@@ -34,9 +34,8 @@ export class LoginComponent implements OnInit{
     this.user = this.formGroup.value;
     this.authService.login(this.user).subscribe({
       next: (res: any) => {
-        console.log(res)
-//        this.authService.saveUser(res.access_token);
-//        this.authService.saveToken(res.access_token);
+        this.authService.saveUser(res.token);
+        this.authService.saveToken(res.token);
         this.router.navigateByUrl('/pvt');
       },
       error: (err: any) => {

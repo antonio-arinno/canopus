@@ -1,1 +1,35 @@
-<p>product works!</p>
+<table mat-table [dataSource]="products()">
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef> Name </th>
+      <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+    </ng-container>
+    <ng-container matColumnDef="description">
+      <th mat-header-cell *matHeaderCellDef> Description </th>
+      <td mat-cell *matCellDef="let element"> {{element.description}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="countContributors">
+      <th mat-header-cell *matHeaderCellDef> Contribuidores </th>
+      <td mat-cell *matCellDef="let element"> {{element.getCountContributors()}} </td>
+    </ng-container>  
+
+    <ng-container matColumnDef="countProjects">
+      <th mat-header-cell *matHeaderCellDef> Projects </th>
+      <td mat-cell *matCellDef="let element"> {{element.getCountProjects()}} </td>
+    </ng-container>  
+    <ng-container matColumnDef="time">
+      <th mat-header-cell *matHeaderCellDef> Time </th>
+      <td mat-cell *matCellDef="let element"> {{element.getTime()}} </td>
+    </ng-container>    
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row
+      (click)="edit(row.id)"
+      *matRowDef="let row; columns: displayedColumns;">
+    </tr>
+</table>
+  
+<ng-container matColumnDef="create">
+    <button mat-raised-button (click)="create()">
+        Create
+    </button>
+</ng-container>

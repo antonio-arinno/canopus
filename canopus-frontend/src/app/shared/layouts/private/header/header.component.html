@@ -1,1 +1,27 @@
-<p>header works!</p>
+<mat-toolbar>
+    <button mat-icon-button>
+      <mat-icon>menu</mat-icon>
+    </button>
+    <span>My App</span>
+    <span class="spacer"></span>
+    <div class="user-info">
+      <span>
+          Hi, 
+          {{this.authService.user.username}}
+      </span>
+      <button mat-icon-button [matMenuTriggerFor]="userMenu">
+        <mat-icon>person</mat-icon>
+      </button>
+    </div>
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item  (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Log Out</span>
+      </button>
+      <button mat-menu-item routerLink="user/detail/1">
+          <mat-icon>account_box</mat-icon>
+          <span>Profile</span>
+      </button>
+    </mat-menu>   
+
+</mat-toolbar>

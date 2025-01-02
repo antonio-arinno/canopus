@@ -7,9 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -19,32 +16,33 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserRequest;
 import com.arinno.canopus.servicies.UserService;
+import com.arinno.canopus.util.IUtil;
 
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/user")
 public class UserController {
 
     @Autowired
     private UserService service;
 
-    @GetMapping
-    public List<User> list() {
-        return service.findAll();
-    }
+    @Autowired
+	private IUtil util;
 
-    @GetMapping("/page/{page}")
-    public Page<User> listPageable(@PathVariable Integer page) {
-        Pageable pageable = PageRequest.of(page, 4);
-        return service.findAll(pageable);
+    @GetMapping
+    public List<User> list(@RequestHeader(value="Authorization") String auth) {
+//        getCompany(auth);
+        return service.findByCompany(util.getCompany(auth));
     }
+        
 
     @GetMapping("/{id}")
     public ResponseEntity<?> show(@PathVariable Long id) {
@@ -56,11 +54,15 @@ public class UserController {
                 .body(Collections.singletonMap("error", "el usuario no se encontro por el id:" + id));
     }
     
-    @PostMapping
-    public ResponseEntity<?> create(@Valid @RequestBody User user, BindingResult result) {
+    /*
+    public ResponseEntity<?> create(@Valid @RequestBody User user, BindingResult result, @RequestHeader(value="Authorization") String auth) {
         if (result.hasErrors()) {
             return validation(result);
         }
+     */        
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody User user, @RequestHeader(value="Authorization") String auth) {
+        user.setCompany(util.getCompany(auth));
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
     }
 
@@ -97,10 +99,16 @@ public class UserController {
         return ResponseEntity.badRequest().body(errors);
     }    
 
+
+	@GetMapping("/select/{term}")
+	public List<User> listSelection(@PathVariable String term, @RequestHeader(value="Authorization") String auth){	
+		return service.findByNameContainingIgnoreCaseAndCompany(term, util.getCompany(auth));
+	}	
+
     @GetMapping("/message")
     public String getMessage(){
         System.out.println("klj");
         return "Hola Mundo 2";
     }   
-
+  
 }

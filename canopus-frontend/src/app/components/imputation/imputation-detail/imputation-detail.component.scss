@@ -1,0 +1,9 @@
+.space-between{
+    display: flex;
+    justify-content: space-between;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  display: none;
+}

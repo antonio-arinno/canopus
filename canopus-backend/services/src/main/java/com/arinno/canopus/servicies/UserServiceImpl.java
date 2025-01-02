@@ -4,13 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.IUser;
 import com.arinno.canopus.entities.Role;
 import com.arinno.canopus.entities.User;
@@ -32,19 +31,32 @@ public class UserServiceImpl implements UserService{
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
     }
-
+/*
     @Override
     @Transactional(readOnly = true)
     public List<User> findAll() {
         return (List) this.repository.findAll();
     }
+ */
+    @Override
+    @Transactional(readOnly = true)
+    public List<User> findByCompany(Company company) {
+        return (List<User>) this.repository.findByCompany(company); 
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<User> findByUsername(String username) {
+        return this.repository.findByUsername(username);
+    }
+
+/*
     @Override
     @Transactional(readOnly = true)
     public Page<User> findAll(Pageable pageable) {
         return this.repository.findAll(pageable);
     }
-
+ */
     @Transactional(readOnly = true)
     @Override
     public Optional<User> findById(@NonNull Long id) {
@@ -97,5 +109,12 @@ public class UserServiceImpl implements UserService{
 
         return roles;
     }
-   
+
+    @Override
+	@Transactional
+	public List<User> findByNameContainingIgnoreCaseAndCompany(String term, Company company) {
+		return repository.findByNameContainingIgnoreCaseAndCompany(term, company);
+	}
+
+
 }

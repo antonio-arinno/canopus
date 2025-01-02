@@ -63,11 +63,15 @@ public class JwtAuthenticationFilter  extends UsernamePasswordAuthenticationFilt
             Authentication authResult) throws IOException, ServletException {
 
         org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authResult.getPrincipal();
-        
-        String username = user.getUsername();
 
+
+
+        String username = user.getUsername();
         Collection<? extends GrantedAuthority> roles = authResult.getAuthorities();
         boolean isAdmin = roles.stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
+
+    //    Optional<User> user2 = userService.findByUsername(username);
+
         Claims claims = Jwts
             .claims()
             .add("authorities", new ObjectMapper().writeValueAsString(roles))

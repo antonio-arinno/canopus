@@ -1,0 +1,85 @@
+<mat-card>
+    <mat-card-title>Imputation</mat-card-title>
+    <mat-card-content>
+
+        <form [formGroup]="imputationForm">              
+ 
+          <mat-form-field>
+            <input matInput [matDatepicker]="picker" (dateChange)="dataChange()" placeholder="Choose a date" formControlName="date">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+
+          <button mat-flat-button (click)="addItemForm()">
+            Add
+          </button>
+
+          <strong> Time: {{ totalTime }} </strong>
+
+          <mat-table [dataSource]="dataSourceItems" class="mat-elevation-z8">
+            <ng-container formArrayName="imputationItemForm">            
+              <ng-container matColumnDef="project">
+                <mat-header-cell *matHeaderCellDef> Project </mat-header-cell>
+                <mat-cell *matCellDef="let element;" [formGroup]="element">
+                  <mat-form-field>
+                    <mat-select formControlName="projectId">
+                      @for (product of products(); track product) {
+                        <mat-optgroup [label]="product.name">
+
+                          @for (project of product.projects; track project) {
+                            <mat-option [value]="project.id">{{project.name}}</mat-option>
+                          }
+                        </mat-optgroup>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </mat-cell>
+              </ng-container>
+ 
+              <ng-container matColumnDef="time">
+                <mat-header-cell *matHeaderCellDef> Time </mat-header-cell>
+                <mat-cell *matCellDef="let element;" [formGroup]="element">
+                  <mat-form-field >
+                    <input matInput type="number" (keyup)="updateTime()" placeholder="Time" formControlName="time">
+                  </mat-form-field>
+                </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="delete">
+                <mat-header-cell *matHeaderCellDef></mat-header-cell>
+                <mat-cell *matCellDef="let element; index as i" [formGroup]="element">
+                  <button mat-raised-button color="warn" (click)="deleteImputationItem(i)">
+                    Delete
+                  </button>           
+                </mat-cell>
+              </ng-container>
+          
+              <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+              <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+            </ng-container>
+          </mat-table>          
+
+          <mat-card-footer>
+            @if (!imputationForm.get('id')?.value){
+              <button type="submit" (click)="create($event)" mat-flat-button [disabled]="imputationForm.invalid || formEmpty()">Save</button>
+            }@else{
+              <div class="space-between">
+                <button type="submit" (click)="update($event)" mat-flat-button [disabled]="imputationForm.invalid || formEmpty()">Update</button>   
+                <button type="submit" (click)="delete($event)" mat-flat-button [disabled]="imputationForm.invalid">Delete</button>  
+              </div>      
+            }
+
+            @if (error) {
+              <div>
+                  <mat-error>{{ error }}</mat-error>
+                  <mat-error>{{ message }}</mat-error>
+                  <mat-error>{{ message2 }}</mat-error>
+              </div>
+            }
+
+          </mat-card-footer>
+    
+        </form>
+    </mat-card-content>
+    
+</mat-card>

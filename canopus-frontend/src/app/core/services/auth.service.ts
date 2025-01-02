@@ -26,6 +26,7 @@ export class AuthService {
   }
 
   public get token(): string{
+
     if(this._token != null){
       return this._token;
     } else if(this._token == null && sessionStorage.getItem('token') != null){
@@ -36,9 +37,9 @@ export class AuthService {
   }   
 
   login(user: User) {
-     const username = user.username;
-     const password = user.password;
-    const url: string = 'http://localhost:8080/login';
+    const username = user.username;
+    const password = user.password;
+    const url: string = URL_BACKEND + '/login';
     return this.http.post<any>(url, { username, password });
 /*
     const urlEndpoint = URL_BACKEND + '/oauth/oauth/token';
@@ -64,7 +65,7 @@ export class AuthService {
     this._user.id = payload.id;
     this._user.name = payload.name;
     this._user.email = payload.email;
-    this._user.username = payload.user_name;
+    this._user.username = payload.username;
     this._user.roles = payload.authorities;
     this._user.company = payload.company;
     sessionStorage.setItem('user', JSON.stringify(this._user));
@@ -84,7 +85,7 @@ export class AuthService {
 
   isAuthenticated():boolean {
     let payload = this.getTokenData(this.token);
-    if(payload != null && payload.user_name && payload.user_name.length>0){
+    if(payload != null && payload.username && payload.username.length>0){
       return true;
     }
     return false;

@@ -3,6 +3,7 @@ package com.arinno.canopus.auth;
 import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,11 +46,12 @@ public class SpringSecurityConfig {
         System.out.println("filterChain");
 
         return http.authorizeHttpRequests(authz -> authz
-                .requestMatchers(HttpMethod.GET, "/users", "/users/page/{page}").permitAll()
-                .requestMatchers(HttpMethod.GET, "/users/{id}").hasAnyRole("USER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/users/{id}").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole("ADMIN")
+//                .requestMatchers(HttpMethod.GET, "/user", "/user/page/{page}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/user/page/{page}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/user/{id}").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/user").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/user/{id}").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/user/{id}").hasRole("ADMIN")
                 .anyRequest().authenticated())
                 .cors(cors -> cors.configurationSource(configurationSource()))
                 .addFilter(new JwtAuthenticationFilter(authenticationManager()))

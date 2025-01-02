@@ -14,12 +14,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Entity
@@ -60,6 +62,12 @@ public class User implements IUser {
         uniqueConstraints = { @UniqueConstraint(columnNames = {"user_id", "role_id"})}
     )
     private List<Role> roles;
+
+    @NotNull
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })	
+    @ManyToOne(fetch = FetchType.EAGER)	
+    private Company company;	
+
 
     public User() {
         this.roles = new ArrayList<>();
@@ -116,6 +124,22 @@ public class User implements IUser {
 
     public void setAdmin(boolean admin) {
         this.admin = admin;
+    }
+
+	public Company getCompany() {
+		return company;
+	}
+	
+	public void setCompany(Company company) {
+		this.company = company;
+	}
+    
+
+    @Override
+    public String toString() {
+        return "User [id=" + id + ", name=" + name + ", lastname=" + lastname + ", email=" + email + ", username="
+                + username + ", admin=" + admin + ", password=" + password + ", roles=" + roles + ", company=" + company
+                + "]";
     }
 
 }

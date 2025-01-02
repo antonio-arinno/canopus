@@ -61,6 +61,14 @@ public class UserRequest implements IUser {
 
     public void setAdmin(boolean admin) {
         this.admin = admin;
+    }
+
+    @Override
+    public String toString() {
+        return "UserRequest [name=" + name + ", lastname=" + lastname + ", email=" + email + ", username=" + username
+                + ", admin=" + admin + "]";
     }    
+
+    
 
 }

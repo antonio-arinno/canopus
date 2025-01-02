@@ -1,0 +1,20 @@
+/*
+mat-sidenav-container {
+  background: #eee;
+}
+
+mat-sidenav {
+  background: red;
+}
+
+mat-sidenav-content {
+  background: blue;
+}
+*/
+.container {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh;
+}
+  
+

@@ -12,7 +12,7 @@ export class Project {
     contributors: Array<User> = [];
     time!: number;
 
-    getCountContributos():number {      
+    getCountContributors():number {      
       return this.contributors.length;
     }
 

@@ -8,6 +8,7 @@ import org.springframework.data.repository.CrudRepository;
 import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.Project;
 import com.arinno.canopus.entities.Status;
+import com.arinno.canopus.entities.User;
 
 public interface ProjectRepository extends CrudRepository<Project, Long> {
 
@@ -23,5 +24,7 @@ public interface ProjectRepository extends CrudRepository<Project, Long> {
 	public void deleteByIdAndCompany(Long id, Company company);
 	
 	public List<Project> findByNameContainingIgnoreCaseAndCompany(String term, Company company);	
+
+	public Integer countByContributors(User contributer);
 
 }

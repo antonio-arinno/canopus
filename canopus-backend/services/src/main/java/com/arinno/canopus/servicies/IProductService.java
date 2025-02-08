@@ -4,10 +4,11 @@ import java.util.List;
 
 import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.Product;
+import com.arinno.canopus.entities.User;
 
 public interface IProductService {
   
-    List<Product> findByCompany(Company company);
+    public List<Product> findByCompany(Company company);
     
     Product findByIdAndCompany(Long id, Company company);
     
@@ -20,4 +21,6 @@ public interface IProductService {
     public List<Product> findByProjectNotProductionAndContributorAndCompany(Long id, Long company_id);
 
     public List<Product> findByProjectNotProductionAndContributor(Long id);
+
+    public Integer countByResponsible(User responsible);
 }

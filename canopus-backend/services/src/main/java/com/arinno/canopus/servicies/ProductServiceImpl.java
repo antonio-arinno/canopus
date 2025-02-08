@@ -42,7 +42,7 @@ public class ProductServiceImpl implements IProductService {
 	    	product.setDescription(productTMP.getDescription());
 	    	product.setResponsible(productTMP.getResponsible());
 	    	product.setCreateAt(productTMP.getCreateAt());
-	    	product.setCompany(productTMP.getCompany());
+//	    	product.setCompany(productTMP.getCompany());
 	    	List<Project> projects = new ArrayList<Project>();
 	    	for (Project projectTMP: productTMP.getProjects()){
 	    		System.out.println(projectTMP.getStatus());
@@ -84,7 +84,7 @@ public class ProductServiceImpl implements IProductService {
 	    	product.setDescription(productTMP.getDescription());
 	    	product.setResponsible(productTMP.getResponsible());
 	    	product.setCreateAt(productTMP.getCreateAt());
-	    	product.setCompany(productTMP.getCompany());
+//	    	product.setCompany(productTMP.getCompany());
 	    	List<Project> projects = new ArrayList<Project>();
 	    	for (Project projectTMP: productTMP.getProjects()){
 	    		System.out.println(projectTMP.getStatus());
@@ -133,6 +133,12 @@ public class ProductServiceImpl implements IProductService {
 	@Transactional
 	public List<Product> findByNameContainingIgnoreCaseAndCompany(String term, Company company) {
 		return productRepository.findByNameContainingIgnoreCaseAndCompany(term, company);
+	}
+
+	@Override
+	@Transactional
+	public Integer countByResponsible(User responsible) {
+		return productRepository.countByResponsible(responsible);
 	}
 
 }

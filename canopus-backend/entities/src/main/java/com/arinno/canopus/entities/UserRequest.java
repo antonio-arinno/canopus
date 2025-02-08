@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Size;
 
 public class UserRequest implements IUser {
 
+    private Long id; 
+
     @NotBlank
     private String name;
 
@@ -23,6 +25,14 @@ public class UserRequest implements IUser {
 
     private boolean admin;
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }    
+    
     public String getName() {
         return name;
     }
@@ -67,7 +77,8 @@ public class UserRequest implements IUser {
     public String toString() {
         return "UserRequest [name=" + name + ", lastname=" + lastname + ", email=" + email + ", username=" + username
                 + ", admin=" + admin + "]";
-    }    
+    }
+
 
     
 

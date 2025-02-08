@@ -45,7 +45,8 @@ public class JwtAuthenticationFilter  extends UsernamePasswordAuthenticationFilt
         try {
             User user = new ObjectMapper().readValue(request.getInputStream(), User.class);
             username = user.getUsername();
-            password = user.getPassword();
+        //    password = user.getPassword();
+            password = user.giveMePassword();
         } catch (StreamReadException e) {
             e.printStackTrace();
         } catch (DatabindException e) {
@@ -70,7 +71,6 @@ public class JwtAuthenticationFilter  extends UsernamePasswordAuthenticationFilt
         Collection<? extends GrantedAuthority> roles = authResult.getAuthorities();
         boolean isAdmin = roles.stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
 
-    //    Optional<User> user2 = userService.findByUsername(username);
 
         Claims claims = Jwts
             .claims()

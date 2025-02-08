@@ -1,12 +1,15 @@
 import { Project } from "./project";
+import { Technology } from "./technology";
 import { User } from "./user";
 
 export class Product {
   id!: number;
   name!: string;
   description!: string;
+  technology!: Technology;
   responsible!: User;
-  
+  //time!: number;
+
   projects: Array<Project> = [];
  
   getTime():number {      

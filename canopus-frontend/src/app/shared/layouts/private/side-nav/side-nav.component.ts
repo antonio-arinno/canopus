@@ -31,6 +31,10 @@ export class SideNavComponent {
       link: 'pvt/product',
     },
     {
+      title: 'technology',
+      link: 'pvt/technology',
+    },    
+    {
       title: 'user',
       link: 'pvt/user',
     }

@@ -48,6 +48,11 @@ public class Product {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy="product", cascade = CascadeType.ALL)
 	private List<Project> projects;	
 
+	@JoinColumn(nullable = false)	
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "products" })
+    @ManyToOne(fetch = FetchType.LAZY)	
+	private Technology technology;
+
     @JoinColumn(nullable = false)	
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)	
@@ -104,23 +109,20 @@ public class Product {
 	public void setProjects(List<Project> projects) {
 		this.projects = projects;
 	}	
-
-    public Company getCompany() {
-        return company;
+ 
+    public Technology getTechnology() {
+        return technology;
     }
-  
+
+    public void setTechnology(Technology technology) {
+        this.technology = technology;
+    }
+
     public void setCompany(Company company) {
         this.company = company;
     }
-/*
-    public Integer getTime() {
-		Integer time = 0;
-		if (projects != null){
-			for(Project project: projects) {
-				time += project.getTime();
-			}
-		}
-		return time;
-	}		    
- */
+
+//    public int getCountProjects() {return this.projects.size();    }
+
+
 }

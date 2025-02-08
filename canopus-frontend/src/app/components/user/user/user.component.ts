@@ -1,13 +1,14 @@
 import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
+import { MatCardModule } from '@angular/material/card';
 import { Router } from '@angular/router';
 import { User } from '@core/model/user';
 import { UserService } from '@core/services/user.service';
 
 @Component({
   selector: 'app-user',
-  imports: [MatTableModule, MatButtonModule],
+  imports: [MatTableModule, MatButtonModule, MatCardModule],
   templateUrl: './user.component.html',
   styleUrl: './user.component.scss'
 })
@@ -18,7 +19,7 @@ export class UserComponent implements OnInit{
 
   users: WritableSignal<User[]> = signal([]);
 //  displayedColumns: string[] = ['name', 'lastname', 'countProducts', 'countProjects', 'time'];
-  displayedColumns: string[] = ['name', 'lastname'];
+  displayedColumns: string[] = ['name', 'lastname', 'countProducts'];
   dataSource = this.users;
 
   ngOnInit(): void {

@@ -14,7 +14,11 @@ export const PRIVATE_ROUTES: Routes = [
         {
             path: 'product',
             loadChildren: () => import('@components/product/product.routing').then(m => m.PRODUCT_ROUTES)
-        },
+        },     
+        {
+            path: 'technology',
+            loadChildren: () => import('@components/technology/technology.routing').then(m => m.TECHNOLOGY_ROUTES)
+        },           
         {
             path: 'user',
             loadChildren: () => import('@components/user/user.routing').then(m => m.USER_ROUTES)

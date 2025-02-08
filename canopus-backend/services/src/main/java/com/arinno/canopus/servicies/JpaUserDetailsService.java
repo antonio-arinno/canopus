@@ -40,7 +40,8 @@ public class JpaUserDetailsService implements UserDetailsService {
                 .collect(Collectors.toList());
 
         return new org.springframework.security.core.userdetails.User(username,
-                user.getPassword(),
+//                user.getPassword(),
+                user.giveMePassword(),
                 true,
                 true,
                 true,

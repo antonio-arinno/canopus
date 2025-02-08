@@ -7,10 +7,11 @@ import org.springframework.data.repository.CrudRepository;
 
 import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.Product;
+import com.arinno.canopus.entities.User;
 
 public interface ProductRepository extends CrudRepository<Product, Long> {
 
-    List<Product> findByCompany(Company company);
+    public List<Product> findByCompany(Company company);
 
     public Product findByIdAndCompany(Long id, Company company);
 
@@ -23,5 +24,7 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
     @Query("select p from Product p left join p.projects pr on p.id = pr.product.id left join pr.contributors prc where prc.id = ?1 and pr.status <> Status.PRODUCTION")
 	public List<Product> findByNotProductionAndContributor(Long id);
+
+    public Integer countByResponsible(User responsible);
 
 }

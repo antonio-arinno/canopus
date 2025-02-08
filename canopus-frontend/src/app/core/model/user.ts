@@ -5,6 +5,7 @@ export class User {
     name!: string;
     lastname!: string;
     email!: string;
+    countProducts!: number;
     roles: string[]=[];
     company!: string;
 

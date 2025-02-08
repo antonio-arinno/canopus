@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserRequest;
+import com.arinno.canopus.servicies.IProductService;
 import com.arinno.canopus.servicies.UserService;
 import com.arinno.canopus.util.IUtil;
 
@@ -35,18 +36,28 @@ public class UserController {
     private UserService service;
 
     @Autowired
+    private IProductService productService;
+
+    @Autowired
 	private IUtil util;
 
     @GetMapping
     public List<User> list(@RequestHeader(value="Authorization") String auth) {
-//        getCompany(auth);
-        return service.findByCompany(util.getCompany(auth));
+//        List<User> users = service.findByCompany(util.getCompany(auth)).stream().map(user -> AddInfoUser(user)).toList();
+        return service.findByCompany(util.getCompany(auth)).stream().map(user -> AddInfoUser(user)).toList();
+//        return service.findByCompany(util.getCompany(auth));
     }
-        
+
+    private User AddInfoUser (User user){
+        user.setCountProducts(productService.countByResponsible(user));
+        return user;
+    }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> show(@PathVariable Long id) {
+    public ResponseEntity<?> show(@PathVariable Long id) {;
+
         Optional<User> userOptional = service.findById(id);
+
         if (userOptional.isPresent()) {
             return ResponseEntity.status(HttpStatus.OK).body(userOptional.orElseThrow());
         }

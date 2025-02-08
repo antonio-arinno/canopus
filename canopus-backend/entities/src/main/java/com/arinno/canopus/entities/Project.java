@@ -44,8 +44,7 @@ public class Project {
 	@Column(name = "create_at")
 	@Temporal(TemporalType.DATE)
 	private Date createAt;	
-	
-	
+		
 	@JoinColumn(nullable = false)	
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "projects" })
     @ManyToOne(fetch = FetchType.LAZY)	

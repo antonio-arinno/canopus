@@ -34,15 +34,10 @@ public class ProductController {
 	public List<Product> list(@RequestHeader(value="Authorization") String auth){	
 		return productService.findByCompany(util.getCompany(auth));
 	}		
-/*
-	@GetMapping("/contributor/{id}")
-	public List<Product> listNotProductionContributor(@PathVariable String id, @RequestHeader(value="Authorization") String auth){
-		return productService.findByProjectNotProductionAndContributorAndCompany(Long.parseLong(id), util.getCompany(auth).getId());
-	}	
- */
+	
+
 	@GetMapping("/contributor")
 	public List<Product> listNotProductionContributor(@RequestHeader(value="Authorization") String auth){
-		System.out.println(util.getCompany(auth).getId());
 		return productService.findByProjectNotProductionAndContributor(util.getUser(auth).getId());
 	}	
 
@@ -50,6 +45,24 @@ public class ProductController {
 	public Product product(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
 		return productService.findByIdAndCompany(id, util.getCompany(auth));
 	}
+
+/*
+	@GetMapping("/{id}")
+	public ProductResponse product(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
+		ProductResponse productResponse = new ProductResponse();
+		Product product = productService.findByIdAndCompany(id, util.getCompany(auth));
+		productResponse.setId(product.getId());
+		productResponse.setName(product.getName());
+		productResponse.setDescription(product.getDescription());
+		productResponse.setCreateAt(product.getCreateAt());
+		productResponse.setTime(product.getTime());
+		UserRequest userRequest = new UserRequest();
+		productResponse.setResponsible(userRequest);
+		productResponse.getResponsible().setId(product.getResponsible().getId());
+		productResponse.getResponsible().setName(product.getResponsible().getName());
+		return productResponse;
+	}
+ */		
 		
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -57,6 +70,7 @@ public class ProductController {
 		Product productDb = productService.findByIdAndCompany(id, util.getCompany(auth));
 		productDb.setName(product.getName());
 		productDb.setDescription(product.getDescription());
+		productDb.setTechnology(product.getTechnology());
 		productDb.setResponsible(product.getResponsible());
 		return productService.save(productDb);
 	}	
@@ -69,7 +83,7 @@ public class ProductController {
 	}	
 
 	@DeleteMapping("/{id}")	
-	@ResponseStatus(HttpStatus.NO_CONTENT)
+//	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
 		productService.deleteByIdAndCompany(id, util.getCompany(auth));
 	}		

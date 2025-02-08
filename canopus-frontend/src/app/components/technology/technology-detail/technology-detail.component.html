@@ -1,0 +1,79 @@
+<mat-card>
+    <mat-card-title>Technology</mat-card-title>
+    <mat-card-content>
+      <form [formGroup]="form">                   
+        <mat-grid-list cols="2" rowHeight="2:1">
+            <mat-grid-tile>
+              <div>
+                <mat-form-field>
+                  <mat-label>Name</mat-label>
+                  <input type="text" matInput placeholder="Name" formControlName="name">
+                </mat-form-field>
+        
+                <mat-form-field>
+                  <mat-label>Description</mat-label>
+                  <input type="text" matInput placeholder="Description" formControlName="description">
+                </mat-form-field>        
+                
+                <mat-form-field>
+                  <mat-label>Responsible</mat-label>
+                  <input type="text" matInput formControlName="responsible" 
+                  [matAutocomplete]="auto">
+                  <mat-autocomplete #auto="matAutocomplete" 
+                  [displayWith]="displayFn">
+                  <mat-option *ngFor="let user of filteredUsers | async" [value]="user">
+                    {{user.name}}
+                  </mat-option>
+                </mat-autocomplete>
+              </mat-form-field>         
+            </div>
+          </mat-grid-tile>
+
+          <mat-grid-tile>
+            <div>
+              <mat-form-field>
+                <mat-label>Products</mat-label>
+                <input type="text" matInput placeholder="Products" formControlName="products">
+              </mat-form-field> 
+              <mat-form-field>
+                <mat-label>Projects</mat-label>
+                <input type="text" matInput placeholder="Projects" formControlName="projects">
+              </mat-form-field> 
+              <mat-form-field>
+                <mat-label>Contribuitors</mat-label>
+                <input type="text" matInput placeholder="Contribuitors" formControlName="contribuitors">
+              </mat-form-field> 
+              <mat-form-field>
+                <mat-label>Time</mat-label>
+                <input type="text" matInput placeholder="Time" formControlName="time">
+              </mat-form-field> 
+            </div>
+            
+          </mat-grid-tile>
+          
+        </mat-grid-list>
+ 
+        <mat-card-footer>
+          @if (!form.get('id')?.value) {
+              <button type="submit" (click)="create($event)" mat-flat-button [disabled]="form.invalid">Save</button>   
+          }@else {
+              <div class="space-between">
+                  <button type="submit" (click)="update($event)" mat-flat-button [disabled]="form.invalid">Update</button>   
+                  <button type="submit" (click)="delete($event)" mat-flat-button [disabled]="form.invalid">Delete</button>  
+              </div>
+          }
+          @if (error) {
+            <div>
+                <mat-error>{{ error }}</mat-error>
+                <mat-error>{{ message }}</mat-error>
+                <mat-error>{{ message2 }}</mat-error>
+            </div>
+            }
+        </mat-card-footer>
+
+      </form>  
+    </mat-card-content>
+</mat-card>
+
+
+

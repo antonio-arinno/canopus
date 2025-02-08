@@ -28,6 +28,7 @@ import jakarta.validation.constraints.Size;
 @Table(name = "users")
 public class User implements IUser {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -49,6 +50,9 @@ public class User implements IUser {
     @Transient
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private boolean admin;
+
+    @Transient
+    private Integer countProducts;
 
     @NotBlank
     private String password;
@@ -103,9 +107,13 @@ public class User implements IUser {
     public void setUsername(String username) {
         this.username = username;
     }
-    public String getPassword() {
+
+//    public String getPassword() {return password;}
+
+    public String giveMePassword(){
         return password;
     }
+
     public void setPassword(String password) {
         this.password = password;
     }
@@ -126,20 +134,23 @@ public class User implements IUser {
         this.admin = admin;
     }
 
-	public Company getCompany() {
-		return company;
-	}
+
+
+    public Integer getCountProducts() {
+        return countProducts;
+    }
+
+    public void setCountProducts(Integer countProducts) {
+        this.countProducts = countProducts;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
 	
 	public void setCompany(Company company) {
 		this.company = company;
-	}
-    
+	}  
 
-    @Override
-    public String toString() {
-        return "User [id=" + id + ", name=" + name + ", lastname=" + lastname + ", email=" + email + ", username="
-                + username + ", admin=" + admin + ", password=" + password + ", roles=" + roles + ", company=" + company
-                + "]";
-    }
 
 }

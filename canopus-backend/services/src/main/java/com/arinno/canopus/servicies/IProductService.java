@@ -4,15 +4,23 @@ import java.util.List;
 
 import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.Product;
+import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
+import com.arinno.canopus.error.CustomException;
 
 public interface IProductService {
   
     public List<Product> findByCompany(Company company);
+
+    public List<Product> findByResponsible(User user);
+
+    public List<Product> findByResponsibleAndCompany(User user, Company company);
+
+    public List<Product> findByTechnology(Technology technology);
     
     Product findByIdAndCompany(Long id, Company company);
     
-    public void deleteByIdAndCompany(Long id, Company company);
+    public void deleteByIdAndCompany(Long id, Company company) throws CustomException;
     
     Product save(Product product);
 
@@ -22,5 +30,12 @@ public interface IProductService {
 
     public List<Product> findByProjectNotProductionAndContributor(Long id);
 
+    public List<Product> findByContributorAndCompany(Long id, Long id2);
+
     public Integer countByResponsible(User responsible);
+
+    public Integer countByTechnology(Technology technology);
+
+
+    
 }

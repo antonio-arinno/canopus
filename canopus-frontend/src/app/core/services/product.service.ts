@@ -14,13 +14,26 @@ export class ProductService {
   getAll(){
     return this.http.get<Product[]>(URL_BACKEND + '/product');
   }
+
+  getByResponsibleMe(){
+    return this.http.get<Product[]>(URL_BACKEND + '/product/responsible');
+  }
 /*
+  getByResponsible(id: number){
+    return this.http.get<Product[]>(URL_BACKEND + `/product/responsible/${id}`);
+  }
+
+*/
   getByContributor(id: number){
     return this.http.get<Product[]>(URL_BACKEND + `/product/contributor/${id}`);
   }
-*/
+/*
   getByContributor(){
     return this.http.get<Product[]>(URL_BACKEND + `/product/contributor`);
+  }
+*/
+  getByTechnology(id: number){
+    return this.http.get<Product[]>(URL_BACKEND + `/product/technology/${id}`);
   }
 
   get(id: number){

@@ -38,12 +38,25 @@
                       {{user.name}}
                     </mat-option>
                   </mat-autocomplete>
-                </mat-form-field>         
+                </mat-form-field>        
+                
+                <mat-form-field>
+                  <mat-label>Backup</mat-label>
+                  <input type="text" matInput formControlName="backup" 
+                  [matAutocomplete]="autoResponsible">
+                  <mat-autocomplete #autoResponsible="matAutocomplete" 
+                  [displayWith]="displayFn">
+                    <mat-option *ngFor="let user of filteredUsers | async" [value]="user">
+                      {{user.name}}
+                    </mat-option>
+                  </mat-autocomplete>
+                </mat-form-field>    
             </div>
-          </mat-grid-tile>
+            </mat-grid-tile>
 
           <mat-grid-tile>
             <div>
+              <div class="inline">
               <mat-form-field>
                 <mat-label>Projects</mat-label>
                 <input type="text" matInput placeholder="Projects" formControlName="projects">
@@ -56,8 +69,41 @@
                 <mat-label>Time</mat-label>
                 <input type="text" matInput placeholder="Time" formControlName="time">
               </mat-form-field> 
+              <mat-form-field>
+                <mat-label>Avg time</mat-label>
+                <input type="text" matInput placeholder="Avg time" formControlName="avgTime">
+              </mat-form-field> 
+              <mat-form-field>
+                <mat-label>Avg duration</mat-label>
+                <input type="text" matInput placeholder="Avg duration" formControlName="avgDuration">
+              </mat-form-field> 
+              </div>
+
+            <table mat-table [dataSource]="projects()">
+              <ng-container matColumnDef="projectName">
+                <th mat-header-cell *matHeaderCellDef> Project </th>
+                <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef> Status </th>
+                <td mat-cell *matCellDef="let element"> {{element.getStatus()}} </td>
+              </ng-container>
+
+              <ng-container matColumnDef="countContributors">
+                <th mat-header-cell *matHeaderCellDef> Contributors </th>
+                <td mat-cell *matCellDef="let element"> {{element.countContributors}} </td>
+              </ng-container>
+
+              <ng-container matColumnDef="time">
+                <th mat-header-cell *matHeaderCellDef> Time </th>
+                <td mat-cell *matCellDef="let element"> {{element.time}} </td>
+              </ng-container>                
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
             </div>
-            
           </mat-grid-tile>
           
         </mat-grid-list>

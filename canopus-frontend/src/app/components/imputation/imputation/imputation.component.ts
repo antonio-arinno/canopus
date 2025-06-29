@@ -41,9 +41,9 @@ export class ImputationComponent {
   ngOnInit(): void {
     this.imputationService.getAll().subscribe({
       next: (res: Imputation[]) => {
-        console.log(res);
         this.imputations = res;
-        this.getDaysFromDate(1, 2024);
+        let today = new Date(Date.now());
+        this.getDaysFromDate(today.getMonth()+1, today.getFullYear());
       },
       error: (err: any) => console.log(err),
     });    
@@ -64,7 +64,7 @@ export class ImputationComponent {
       this.imputations.forEach(function (imputation) {
         const dayObject2 = moment(imputation.date);
         if ( dayObject.diff(dayObject2) == 0 ) {
-          total = imputation.total;
+          total = imputation.time;
           id = imputation.id;
           if(total == 8){
 //            color = '#0f0';

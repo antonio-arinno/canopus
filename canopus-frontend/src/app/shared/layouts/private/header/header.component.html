@@ -7,7 +7,7 @@
     <div class="user-info">
       <span>
           Hi, 
-          {{this.authService.user.username}}
+          {{this.authService.user.name}}
       </span>
       <button mat-icon-button [matMenuTriggerFor]="userMenu">
         <mat-icon>person</mat-icon>
@@ -18,7 +18,7 @@
           <mat-icon>logout</mat-icon>
           <span>Log Out</span>
       </button>
-      <button mat-menu-item routerLink="user/detail/1">
+      <button mat-menu-item routerLink="user/detail/{{this.authService.user.id}}">
           <mat-icon>account_box</mat-icon>
           <span>Profile</span>
       </button>

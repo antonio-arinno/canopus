@@ -8,10 +8,21 @@ export class Product {
   description!: string;
   technology!: Technology;
   responsible!: User;
-  //time!: number;
-
+  backup!: User;
+  countProjects!: number;
+  countContributors!: number;
+  time!: number;
+  avgTime!: number;
+  avgDuration!: number;
   projects: Array<Project> = [];
- 
+
+  public static fromObject(obj: any):Product { 
+    let productRef: Product = new Product();
+    Object.assign(productRef, obj);
+    return productRef;
+  }
+}
+/* 
   getTime():number {      
     let time = 0;
     this.projects.forEach((item: Project) => {
@@ -35,10 +46,4 @@ export class Product {
     });
     return contributors.length;
   }
-
-  public static fromObject(obj: any):Product { 
-    let productRef: Product = new Product();
-    Object.assign(productRef, obj);
-    return productRef;
-  }
-}
+*/

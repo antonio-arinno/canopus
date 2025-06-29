@@ -5,11 +5,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,7 +15,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
@@ -38,12 +34,22 @@ public class Project {
 
 	private String description;
 	
+	/*
 	@Enumerated(EnumType.STRING)
 	private Status status;
-	
+	*/
 	@Column(name = "create_at")
 	@Temporal(TemporalType.DATE)
 	private Date createAt;	
+
+	@Temporal(TemporalType.DATE)
+	private Date dateDev;	
+
+	@Temporal(TemporalType.DATE)
+	private Date datePre;	
+
+	@Temporal(TemporalType.DATE)
+	private Date datePro;	
 		
 	@JoinColumn(nullable = false)	
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "projects" })
@@ -63,12 +69,12 @@ public class Project {
     )
 	private List<User> contributors;
 
- 
+ /*
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "project_id")	
 	private List<ImputationItem> imputationItems;	
-
+*/
 	@JoinColumn(nullable = false)	
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)	
@@ -91,14 +97,6 @@ public class Project {
 		this.name = name;
 	}
 
-	public Status getStatus() {
-		return status;
-	}
-
-	public void setStatus(Status status) {
-		this.status = status;
-	}
-
 	public String getDescription() {
 		return description;
 	}
@@ -113,8 +111,32 @@ public class Project {
 
 	public void setCreateAt(Date createAt) {
 		this.createAt = createAt;
-	}		
+	}	
 	
+	public Date getDateDev() {
+		return dateDev;
+	}
+
+	public void setDateDev(Date dateDev) {
+		this.dateDev = dateDev;
+	}
+
+	public Date getDatePre() {
+		return datePre;
+	}
+
+	public void setDatePre(Date datePre) {
+		this.datePre = datePre;
+	}
+
+	public Date getDatePro() {
+		return datePro;
+	}
+
+	public void setDatePro(Date datePro) {
+		this.datePro = datePro;
+	}
+
 	public Product getProduct() {
 		return product;
 	}
@@ -146,7 +168,10 @@ public class Project {
 	public void setCompany(Company company) {
 		this.company = company;
 	}
-		
+	
+
+	
+/*		
 	public Integer getTime() {
 		Integer time = 0;
 		if (imputationItems != null){
@@ -156,5 +181,5 @@ public class Project {
 		}
 		return time;
 	}	
- 
+*/ 
 }

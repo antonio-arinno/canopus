@@ -18,14 +18,13 @@ export class UserComponent implements OnInit{
   router = inject(Router);
 
   users: WritableSignal<User[]> = signal([]);
-//  displayedColumns: string[] = ['name', 'lastname', 'countProducts', 'countProjects', 'time'];
-  displayedColumns: string[] = ['name', 'lastname', 'countProducts'];
-  dataSource = this.users;
+  displayedColumns: string[] = ['name', 'lastname', 'countProducts', 'time'];
+//  dataSource = this.users;
+
 
   ngOnInit(): void {
     this.userService.getAll().subscribe({
       next: (res: User[]) => {
-        console.log(res);
         let usersTmp = res.map(function (user){
           return User.fromObject(user);
         });

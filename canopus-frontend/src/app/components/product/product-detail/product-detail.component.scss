@@ -1,6 +1,15 @@
+mat-card {
+    margin: 20px;
+}
+
 .space-between{
     display: flex;
     justify-content: space-between;
+}
+
+.inline{
+  display: inline-flex;
+  width: 100%;
 }
 
 //mat-grid-tile {background: lightblue;}

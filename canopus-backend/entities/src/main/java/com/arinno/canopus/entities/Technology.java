@@ -1,11 +1,9 @@
 package com.arinno.canopus.entities;
 
 import java.util.Date;
-import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,10 +12,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name="technologies")
@@ -41,10 +39,13 @@ public class Technology {
     @ManyToOne(fetch = FetchType.LAZY)		
 	private User responsible;
 
+    @Transient
+    private Integer countProducts;
+/*
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "technology" })
 	@OneToMany(fetch = FetchType.LAZY, mappedBy="technology", cascade = CascadeType.ALL)
 	private List<Product> products;	
-
+*/
     @JoinColumn(nullable = false)	
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)	
@@ -89,7 +90,7 @@ public class Technology {
     public void setResponsible(User responsible) {
         this.responsible = responsible;
     }
-
+/*
     public List<Product> getProducts() {
         return products;
     }
@@ -97,15 +98,21 @@ public class Technology {
     public void setProducts(List<Product> products) {
         this.products = products;
     }
-
+*/
 //    public Company getCompany() { return company;}
+
+
 
     public void setCompany(Company company) {
         this.company = company;
     }
 
-    
+    public Integer getCountProducts() {
+        return countProducts;
+    }
 
-
+    public void setCountProducts(Integer countProducts) {
+        this.countProducts = countProducts;
+    }
 
 }

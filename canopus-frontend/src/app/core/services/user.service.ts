@@ -15,8 +15,16 @@ export class UserService {
     return this.http.get<User[]>(URL_BACKEND + '/user');
   }
 
+  getByTechnology(id: number){
+    return this.http.get<User[]>(URL_BACKEND + `/user/technology/${id}`);
+  }
+
   get(id: number){
     return this.http.get<User>(URL_BACKEND + `/user/${id}`);
+  }
+
+  getMe(){
+    return this.http.get<User>(URL_BACKEND + '/user/me');
   }
 
   update(user: User){

@@ -1,6 +1,6 @@
 package com.arinno.canopus.servicies;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.Product;
-import com.arinno.canopus.entities.Project;
-import com.arinno.canopus.entities.Status;
+import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
+import com.arinno.canopus.error.CustomException;
 import com.arinno.canopus.repositories.ProductRepository;
 
 @Service
@@ -26,11 +26,16 @@ public class ProductServiceImpl implements IProductService {
         return (List<Product>) productRepository.findByCompany(company);
     }
 
+	@Override
+	@Transactional(readOnly = true)
+	public List<Product> findByResponsible(User user) {
+		return (List<Product>) productRepository.findByResponsible(user);
+	}
+
     @Override
 	@Transactional(readOnly = true)
 	public List<Product> findByProjectNotProductionAndContributorAndCompany(Long id, Long company_id) {	
-		
-//	    List<Product> productsTMP = productDao.findByContributorAndCompany(id, Status.PRODUCTION, company_id);
+/*		
 	    List<Product> productsTMP = productRepository.findByNotProductionAndContributorAndCompany(id, company_id);
 	    List<Product> products = new ArrayList<Product>();
 	    
@@ -42,7 +47,6 @@ public class ProductServiceImpl implements IProductService {
 	    	product.setDescription(productTMP.getDescription());
 	    	product.setResponsible(productTMP.getResponsible());
 	    	product.setCreateAt(productTMP.getCreateAt());
-//	    	product.setCompany(productTMP.getCompany());
 	    	List<Project> projects = new ArrayList<Project>();
 	    	for (Project projectTMP: productTMP.getProjects()){
 	    		System.out.println(projectTMP.getStatus());
@@ -65,14 +69,16 @@ public class ProductServiceImpl implements IProductService {
 	    		product.setProjects(projects);
 	    	}
 	    	products.add(product);
-	    }
+	    }			
 		return products;
+*/		
+		return null;
 	}		
 
     @Override
 	@Transactional(readOnly = true)
 	public List<Product> findByProjectNotProductionAndContributor(Long id) {			
-//	    List<Product> productsTMP = productDao.findByContributorAndCompany(id, Status.PRODUCTION, company_id);
+/*
 	    List<Product> productsTMP = productRepository.findByNotProductionAndContributor(id);
 	    List<Product> products = new ArrayList<Product>();
 	    
@@ -84,7 +90,6 @@ public class ProductServiceImpl implements IProductService {
 	    	product.setDescription(productTMP.getDescription());
 	    	product.setResponsible(productTMP.getResponsible());
 	    	product.setCreateAt(productTMP.getCreateAt());
-//	    	product.setCompany(productTMP.getCompany());
 	    	List<Project> projects = new ArrayList<Project>();
 	    	for (Project projectTMP: productTMP.getProjects()){
 	    		System.out.println(projectTMP.getStatus());
@@ -109,6 +114,8 @@ public class ProductServiceImpl implements IProductService {
 	    	products.add(product);
 	    }
 		return products;
+*/
+		return null;		
 	}		
     
     @Override
@@ -119,7 +126,7 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     @Transactional
-    public void deleteByIdAndCompany(Long id, Company company) {
+    public void deleteByIdAndCompany(Long id, Company company) throws CustomException {
         productRepository.deleteByIdAndCompany(id, company);
     }
         
@@ -140,5 +147,27 @@ public class ProductServiceImpl implements IProductService {
 	public Integer countByResponsible(User responsible) {
 		return productRepository.countByResponsible(responsible);
 	}
+
+	@Override
+	@Transactional
+	public Integer countByTechnology(Technology technology) {
+		return productRepository.countByTechnology(technology);
+	}
+
+	@Override
+	public List<Product> findByResponsibleAndCompany(User user, Company company) {
+		return productRepository.findByResponsibleAndCompany(user, company);
+	}
+
+	@Override
+	public List<Product> findByTechnology(Technology technology) {
+		return productRepository.findByTechnology(technology);
+	}
+
+	@Override
+	public List<Product> findByContributorAndCompany(Long id, Long id2) {
+		return productRepository.findByContributorAndCompany(id, id2);
+	}
+
 
 }

@@ -62,12 +62,15 @@ export class AuthService {
   saveUser(accessToken: string): void {
     let payload = this.getTokenData(accessToken);
     this._user = new User();
-    this._user.id = payload.id;
-    this._user.name = payload.name;
-    this._user.email = payload.email;
     this._user.username = payload.username;
     this._user.roles = payload.authorities;
-    this._user.company = payload.company;
+    sessionStorage.setItem('user', JSON.stringify(this._user));
+  }
+
+  updateUser(user: User):void {
+    this._user = JSON.parse(sessionStorage.getItem('user')!) as User;
+    this._user.id = user.id;
+    this._user.name = user.name;
     sessionStorage.setItem('user', JSON.stringify(this._user));
   }
 

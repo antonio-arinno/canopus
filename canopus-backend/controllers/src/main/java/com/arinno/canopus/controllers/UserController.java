@@ -1,5 +1,6 @@
 package com.arinno.canopus.controllers;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -20,8 +21,12 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.arinno.canopus.entities.Technology;
+import com.arinno.canopus.entities.TechnologyResponse;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserRequest;
+import com.arinno.canopus.entities.UserResponse;
+import com.arinno.canopus.servicies.IImputationService;
 import com.arinno.canopus.servicies.IProductService;
 import com.arinno.canopus.servicies.UserService;
 import com.arinno.canopus.util.IUtil;
@@ -38,39 +43,72 @@ public class UserController {
     @Autowired
     private IProductService productService;
 
+//    @Autowired
+//    private IProjectService projectService;
+
+    @Autowired
+    private IImputationService imputationService;
+
     @Autowired
 	private IUtil util;
 
     @GetMapping
-    public List<User> list(@RequestHeader(value="Authorization") String auth) {
-//        List<User> users = service.findByCompany(util.getCompany(auth)).stream().map(user -> AddInfoUser(user)).toList();
-        return service.findByCompany(util.getCompany(auth)).stream().map(user -> AddInfoUser(user)).toList();
-//        return service.findByCompany(util.getCompany(auth));
+    public List<UserResponse> list(@RequestHeader(value="Authorization") String auth) {
+//        return service.findByCompany(util.getCompany(auth)).stream().map(user -> AddInfoUser(user)).toList();
+        return service.findByCompany(util.getCompany(auth)).stream().map(user -> GetUserResponse(user)).toList();
     }
 
-    private User AddInfoUser (User user){
-        user.setCountProducts(productService.countByResponsible(user));
-        return user;
+    @GetMapping("/technology/{id}")
+    public List<UserResponse> listByTechnologies(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
+        Technology technology = new Technology();
+        technology.setId(id);
+        List<Technology> technologies = new ArrayList<>();
+        technologies.add(technology);
+        return service.findByTechnologies(technologies).stream().map(user -> GetUserResponse(user)).toList();
     }
 
+    
     @GetMapping("/{id}")
     public ResponseEntity<?> show(@PathVariable Long id) {;
-
         Optional<User> userOptional = service.findById(id);
-
         if (userOptional.isPresent()) {
-            return ResponseEntity.status(HttpStatus.OK).body(userOptional.orElseThrow());
+            return ResponseEntity.status(HttpStatus.OK).body(GetUserResponse(userOptional.orElseThrow()));
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Collections.singletonMap("error", "el usuario no se encontro por el id:" + id));
+        .body(Collections.singletonMap("error", "el usuario no se encontro por el id:" + id));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> user(@RequestHeader(value="Authorization") String auth) {;
+        Optional<User> userOptional = service.findById(util.getUser(auth).getId());
+        if (userOptional.isPresent()) {
+            return ResponseEntity.status(HttpStatus.OK).body(GetUserResponse(userOptional.orElseThrow()));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(Collections.singletonMap("error", "el usuario no se encontro"));
     }
     
-    /*
-    public ResponseEntity<?> create(@Valid @RequestBody User user, BindingResult result, @RequestHeader(value="Authorization") String auth) {
-        if (result.hasErrors()) {
-            return validation(result);
-        }
-     */        
+    private UserResponse GetUserResponse (User user){
+        return UserResponse.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .name(user.getName())
+                    .email(user.getEmail())
+                    .lastname(user.getLastname())
+                    .technologies(user.getTechnologies().stream().map(technology -> GetTechnologyResponse(technology)).toList())
+                    .countProducts(productService.countByResponsible(user))
+//                    .countProjects(projectService.countByResponsible(user))
+                    .time(imputationService.timeByUser(user))
+                    .build();
+    }
+    
+    private TechnologyResponse GetTechnologyResponse (Technology technology){
+        return TechnologyResponse.builder()
+                    .id(technology.getId())
+                    .name(technology.getName())
+                    .build();
+    }
+
     @PostMapping
     public ResponseEntity<?> create(@RequestBody User user, @RequestHeader(value="Authorization") String auth) {
         user.setCompany(util.getCompany(auth));
@@ -112,8 +150,8 @@ public class UserController {
 
 
 	@GetMapping("/select/{term}")
-	public List<User> listSelection(@PathVariable String term, @RequestHeader(value="Authorization") String auth){	
-		return service.findByNameContainingIgnoreCaseAndCompany(term, util.getCompany(auth));
+	public List<UserResponse> listSelection(@PathVariable String term, @RequestHeader(value="Authorization") String auth){	
+        return service.findByNameContainingIgnoreCaseAndCompany(term, util.getCompany(auth)).stream().map(user -> GetUserResponse(user)).toList();
 	}	
 
     @GetMapping("/message")

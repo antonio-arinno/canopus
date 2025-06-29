@@ -17,6 +17,7 @@ import { AuthService } from '@core/services/auth.service';
 import { ImputationService } from '@core/services/imputation.service';
 import { ProductService } from '@core/services/product.service';
 import { MatSelectModule } from '@angular/material/select';
+import { ProjectService } from '@core/services/project.service';
 
 @Component({
   selector: 'app-imputation-detail',
@@ -29,10 +30,12 @@ export class ImputationDetailComponent {
 
   imputationService = inject(ImputationService);
   productService = inject(ProductService);
+  projectService = inject(ProjectService);
   authService = inject(AuthService);
   fb = inject(FormBuilder);
   cd = inject(ChangeDetectorRef)
   router = inject(Router);
+
   activatedRoute = inject(ActivatedRoute);
 
   displayedColumns: string[] = ['project', 'time', 'delete'];
@@ -44,7 +47,8 @@ export class ImputationDetailComponent {
   product!: Product;
   project!: Project;
 
-  products: WritableSignal<Product[]> = signal([]);
+//  products: WritableSignal<Product[]> = signal([]);
+  projects: WritableSignal<Project[]> = signal([]);
 
   dataSourceItems!: MatTableDataSource<any>;
 
@@ -54,9 +58,7 @@ export class ImputationDetailComponent {
   message!: string;
   message2!: string;  
 
-
-  ngOnInit(): void {
-    this.getProducts();
+  ngOnInit(){
     this.buildForm();
     this.activatedRoute.params.subscribe(params => {
       let id = params['id'];
@@ -64,6 +66,7 @@ export class ImputationDetailComponent {
       if(!id.match(cmpDate)){
         this.imputationService.get(id).subscribe({
           next:(res: Imputation)=> {
+            this.getProjects(res.date);
             this.getImputationForm(res);
           },
           error: (err: any) => console.log(err)
@@ -71,20 +74,38 @@ export class ImputationDetailComponent {
       }else{
         this.imputationForm.get('date')?.setValue(id);
         this.addItemForm();
+        this.getProjects(id);
       }
-    });     
-  }  
 
+    });   
+  }   
+
+  getProjects(id: string){
+    this.projectService.getByOpenAndDate(id).subscribe({
+      next: (res: Project[]) => {
+        this.projects.set(res);
+        /*
+                for (var project of res) this.projects.push(project);
+                this.updateList();
+                this.technologies.set(this.technologiesTmp);
+                this.products.set(res);
+                */
+      },
+      error: (err: any) => console.log(err),
+    });  
+    
+  }
+/*
   getProducts(){
-//    this.productService.getByContributor(this.authService.user.id).subscribe({
     this.productService.getByContributor().subscribe({
       next: (res: Product[]) => {
+        console.log(res);
         this.products.set(res);
       },
       error: (err: any) => console.log(err),
     });    
   }
-
+*/
   getImputationForm(res: any){
     this.imputationForm.get('id')?.setValue(res.id);
     this.imputationForm.get('date')?.setValue(res.date);
@@ -176,9 +197,9 @@ export class ImputationDetailComponent {
           this.router.navigateByUrl('/pvt/imputation');
         },
         error: (err: any) => {
-          this.error = err.error.error;
-          this.message = err.error.message;
-          this.message2 = err.message;
+          console.log(err);
+          this.error = err.name;
+          this.message2 = err.error.message;
         },
       });      
     }    
@@ -223,6 +244,7 @@ export class ImputationDetailComponent {
 
   dataChange(){
     const date = `${this.imputationForm.get('date')?.value.getFullYear()}-${(this.imputationForm.get('date')?.value.getMonth()+1).toString().padStart(2, '0')}-${this.imputationForm.get('date')?.value.getDate().toString().padStart(2, '0')}`;
+    this.getProjects(date);
     this.imputationService.getByDate(date).subscribe({
       next:(res: Imputation)=> {
         this.totalTime = 0;

@@ -65,9 +65,8 @@ public class JwtAuthenticationFilter  extends UsernamePasswordAuthenticationFilt
 
         org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authResult.getPrincipal();
 
-
-
         String username = user.getUsername();
+  
         Collection<? extends GrantedAuthority> roles = authResult.getAuthorities();
         boolean isAdmin = roles.stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
 

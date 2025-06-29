@@ -7,8 +7,22 @@ export class Technology {
   name!: string;
   description!: string;
   responsible!: User;
+  countProducts!: number;
+  countProjects!: number;
+  countContributors!: number;
+  time!: number;
   products: Array<Product> = [];
+  
+  public static fromObject(obj: any):Technology { 
+    let technologyRef: Technology = new Technology();
+    Object.assign(technologyRef, obj);
+    return technologyRef;
+  }
+}  
 
+
+
+/*
   getCountProducts():number {      
     return this.products.length;
   }
@@ -44,10 +58,4 @@ export class Technology {
      });
      return time;
    }
-
-  public static fromObject(obj: any):Technology { 
-    let technologyRef: Technology = new Technology();
-    Object.assign(technologyRef, obj);
-    return technologyRef;
-  }
-}  
+*/

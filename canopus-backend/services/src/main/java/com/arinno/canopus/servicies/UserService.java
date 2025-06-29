@@ -6,18 +6,17 @@ import java.util.Optional;
 import org.springframework.lang.NonNull;
 
 import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserRequest;
 
 public interface UserService {
 
-//    List<User> findAll();
-
     List<User> findByCompany(Company company);
 
-    Optional<User> findByUsername(String username);
+    List<User> findByTechnologies(List<Technology> technologies);
 
-//    Page<User> findAll(Pageable pageable);
+    Optional<User> findByUsername(String username);
 
     Optional<User> findById(@NonNull Long id);
 

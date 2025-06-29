@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { User } from '@core/model/user';
 import { AuthService } from '@core/services/auth.service';
+import { UserService } from '@core/services/user.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -20,6 +21,7 @@ export class LoginComponent implements OnInit{
 
   private formBuilder = inject(FormBuilder);
   private authService = inject(AuthService);
+  userService = inject(UserService);
   private router = inject(Router);
 
   ngOnInit(): void {
@@ -36,6 +38,12 @@ export class LoginComponent implements OnInit{
       next: (res: any) => {
         this.authService.saveUser(res.token);
         this.authService.saveToken(res.token);
+        this.userService.getMe().subscribe({
+          next:(res: User)=> {
+            this.authService.updateUser(res);
+          },
+          error: (err: any) => console.log(err)
+        });
         this.router.navigateByUrl('/pvt');
       },
       error: (err: any) => {

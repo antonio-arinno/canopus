@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, WritableSignal, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule} from '@angular/forms';
@@ -12,24 +12,29 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Product } from '@core/model/product';
 import { map, mergeMap, Observable, startWith } from 'rxjs';
 import { User } from '@core/model/user';
-import {MatGridListModule} from '@angular/material/grid-list';
+import { MatGridListModule } from '@angular/material/grid-list';
+import { MatTableModule } from '@angular/material/table';
 import { TechnologyService } from '@core/services/technology.service';
+import { ProductService } from '@core/services/product.service';
 import { Technology } from '@core/model/technology';
 
 @Component({
   selector: 'app-technology-detail',
-  imports: [CommonModule, MatCardModule, ReactiveFormsModule, MatInputModule, MatAutocompleteModule, MatButtonModule, MatGridListModule],
+  imports: [CommonModule, MatCardModule, ReactiveFormsModule, MatInputModule, MatAutocompleteModule, MatButtonModule, MatGridListModule, MatTableModule],
   templateUrl: './technology-detail.component.html',
   styleUrl: './technology-detail.component.scss'
 })
 export class TechnologyDetailComponent {
 
   technologyService = inject(TechnologyService);
+  productService = inject(ProductService);
   userService = inject(UserService);
   router = inject(Router);
   activateRoute = inject(ActivatedRoute);
   fb = inject(FormBuilder);
 
+  products:         WritableSignal<Product[]> = signal([]);
+  displayedColumns: string[] = ['product', 'responsible', 'backup', 'time'];
   form!: FormGroup;
 
   technology!: Technology;
@@ -38,7 +43,6 @@ export class TechnologyDetailComponent {
 
   error!: string;
   message!: string;
-  message2!: string;  
 
   ngOnInit(): void {
     this.activateRoute.params.subscribe(params => {
@@ -46,16 +50,24 @@ export class TechnologyDetailComponent {
       let id = params['id']
       if(id){
         this.technologyService.get(id).subscribe({
-          next:(res: Technology)=> {          
+          next:(res: Technology)=> {                    
             let technologiesTmp = Technology.fromObject(res);
             this.form.get('id')?.setValue(technologiesTmp.id);
             this.form.get('name')?.setValue(technologiesTmp.name);
             this.form.get('description')?.setValue(technologiesTmp.description);    
             this.form.get('responsible')?.setValue(technologiesTmp.responsible);
-            this.form.get('products')?.setValue(technologiesTmp.getCountProducts());
-            this.form.get('projects')?.setValue(technologiesTmp.getCountProjects());
-            this.form.get('time')?.setValue(technologiesTmp.getTime());
-            this.form.get('contribuitors')?.setValue(technologiesTmp.getCountContributors());
+            this.form.get('products')?.setValue(technologiesTmp.countProducts);
+            this.form.get('projects')?.setValue(technologiesTmp.countProjects);
+            this.form.get('contribuitors')?.setValue(technologiesTmp.countContributors);
+            this.form.get('time')?.setValue(technologiesTmp.time);
+
+            this.productService.getByTechnology(res.id).subscribe({
+              next: (res: Product[]) => {
+                console.log(res);
+                this.products.set(res);   
+              },
+              error: (err: any) => console.log(err),
+            });
 
           },
           error: (err: any) => console.log(err)
@@ -110,7 +122,6 @@ export class TechnologyDetailComponent {
         error: (err: any) => {
           this.error = err.error.error;
           this.message = err.error.message;
-          this.message2 = err.message;
         },
       });
     }    
@@ -125,9 +136,8 @@ export class TechnologyDetailComponent {
           this.router.navigateByUrl('/pvt/technology');
         },
         error: (err: any) => {
-          this.error = err.error.error;
-          this.message = err.error.message;
-          this.message2 = err.message;
+          this.error = err.name;
+          this.message = err.error;
         },
       });
     }
@@ -142,9 +152,8 @@ export class TechnologyDetailComponent {
           this.router.navigateByUrl('/pvt/technology');
         },
         error: (err: any) => {
-          this.error = err.error.error;
-          this.message = err.error.message;
-          this.message2 = err.message;
+          this.error = err.name;
+          this.message = err.error;
         },
       });
     }

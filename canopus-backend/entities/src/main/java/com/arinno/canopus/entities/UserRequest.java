@@ -1,5 +1,7 @@
 package com.arinno.canopus.entities;
 
+import java.util.List;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -24,6 +26,8 @@ public class UserRequest implements IUser {
     private String username;
 
     private boolean admin;
+
+    private List<Technology> technologies;
 
     public Long getId() {
         return id;
@@ -73,13 +77,19 @@ public class UserRequest implements IUser {
         this.admin = admin;
     }
 
-    @Override
-    public String toString() {
-        return "UserRequest [name=" + name + ", lastname=" + lastname + ", email=" + email + ", username=" + username
-                + ", admin=" + admin + "]";
+    public List<Technology> getTechnologies() {
+        return technologies;
     }
 
+    public void setTechnologies(List<Technology> technologies) {
+        this.technologies = technologies;
+    }
 
-    
+    @Override
+    public String toString() {
+        return "UserRequest [id=" + id + ", name=" + name + ", lastname=" + lastname + ", email=" + email
+                + ", username=" + username + ", admin=" + admin + ", technologies=" + technologies + "]";
+    }
+
 
 }

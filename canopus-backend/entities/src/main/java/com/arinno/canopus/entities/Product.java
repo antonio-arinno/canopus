@@ -1,12 +1,9 @@
 package com.arinno.canopus.entities;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -15,7 +12,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
@@ -44,9 +40,16 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)		
 	private User responsible;
 
+    @JoinColumn(nullable = false)	
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @ManyToOne(fetch = FetchType.LAZY)		
+	private User backup;
+
+/*    
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "product" })
 	@OneToMany(fetch = FetchType.LAZY, mappedBy="product", cascade = CascadeType.ALL)
 	private List<Project> projects;	
+*/    
 
 	@JoinColumn(nullable = false)	
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "products" })
@@ -59,7 +62,6 @@ public class Product {
     private Company company;
 
     public Product() {	
-		this.projects = new ArrayList<>();
 	}
 
     public Long getId() {
@@ -101,15 +103,15 @@ public class Product {
     public void setResponsible(User responsible) {
         this.responsible = responsible;
     }
+    
+    public User getBackup() {
+        return backup;
+    }
 
-    public List<Project> getProjects() {
-		return projects;
-	}
+    public void setBackup(User backup) {
+        this.backup = backup;
+    }
 
-	public void setProjects(List<Project> projects) {
-		this.projects = projects;
-	}	
- 
     public Technology getTechnology() {
         return technology;
     }
@@ -121,8 +123,5 @@ public class Product {
     public void setCompany(Company company) {
         this.company = company;
     }
-
-//    public int getCountProjects() {return this.projects.size();    }
-
 
 }

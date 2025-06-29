@@ -1,3 +1,5 @@
+import { Technology } from "./technology";
+
 export class User {
     id!: number;
     username!: string;
@@ -5,8 +7,11 @@ export class User {
     name!: string;
     lastname!: string;
     email!: string;
-    countProducts!: number;
     roles: string[]=[];
+    countProducts!: number;
+    countProjects!: number;
+    time!: number;
+    technologies: Array<Technology> = [];
     company!: string;
 
     public static fromObject(obj: any):User { 

@@ -25,7 +25,6 @@ export class TechnologyComponent {
   ngOnInit(): void {
     this.technologyService.getAll().subscribe({
       next: (res: Technology[]) => {
-        console.log(res)
         let technologyTmp = res.map(function (technology){
           return Technology.fromObject(technology);
         });

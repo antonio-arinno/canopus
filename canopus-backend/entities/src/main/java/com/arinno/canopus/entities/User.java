@@ -3,6 +3,7 @@ package com.arinno.canopus.entities;
 import java.util.ArrayList;
 import java.util.List;
 
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -54,6 +55,9 @@ public class User implements IUser {
     @Transient
     private Integer countProducts;
 
+    @Transient
+    private Integer countProjects;
+
     @NotBlank
     private String password;
 
@@ -67,7 +71,18 @@ public class User implements IUser {
     )
     private List<Role> roles;
 
+    @JsonIgnoreProperties({"handler", "hibernateLazyInitializer"})
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name="users_technologies",
+        joinColumns = {@JoinColumn(name="user_id")},
+        inverseJoinColumns = @JoinColumn(name="technology_id"),
+        uniqueConstraints = { @UniqueConstraint(columnNames = {"user_id", "technology_id"})}
+    )
+    private List<Technology> technologies;
+
     @NotNull
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })	
     @ManyToOne(fetch = FetchType.EAGER)	
     private Company company;	
@@ -126,6 +141,14 @@ public class User implements IUser {
         this.roles = roles;
     }
 
+    public List<Technology> getTechnologies() {
+        return technologies;
+    }
+
+    public void setTechnologies(List<Technology> technologies) {
+        this.technologies = technologies;
+    }
+
     public boolean isAdmin() {
         return admin;
     }
@@ -133,8 +156,6 @@ public class User implements IUser {
     public void setAdmin(boolean admin) {
         this.admin = admin;
     }
-
-
 
     public Integer getCountProducts() {
         return countProducts;
@@ -144,13 +165,29 @@ public class User implements IUser {
         this.countProducts = countProducts;
     }
 
+    public Integer getCountProjects() {
+        return countProjects;
+    }
+
+    public void setCountProjects(Integer countProjects) {
+        this.countProjects = countProjects;
+    }
+
     public Company getCompany() {
         return company;
     }
 	
 	public void setCompany(Company company) {
 		this.company = company;
-	}  
+	}
+
+    @Override
+    public String toString() {
+        return "User [id=" + id + ", name=" + name + ", lastname=" + lastname + ", email=" + email + ", username="
+                + username + ", admin=" + admin + ", countProducts=" + countProducts + ", countProjects="
+                + countProjects + ", password=" + password + ", roles=" + roles + ", technologies=" + technologies
+                + ", company=" + company + "]";
+    }  
 
 
 }

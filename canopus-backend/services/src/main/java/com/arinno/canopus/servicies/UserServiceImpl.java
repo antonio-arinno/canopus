@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.IUser;
 import com.arinno.canopus.entities.Role;
+import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserRequest;
 import com.arinno.canopus.repositories.RoleRepository;
@@ -86,6 +87,7 @@ public class UserServiceImpl implements UserService{
             userDb.setName(user.getName());
             userDb.setUsername(user.getUsername());
             userDb.setRoles(getRoles(user));
+            userDb.setTechnologies(user.getTechnologies());
             return Optional.of(repository.save(userDb));
         }
         return Optional.empty();
@@ -116,6 +118,12 @@ public class UserServiceImpl implements UserService{
 	public List<User> findByNameContainingIgnoreCaseAndCompany(String term, Company company) {
 		return repository.findByNameContainingIgnoreCaseAndCompany(term, company);
 	}
+    @Override
+    public List<User> findByTechnologies(List<Technology> technologies) {
+        return repository.findByTechnologies(technologies);
+    }
+
+
 
 
 }

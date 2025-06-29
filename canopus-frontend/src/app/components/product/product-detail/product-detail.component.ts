@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule} from '@angular/forms';
@@ -13,26 +13,35 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Product } from '@core/model/product';
 import { map, mergeMap, Observable, startWith } from 'rxjs';
 import { User } from '@core/model/user';
-import {MatGridListModule} from '@angular/material/grid-list';
+import { MatGridListModule } from '@angular/material/grid-list';
+import { MatTableModule } from '@angular/material/table';
 import { Technology } from '@core/model/technology';
 import { TechnologyService } from '@core/services/technology.service';
+import { ImputationService } from '@core/services/imputation.service';
+import { Dto1 } from '@core/model/dto/dto1';
+import { ProjectService } from '@core/services/project.service';
+import { Project } from '@core/model/project';
 
 
 @Component({
   selector: 'app-product-detail',
-  imports: [CommonModule, MatCardModule, ReactiveFormsModule, MatInputModule, MatAutocompleteModule, MatButtonModule, MatGridListModule],
+  imports: [CommonModule, MatCardModule, ReactiveFormsModule, MatInputModule, MatAutocompleteModule, MatButtonModule, MatGridListModule, MatTableModule],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.scss'
 })
 export class ProductDetailComponent {
 
   productService = inject(ProductService);
+  projectService = inject(ProjectService);
+//  imputationService = inject(ImputationService);
   userService = inject(UserService);
   technologyService = inject(TechnologyService);
   router = inject(Router);
   activateRoute = inject(ActivatedRoute);
   fb = inject(FormBuilder);
-
+//  dtos:         WritableSignal<Dto1[]> = signal([]);
+  projects2: Project[] = [];
+  projects:         WritableSignal<Project[]> = signal([]);
   form!: FormGroup;
 
   product!: Product;
@@ -43,6 +52,8 @@ export class ProductDetailComponent {
   error!: string;
   message!: string;
   message2!: string;
+  displayedColumns: string[] = ['projectName', 'status', 'countContributors', 'time'];
+
 
   ngOnInit(): void {
     this.activateRoute.params.subscribe(params => {
@@ -50,17 +61,27 @@ export class ProductDetailComponent {
       let id = params['id']
       if(id){
         this.productService.get(id).subscribe({
-          next:(res: Product)=> {          
+          next:(res: Product)=> {      
             let productsTmp = Product.fromObject(res);
             this.form.get('id')?.setValue(productsTmp.id);
             this.form.get('name')?.setValue(productsTmp.name);
             this.form.get('description')?.setValue(productsTmp.description);   
             this.form.get('technology')?.setValue(productsTmp.technology);
             this.form.get('responsible')?.setValue(productsTmp.responsible);
-            this.form.get('projects')?.setValue(productsTmp.getCountProjects());
-            this.form.get('time')?.setValue(productsTmp.getTime());
-            this.form.get('contribuitors')?.setValue(productsTmp.getCountContributors());
+            this.form.get('backup')?.setValue(productsTmp.backup);
+            this.form.get('projects')?.setValue(productsTmp.countProjects);
+            this.form.get('contribuitors')?.setValue(productsTmp.countContributors);
+            this.form.get('time')?.setValue(productsTmp.time);
+            this.form.get('avgTime')?.setValue(productsTmp.avgTime);
+            this.form.get('avgDuration')?.setValue(productsTmp.avgDuration);
 
+            this.projectService.getByProduct(res.id).subscribe({
+              next: (res: Project[]) => {
+                for (var project of res) this.projects2.push(Project.fromObject(project));
+                this.projects.set(this.projects2);   
+              },
+              error: (err: any) => console.log(err),
+            });
           },
           error: (err: any) => console.log(err)
         });
@@ -119,18 +140,21 @@ export class ProductDetailComponent {
       description:    ['', [Validators.required]],
       technology:     ['', [Validators.required]],
       responsible:    ['', [Validators.required]],
+      backup:         ['', [Validators.required]],
       projects:       [{value: '', disabled: true}, Validators.required],
       contribuitors:  [{value: '', disabled: true}, Validators.required],
-      time:           [{value: '', disabled: true}, Validators.required]
+      time:           [{value: '', disabled: true}, Validators.required],
+      avgTime:        [{value: '', disabled: true}, Validators.required],
+      avgDuration:    [{value: '', disabled: true}, Validators.required]
     });  
   }  
 
   update(event: Event): void {
     event.preventDefault();
     if(this.form.valid){
-      console.log(this.form);
       this.product = this.form.value;
       console.log(this.product);
+      console.log(this.form.value)
       this.productService.update(this.product).subscribe({
         next: (res: any) => {
           this.router.navigateByUrl('/pvt/product');
@@ -170,12 +194,8 @@ export class ProductDetailComponent {
           this.router.navigateByUrl('/pvt/product');
         },
         error: (err: any) => {
-          console.log('error');
-          console.log(err)
-          this.error = 'err.error';
-          this.message2 = err.message;
-          console.log(this.error);
-          console.log(this.message2);
+          this.error = err.name;
+          this.message2 = err.error;
         },
       });
     }

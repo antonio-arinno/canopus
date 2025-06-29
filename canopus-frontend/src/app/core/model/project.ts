@@ -1,5 +1,6 @@
 import { Product } from "./product";
 import { Status } from "./status";
+import { Technology } from "./technology";
 import { User } from "./user";
 
 export class Project {
@@ -7,13 +8,25 @@ export class Project {
     name!: string;
     description!: string;
     product!: Product;
-    status!: Status;
+    technology!: Technology;
+    dateDev!: string;
+    datePre!: string;
+    datePro!: string;
     responsible!: User;
-    contributors: Array<User> = [];
     time!: number;
+    countContributors!: number;
+    contributors: Array<User> = [];
 
-    getCountContributors():number {      
-      return this.contributors.length;
+    getStatus():Status {
+      if(this.datePro!=null){
+        return Status.PRODUCTION
+      }else{
+        if(this.datePre!=null){
+          return Status.PRE_PRODUCTION
+        }else{
+          return Status.DEVELOPMENT
+        }
+      }
     }
 
     public static fromObject(obj: any):Project { 
@@ -22,3 +35,8 @@ export class Project {
       return projectRef;
     }    
   }
+  /*
+      getCountContributors():number {      
+        return this.contributors.length;
+      }
+  */

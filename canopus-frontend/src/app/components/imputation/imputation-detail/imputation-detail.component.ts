@@ -18,6 +18,8 @@ import { ImputationService } from '@core/services/imputation.service';
 import { ProductService } from '@core/services/product.service';
 import { MatSelectModule } from '@angular/material/select';
 import { ProjectService } from '@core/services/project.service';
+import { User } from '@core/model/user';
+import { Technology } from '@core/model/technology';
 
 @Component({
   selector: 'app-imputation-detail',
@@ -47,8 +49,11 @@ export class ImputationDetailComponent {
   product!: Product;
   project!: Project;
 
-//  products: WritableSignal<Product[]> = signal([]);
-  projects: WritableSignal<Project[]> = signal([]);
+  products: WritableSignal<Product[]> = signal([]);
+//  projects: WritableSignal<Project[]> = signal([]);
+
+  productsTmp: Product[] = [];
+  projects: Project[] = [];
 
   dataSourceItems!: MatTableDataSource<any>;
 
@@ -83,18 +88,50 @@ export class ImputationDetailComponent {
   getProjects(id: string){
     this.projectService.getByOpenAndDate(id).subscribe({
       next: (res: Project[]) => {
-        this.projects.set(res);
-        /*
-                for (var project of res) this.projects.push(project);
-                this.updateList();
-                this.technologies.set(this.technologiesTmp);
-                this.products.set(res);
-                */
+  //      this.projects.set(res);
+        for (var project of res) this.projects.push(project);
+        this.updateList();
+        this.products.set(this.productsTmp);
       },
       error: (err: any) => console.log(err),
     });  
     
   }
+
+
+  updateList(){
+    this.productsTmp = [];
+    let exist = false;
+    for (let project of this.projects) {
+      exist = false;
+      for (let product of this.productsTmp) {
+        if (project.product.id === product.id){
+          product.projects.push(project)
+          exist = true;
+        }
+      }
+      if (!exist){
+        this.productsTmp.push({
+          id: project.product.id,
+          name: project.product.name,
+          description: '',
+          technology: new Technology,
+          responsible: new User,
+          backup: new User,
+          countProjects: NaN,
+          countContributors: NaN,
+          time: NaN,
+          avgTime: NaN,
+          avgDuration: NaN,
+          projects: [project]
+        });
+      }
+    }
+  }
+
+
+
+
 /*
   getProducts(){
     this.productService.getByContributor().subscribe({
@@ -245,8 +282,10 @@ export class ImputationDetailComponent {
   dataChange(){
     const date = `${this.imputationForm.get('date')?.value.getFullYear()}-${(this.imputationForm.get('date')?.value.getMonth()+1).toString().padStart(2, '0')}-${this.imputationForm.get('date')?.value.getDate().toString().padStart(2, '0')}`;
     this.getProjects(date);
+    console.log(date)
     this.imputationService.getByDate(date).subscribe({
       next:(res: Imputation)=> {
+        console.log(res)
         this.totalTime = 0;
         this.buildForm();
         if(res==null){

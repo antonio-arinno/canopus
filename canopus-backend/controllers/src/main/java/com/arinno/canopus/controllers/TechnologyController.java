@@ -63,25 +63,20 @@ public class TechnologyController {
 					.time(imputationService.timeByTechnology(technology))
 					.build();
 	}
-/*
-    private Technology AddInfoTechnology (Technology technology){
-        technology.setCountProducts(productService.countByTechnology(technology));
-        return technology;
-    }	
-*/
+
 
     @PostMapping	
 	@ResponseStatus(HttpStatus.CREATED)
-	public Technology save(@RequestBody Technology technology, @RequestHeader(value="Authorization") String auth) {
+	public void save(@RequestBody Technology technology, @RequestHeader(value="Authorization") String auth) {
 		technology.setCompany(util.getCompany(auth));
-		return technologyService.save(technology);
+		technologyService.save(technology);
 	}	
 
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public Technology update(@RequestBody Technology technology, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) {	
+	public void update(@RequestBody Technology technology, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) {	
 		technology.setCompany(util.getCompany(auth));
-		return technologyService.save(technology);
+		technologyService.save(technology);
 	}
 
 	@DeleteMapping("/{id}")

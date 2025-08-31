@@ -98,7 +98,7 @@ export class ProjectDetailComponent implements OnInit {
   filteredProducts: Observable<Product[]> | undefined;    
   filteredUsers: Observable<User[]> | undefined;  
 
-  status: WritableSignal<Status> = signal(Status.STATELESS)
+//  status: WritableSignal<Status> = signal(Status.STATELESS)
 
   public keys = Object.keys;
   public userRoles = Status;
@@ -133,8 +133,7 @@ export class ProjectDetailComponent implements OnInit {
             this.form.get('responsible')?.setValue(res.responsible);
             this.form.get('countContributors')?.setValue(res.countContributors);
             this.form.get('time')?.setValue(res.time);
-            console.log('111111111111');
-            console.log(this.form.value);
+            console.log(4);
             this.statusChange();
             this.contribuitors.set(res.contributors);
             this.userService.getByTechnology(res.technology.id)
@@ -234,9 +233,11 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   private statusChange(){
-//    let res= Project.fromObject(this.form.value);
-//    this.form.get('status')?.setValue(res.getStatus());
-
+    const datePro = { datepro: this.form.get('datePro')?.value};
+    this.form.patchValue( datePro );
+    let project = Project.fromObject(this.form.value);
+    this.form.get('status')?.setValue(project.getStatus());
+/*
     if(this.form.get('datePro')?.value){
       this.status.set(Status.PRODUCTION)
     }else{
@@ -249,7 +250,8 @@ export class ProjectDetailComponent implements OnInit {
           this.status.set(Status.STATELESS)
         }  
       }
-    } 
+    }
+*/ 
   }    
 
   private _getAll(): Observable<Product[]> {

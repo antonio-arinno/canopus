@@ -57,7 +57,7 @@ public interface ImputationRepository extends CrudRepository<Imputation, Long> {
 	public Float avgTimeByProduct(Long id);	
 
 	@NativeQuery
-	("select sum(datediff (date_pro, date_dev)) / count(*) from projects where not isnull(date_pro)")
+	("select sum(datediff (date_pro, date_dev)) / count(*) from projects where product_id = ?1 and  not isnull(date_pro)")
 	public Integer avgDurationByProduct(Long id);	
 
 }

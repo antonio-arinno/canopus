@@ -23,10 +23,12 @@
                 <mat-cell *matCellDef="let element;" [formGroup]="element">
                   <mat-form-field>
                     <mat-select formControlName="projectId">
+<!--                      
                       @for (project of projects(); track project) {
                         <mat-option [value]="project.id">{{project.name}}</mat-option>
                       }
-<!--
+-->                        
+
                       @for (product of products(); track product) {
                         <mat-optgroup [label]="product.name">
 
@@ -35,7 +37,7 @@
                           }
                         </mat-optgroup>
                       }
--->
+
                     </mat-select>
                   </mat-form-field>
                 </mat-cell>

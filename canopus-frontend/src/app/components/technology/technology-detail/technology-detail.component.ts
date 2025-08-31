@@ -38,6 +38,7 @@ export class TechnologyDetailComponent {
   form!: FormGroup;
 
   technology!: Technology;
+  user!: User;
 
   filteredUsers: Observable<User[]> | undefined;  
 
@@ -63,7 +64,6 @@ export class TechnologyDetailComponent {
 
             this.productService.getByTechnology(res.id).subscribe({
               next: (res: Product[]) => {
-                console.log(res);
                 this.products.set(res);   
               },
               error: (err: any) => console.log(err),
@@ -115,6 +115,7 @@ export class TechnologyDetailComponent {
     event.preventDefault();
     if(this.form.valid){
       this.technology = this.form.value;
+      this.technology.responsible.technologies = [];    
       this.technologyService.create(this.technology).subscribe({
         next: (res: any) => {
           this.router.navigateByUrl('/pvt/technology');
@@ -130,7 +131,7 @@ export class TechnologyDetailComponent {
   delete(event: Event): void {
     event.preventDefault();
     if(this.form.valid){
-      this.technology = this.form.value;
+      this.technology = this.form.value;   
       this.technologyService.delete(this.technology.id).subscribe({
         next: (res: any) => {
           this.router.navigateByUrl('/pvt/technology');
@@ -147,6 +148,7 @@ export class TechnologyDetailComponent {
     event.preventDefault();
     if(this.form.valid){
       this.technology = this.form.value;
+      this.technology.responsible.technologies = []; 
       this.technologyService.update(this.technology).subscribe({
         next: (res: any) => {
           this.router.navigateByUrl('/pvt/technology');

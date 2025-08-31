@@ -209,6 +209,7 @@ and not isnull(date_pre)
 	@PostMapping	
 	@ResponseStatus(HttpStatus.CREATED)
 	public Product create(@RequestBody Product product, @RequestHeader(value="Authorization") String auth) {
+		System.out.println("crear producto");
 		product.setCompany(util.getCompany(auth));
 		return productService.save(product);
 	}	

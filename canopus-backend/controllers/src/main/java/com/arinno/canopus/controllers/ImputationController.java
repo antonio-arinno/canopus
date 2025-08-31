@@ -75,6 +75,26 @@ public class ImputationController {
 				.build();
 	}
 
+	
+	@GetMapping("/date/{dateString}")
+	public ImputationResponse imputationByDate(@PathVariable String dateString, @RequestHeader(value="Authorization") String auth) {		 
+		Date date = null;
+		try {
+			date = new SimpleDateFormat("yyyy-MM-dd").parse(dateString);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}  	
+		Imputation imputation =  imputationService.findByDateAndUser(date, util.getUser(auth));
+		
+		return ImputationResponse.builder()
+				.id(imputation.getId())
+				.date(imputation.getDate())
+				.time(imputation.getTotal())
+				.items(imputation.getItems().stream().map(item -> GetImputationItemResponse(item)).toList())
+				.build();
+		
+	}
+	
 	private ImputationItemResponse GetImputationItemResponse (ImputationItem item){
 		return ImputationItemResponse.builder()
 				.id(item.getId())
@@ -87,18 +107,6 @@ public class ImputationController {
 
 	}
 
-	@GetMapping("/date/{dateString}")
-	public Imputation imputationByDate(@PathVariable String dateString, @RequestHeader(value="Authorization") String auth) {		 
-		Date date = null;
-		try {
-			date = new SimpleDateFormat("yyyy-MM-dd").parse(dateString);
-			System.out.println(date);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}  	
-		return imputationService.findByDateAndUser(date, util.getUser(auth));
-	}
-	
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public void create(@RequestBody Imputation imputation, @RequestHeader(value="Authorization") String auth) {

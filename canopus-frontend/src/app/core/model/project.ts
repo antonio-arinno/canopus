@@ -7,6 +7,8 @@ export class Project {
     id!: number;
     name!: string;
     description!: string;
+    reference1!: string;
+    reference2!: string;
     product!: Product;
     technology!: Technology;
     dateDev!: string;
@@ -27,6 +29,13 @@ export class Project {
           return Status.DEVELOPMENT
         }
       }
+    }
+
+    getDuration():number{
+      if(this.datePro!=null){
+        return Math.ceil((new Date(this.datePro).getTime() - new Date(this.dateDev).getTime()) / (1000 * 60 * 60 * 24));
+      }  
+      return Math.ceil((new Date().getTime() - new Date(this.dateDev).getTime()) / (1000 * 60 * 60 * 24));
     }
 
     public static fromObject(obj: any):Project { 

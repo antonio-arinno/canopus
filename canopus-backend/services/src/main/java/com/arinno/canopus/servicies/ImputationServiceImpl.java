@@ -4,7 +4,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +18,11 @@ import com.arinno.canopus.repositories.ImputationRepository;
 @Service
 public class ImputationServiceImpl implements IImputationService {
 
-    @Autowired
-	private ImputationRepository imputationRepository;
+    private final ImputationRepository imputationRepository;
+
+	ImputationServiceImpl(ImputationRepository imputationRepository) {
+		this.imputationRepository = imputationRepository;
+	}
 
 	@Override
 	@Transactional(readOnly = true)	

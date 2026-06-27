@@ -205,6 +205,7 @@ export class ImputationDetailComponent {
           this.loadItem(item);
         }
       }
+      console.log(this.imputation)
       this.imputationService.create(this.imputation).subscribe({
         next: (res: any) => {
           this.router.navigateByUrl('/pvt/imputation');
@@ -282,7 +283,6 @@ export class ImputationDetailComponent {
   dataChange(){
     const date = `${this.imputationForm.get('date')?.value.getFullYear()}-${(this.imputationForm.get('date')?.value.getMonth()+1).toString().padStart(2, '0')}-${this.imputationForm.get('date')?.value.getDate().toString().padStart(2, '0')}`;
     this.getProjects(date);
-    console.log(date)
     this.imputationService.getByDate(date).subscribe({
       next:(res: Imputation)=> {
         console.log(res)

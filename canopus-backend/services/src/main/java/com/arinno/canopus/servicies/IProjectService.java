@@ -1,6 +1,7 @@
 package com.arinno.canopus.servicies;
 
-import java.sql.Date;
+//import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 import com.arinno.canopus.entities.Company;
@@ -40,10 +41,12 @@ public interface IProjectService {
 
 	public Integer countByTechnology(Long id);
 
-    public List<Project> findByContributorOpenDate(Long id, Date date);
+    //List<Project> findByContributorOpenDate(Long id, Date date);
 
     public Integer countContributorsByProduct(Long id);
 
 	public Integer countContributorsByTechnology(Long id);
+
+	List<Project> findByContributorOpenDate(Long id, LocalDate date);
 
 }

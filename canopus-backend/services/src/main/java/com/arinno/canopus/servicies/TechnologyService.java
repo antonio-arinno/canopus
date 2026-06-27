@@ -2,7 +2,6 @@ package com.arinno.canopus.servicies;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,8 +12,11 @@ import com.arinno.canopus.repositories.TechnologyRepository;
 @Service
 public class TechnologyService implements ITechnologyService {
 
-    @Autowired
-    private TechnologyRepository technologyRepository;
+    private final TechnologyRepository technologyRepository;
+
+    TechnologyService(TechnologyRepository technologyRepository) {
+        this.technologyRepository = technologyRepository;
+    }
 
     @Override
     public List<Technology> findByCompany(Company company) {
@@ -39,6 +41,7 @@ public class TechnologyService implements ITechnologyService {
     @Override
     @Transactional
     public void deleteByIdAndCompany(Long id, Company company) {
+//        technologyRepository.deleteRelationsByTechnologyId(id);
         technologyRepository.deleteByIdAndCompany(id, company);
     }
 

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -37,24 +36,24 @@ import jakarta.validation.Valid;
 @RequestMapping("/user")
 public class UserController {
 
-    @Autowired
-    private UserService service;
+    private final UserService service;
 
-    @Autowired
-    private IProductService productService;
+    private final IProductService productService;
 
-//    @Autowired
-//    private IProjectService projectService;
+    private final IImputationService imputationService;
 
-    @Autowired
-    private IImputationService imputationService;
+    private final IUtil util;
 
-    @Autowired
-	private IUtil util;
+    UserController(UserService service, IProductService productService, IImputationService imputationService, IUtil util) {
+        this.service = service;
+        this.productService = productService;
+        this.imputationService = imputationService;
+        this.util = util;
+    }
 
     @GetMapping
     public List<UserResponse> list(@RequestHeader(value="Authorization") String auth) {
-//        return service.findByCompany(util.getCompany(auth)).stream().map(user -> AddInfoUser(user)).toList();
+        service.registrarYVerificar();
         return service.findByCompany(util.getCompany(auth)).stream().map(user -> GetUserResponse(user)).toList();
     }
 
@@ -64,7 +63,7 @@ public class UserController {
         technology.setId(id);
         List<Technology> technologies = new ArrayList<>();
         technologies.add(technology);
-        return service.findByTechnologies(technologies).stream().map(user -> GetUserResponse(user)).toList();
+        return service.findByTechnologies(technologies).stream().map(user -> GetUserResponseIdName(user)).toList();
     }
 
     
@@ -97,9 +96,15 @@ public class UserController {
                     .lastname(user.getLastname())
                     .technologies(user.getTechnologies().stream().map(technology -> GetTechnologyResponse(technology)).toList())
                     .countProducts(productService.countByResponsible(user))
-//                    .countProjects(projectService.countByResponsible(user))
                     .time(imputationService.timeByUser(user))
                     .build();
+    }
+
+    private UserResponse GetUserResponseIdName (User user){
+            return UserResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .build();
     }
     
     private TechnologyResponse GetTechnologyResponse (Technology technology){
@@ -112,24 +117,23 @@ public class UserController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody User user, @RequestHeader(value="Authorization") String auth) {
         user.setCompany(util.getCompany(auth));
+        user.setPassword(user.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
     }
-
+  
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@Valid @RequestBody UserRequest user, BindingResult result, @PathVariable Long id) {
-
         if (result.hasErrors()) {
             return validation(result);
-        }
-        
+        }        
         Optional<User> userOptional = service.update(user, id);
-
         if (userOptional.isPresent()) {
-            return ResponseEntity.ok(userOptional.orElseThrow());
+            return ResponseEntity.ok(GetUserResponse(userOptional.orElseThrow()));
+//            return ResponseEntity.ok(userOptional.orElseThrow());
         }
         return ResponseEntity.notFound().build();
     }
-
+  
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Optional<User> userOptional = service.findById(id);

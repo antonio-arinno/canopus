@@ -123,11 +123,9 @@ public class User implements IUser {
         this.username = username;
     }
 
-//    public String getPassword() {return password;}
+    public String getPassword() {return password;}
 
-    public String giveMePassword(){
-        return password;
-    }
+//    public String giveMePassword(){return password;}
 
     public void setPassword(String password) {
         this.password = password;

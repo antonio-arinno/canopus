@@ -68,8 +68,9 @@ public class UserServiceImpl implements UserService{
     @Override
     public User save(User user) {
         user.setRoles(getRoles(user));       
-//        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setPassword(passwordEncoder.encode(user.giveMePassword()));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+//        user.setPassword(passwordEncoder.encode(user.giveMePassword()));
+        System.out.println(user.toString());
         return repository.save(user);
     }
 
@@ -88,6 +89,7 @@ public class UserServiceImpl implements UserService{
             userDb.setUsername(user.getUsername());
             userDb.setRoles(getRoles(user));
             userDb.setTechnologies(user.getTechnologies());
+            System.out.println(userDb.toString());
             return Optional.of(repository.save(userDb));
         }
         return Optional.empty();
@@ -123,7 +125,17 @@ public class UserServiceImpl implements UserService{
         return repository.findByTechnologies(technologies);
     }
 
+    public void registrarYVerificar() {
+        String passwordPlana = "12345";
 
+        // Generar el hash para guardar en la base de datos
+        String passwordHash = passwordEncoder.encode(passwordPlana);
+        System.out.println("Hash generado: " + passwordHash);
+
+        // Verificación correcta al iniciar sesión
+        boolean esValida = passwordEncoder.matches(passwordPlana, passwordHash);
+        System.out.println("¿La contraseña coincide?: " + esValida);
+    }
 
 
 }

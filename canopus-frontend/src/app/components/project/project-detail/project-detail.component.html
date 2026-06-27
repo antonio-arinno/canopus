@@ -2,7 +2,7 @@
     <mat-card-title>Project</mat-card-title>
     <mat-card-content>  
         <form [formGroup]="form">     
-        <mat-grid-list cols="2" rowHeight="1.4:1">
+        <mat-grid-list cols="2" rowHeight=925px>
           <mat-grid-tile>
             <div>
             <mat-form-field>
@@ -16,9 +16,9 @@
             }
 
             <mat-form-field>
-              <input type="text" matInput placeholder="Description" formControlName="description">
-            </mat-form-field>
-
+                <textarea matInput placeholder="Description" formControlName="description"></textarea>
+            </mat-form-field> 
+            
             <mat-form-field>
               <mat-label>Product</mat-label>
               <input type="text" matInput formControlName="product" 
@@ -36,28 +36,28 @@
               <input type="text" matInput placeholder="Status" formControlName="status">
             </mat-form-field> 
 
-          <div class="inline">
-          <mat-form-field>
+        
+          <mat-form-field style="width: 32%;">
             <mat-label>Development</mat-label>
             <input matInput [matDatepicker]="picker" formControlName="dateDev">
             <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
             <mat-datepicker #picker></mat-datepicker>
           </mat-form-field>
 
-          <mat-form-field style="margin-right:12px; margin-left:12px;">
+          <mat-form-field style="margin-right:12px; margin-left:12px; width: 32%;">
             <mat-label>Pre Production</mat-label>
             <input matInput [matDatepicker]="picker2" formControlName="datePre">
             <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
             <mat-datepicker #picker2></mat-datepicker>
           </mat-form-field>
 
-          <mat-form-field>
+          <mat-form-field style="width: 32%;">
             <mat-label>Production</mat-label>
             <input matInput [matDatepicker]="picker3" formControlName="datePro">
             <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
             <mat-datepicker #picker3></mat-datepicker>
           </mat-form-field>        
-          </div>
+          
             <mat-form-field>
               <mat-label>Responsible</mat-label>
               <input type="text" matInput formControlName="responsible" 
@@ -99,35 +99,48 @@
               }
             </div>
           </div>
-          </div>
+            </div>
           </mat-grid-tile>
           <mat-grid-tile>
             <div>
-              <div class="inline">
-                <mat-form-field>
-                  <mat-label>Contribuitors</mat-label>
-                  <input type="text" matInput placeholder="Contribuitors" formControlName="countContributors">
-                </mat-form-field> 
-                <mat-form-field>
-                  <mat-label>Time</mat-label>
-                  <input type="text" matInput placeholder="Time" formControlName="time">
-                </mat-form-field> 
-              </div>
 
-            <table mat-table [dataSource]="dtos()">
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef> Name </th>
-                <td mat-cell *matCellDef="let element"> {{element.name}} </td>
-              </ng-container>
+              <mat-form-field>
+                <input type="text" matInput placeholder="Release" formControlName="reference1">
+              </mat-form-field>
 
-              <ng-container matColumnDef="time">
-                <th mat-header-cell *matHeaderCellDef> Time </th>
-                <td mat-cell *matCellDef="let element"> {{element.time}} </td>
-              </ng-container>                
+              <mat-form-field>
+                <input type="text" matInput placeholder="FrontWork" formControlName="reference2">
+              </mat-form-field>
 
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-            </table>
+              
+              <mat-form-field style="width: 33%;">
+                <mat-label>Contribuitors</mat-label>
+                <input type="text" matInput placeholder="Contribuitors" formControlName="countContributors">
+              </mat-form-field> 
+              <mat-form-field style="width: 33%;">
+                <mat-label>Time</mat-label>
+                <input type="text" matInput placeholder="Time" formControlName="time">
+              </mat-form-field> 
+              <mat-form-field style="width: 33%;">
+                <mat-label>Duration</mat-label>
+                <input type="text" matInput placeholder="Duration" formControlName="duration">
+              </mat-form-field> 
+              
+
+              <table mat-table [dataSource]="dtos()">
+                <ng-container matColumnDef="name">
+                  <th mat-header-cell *matHeaderCellDef> Name </th>
+                  <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="time">
+                  <th mat-header-cell *matHeaderCellDef> Time </th>
+                  <td mat-cell *matCellDef="let element"> {{element.time}} </td>
+                </ng-container>                
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              </table>
 
             </div>
           </mat-grid-tile>

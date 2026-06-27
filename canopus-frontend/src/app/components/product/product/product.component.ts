@@ -97,7 +97,7 @@ export class ProductComponent implements OnInit {
         error: (err: any) => console.log(err),
       });
     } 
-    this.modoControl.setValue('collapsed'); 
+    this.modoControl.setValue('collapsed');  
   }
 
   updateList(){

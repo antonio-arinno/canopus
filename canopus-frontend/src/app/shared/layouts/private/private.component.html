@@ -1,10 +1,10 @@
 
 <div class="container">
 
-  <app-header></app-header>
+  <app-header (menuClicked)="sideNav.toggle()"></app-header>
 
   <mat-sidenav-container>
-      <mat-sidenav mode="side" opened>
+      <mat-sidenav mode="side" #sideNav opened>
         <app-side-nav></app-side-nav>
       </mat-sidenav>
       <mat-sidenav-content>

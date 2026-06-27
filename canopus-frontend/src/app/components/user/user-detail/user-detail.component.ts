@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, WritableSignal, signal } from '@angular/core';
+import { Component, inject, WritableSignal, signal, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
+import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
 
 import {
   CdkDragDrop,
@@ -23,6 +24,7 @@ import { TechnologyService } from '@core/services/technology.service';
 import { Technology } from '@core/model/technology';
 import { ProductService } from '@core/services/product.service';
 import { Product } from '@core/model/product';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-user-detail',
@@ -30,7 +32,44 @@ import { Product } from '@core/model/product';
   templateUrl: './user-detail.component.html',
   styleUrl: './user-detail.component.scss'
 })
-export class UserDetailComponent {
+export class UserDetailComponent implements OnDestroy {
+
+  destroyed = new Subject<void>();
+  ratio!: string;
+  ratioMap2 = new Map([
+    [Breakpoints.XSmall, '0.5:1'],
+    [Breakpoints.Small, '1:1'],
+    [Breakpoints.Medium, '1.2:2'],
+    [Breakpoints.Large, '1.4:1'],
+    [Breakpoints.XLarge, '1.6:2'],
+  ]);
+
+    ratioMap = new Map([
+    [Breakpoints.XSmall, 'XSmall'],
+    [Breakpoints.Small, 'Small'],
+    [Breakpoints.Medium, 'Medium'],
+    [Breakpoints.Large, 'Large'],
+    [Breakpoints.XLarge, 'Xlarge'],
+  ]);
+
+  constructor() {
+    inject(BreakpointObserver)
+      .observe([
+        Breakpoints.XSmall,
+        Breakpoints.Small,
+        Breakpoints.Medium,
+        Breakpoints.Large,
+        Breakpoints.XLarge,
+      ])
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(result => {
+        for (const query of Object.keys(result.breakpoints)) {
+          if (result.breakpoints[query]) {
+            this.ratio = this.ratioMap.get(query) ?? 'Unknown';
+          }
+        }
+      });
+  }
 
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
@@ -138,9 +177,8 @@ export class UserDetailComponent {
           this.router.navigateByUrl('/pvt/user');
         },
         error: (err: any) => {
-          this.error = err.error.error;
-          this.message = err.error.message;
-          this.message2 = err.message;
+          this.error = err.error;
+          this.message = err.message;
         },
       });
     }
@@ -150,14 +188,14 @@ export class UserDetailComponent {
     event.preventDefault();
     if(this.form.valid){
       this.user = this.form.value;
+      this.user.technologies = this.my_technologies();
       this.userService.create(this.user).subscribe({
         next: (res: any) => {
           this.router.navigateByUrl('/pvt/user');
         },
         error: (err: any) => {
-          this.error = err.error.error;
-          this.message = err.error.message;
-          this.message2 = err.message;
+          this.error = err.error;
+          this.message = err.message;
         },
       });
     }    
@@ -172,12 +210,16 @@ export class UserDetailComponent {
           this.router.navigateByUrl('/pvt/user');
         },
         error: (err: any) => {
-          this.error = err.error.error;
-          this.message = err.error.message;
-          this.message2 = err.message;
+          this.error = err.name;
+          this.message = err.error;
         },
       });
     }
+  }
+
+  ngOnDestroy() {
+    this.destroyed.next();
+    this.destroyed.complete();
   }
 
 

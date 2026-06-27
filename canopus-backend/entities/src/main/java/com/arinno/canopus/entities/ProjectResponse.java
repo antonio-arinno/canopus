@@ -1,6 +1,6 @@
 package com.arinno.canopus.entities;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -15,9 +15,11 @@ public class ProjectResponse {
     private Long id;
 	private String name;
 	private String description;
-    private Date dateDev;
-    private Date datePre;
-    private Date datePro;
+    private String reference1;
+    private String reference2;
+    private LocalDate dateDev;
+    private LocalDate datePre;
+    private LocalDate datePro;
     private Status status;
     private UserResponse responsible;
     private List<UserResponse> contributors;

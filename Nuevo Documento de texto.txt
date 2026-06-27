@@ -1,0 +1,65 @@
+server {
+    listen 80;
+    server_name 15.188.75.101;
+
+    # 1. FRONTEND: Servir Angular
+    location / {
+        root /var/www/html; # Ajusta a tu carpeta 'dist'
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 2. BACKEND: Todo lo que empiece por /api va a Spring
+    location /api/ {
+        # Configuración de CORS (Usa la IP exacta, no '*')
+        add_header 'Access-Control-Allow-Origin' 'http://15.188.75.101' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+        add_header 'Access-Control-Allow-Headers' 'Authorization, Origin, X-Requested-With, Content-Type, Accept' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' 'http://15.188.75.101' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+            add_header 'Access-Control-Allow-Headers' 'Authorization, Origin, X-Requested-With, Content-Type, Accept' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            return 204;
+        }
+
+        proxy_pass http://127.0.0.1:8080; # El puerto de tu JAR
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+
+src/main/resources/application.properties
+server.servlet.context-path=/api
+
+En Angular: Asegúrate de que tus servicios llamen ahora a http://15.188.75.
+Limpia Nginx: Borra cualquier otro archivo en /etc/nginx/sites-enabled/ que no sea este.
+Reinicia: sudo systemctl restart nginx.
+Al estar todo en el mismo puerto (80), es muy probable que el navegador ya ni siquiera necesite validar el CORS, pero los encabezados están ahí por si acaso.
+
+
+[Unit]
+Description=Backend Spring Boot App
+After=syslog.target network.target
+
+[Service]
+# Usuario que ejecutará el JAR (puedes usar tu usuario de linux o 'www-data')
+User=root
+# Ruta absoluta al directorio donde está el JAR
+WorkingDirectory=/var/www/backend
+# Comando para arrancar el JAR
+ExecStart=/usr/bin/java -jar /var/www/backend/tu-proyecto-65mb.jar
+# Reiniciar automáticamente si la app falla
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+
+sudo systemctl daemon-reload
+sudo systemctl enable mi-backend
+sudo systemctl start mi-backend

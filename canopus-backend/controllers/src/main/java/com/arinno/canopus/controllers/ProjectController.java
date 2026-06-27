@@ -1,9 +1,9 @@
 package com.arinno.canopus.controllers;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,14 +31,17 @@ import com.arinno.canopus.util.IUtil;
 @RequestMapping("/project")
 public class ProjectController {
 
-	@Autowired
-	private IProjectService projectService;
+	private final IProjectService projectService;
 
-	@Autowired
-	private IImputationService imputationService;
+	private final IImputationService imputationService;
 
-    @Autowired
-	private IUtil util;
+    private final IUtil util;
+
+	ProjectController(IProjectService projectService, IImputationService imputationService, IUtil util) {
+		this.projectService = projectService;
+		this.imputationService = imputationService;
+		this.util = util;
+	}
 
 	@GetMapping	
 	public List<ProjectResponse> listPersonalOpened(@RequestHeader(value="Authorization") String auth){
@@ -74,6 +77,8 @@ public class ProjectController {
 		.id(project.getId())
 		.name(project.getName())
 		.description(project.getDescription())
+		.reference1(project.getReference1())
+		.reference2(project.getReference2())
 		.dateDev(project.getDateDev())
 		.datePre(project.getDatePre())
 		.datePro(project.getDatePro())
@@ -112,7 +117,13 @@ public class ProjectController {
 	
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public Project edit(@RequestBody Project project, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
+	public void edit(@RequestBody Project project, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
+
+		project.setCompany(util.getCompany(auth));	
+		System.out.println(project.getDateDev());
+		projectService.save(project);
+		System.out.println(project.getDateDev());
+		/*
 		Project projectDb = projectService.findByIdAndCompany(id, util.getCompany(auth));
 		projectDb.setName(project.getName());
 		projectDb.setDescription(project.getDescription());
@@ -122,7 +133,8 @@ public class ProjectController {
 		projectDb.setDatePro(project.getDatePro());
 		projectDb.setResponsible(project.getResponsible());
 		projectDb.setContributors(project.getContributors());
-		return projectService.save(projectDb);
+		projectService.save(projectDb);
+		*/
 	}
 	
 	@DeleteMapping("/{id}")
@@ -140,11 +152,22 @@ public class ProjectController {
 	public List<Project> listNotProductionContributor(@RequestHeader(value="Authorization") String auth){
 		return projectService.findByContributorAndNotProduction(util.getUser(auth).getId());
 	}	
-	
+/*
 	@GetMapping("/contributor/{date}")
 	public List<ProjectResponse> listOpenedContributorDate(@PathVariable Date date, @RequestHeader(value="Authorization") String auth){
 		return projectService.findByContributorOpenDate(util.getUser(auth).getId(), date).stream().map(project -> GetProjectResponse(project)).toList();
 	}	
+
+ */	
+	@GetMapping("/contributor/{date}")
+	public List<ProjectResponse> listOpenedContributorDate(
+    @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date, @RequestHeader(value="Authorization") String auth) {
+    
+    	return projectService.findByContributorOpenDate(util.getUser(auth).getId(), date)
+        	.stream()
+        	.map(project -> GetProjectResponse(project))
+        	.toList();
+}
 	
 	private ProjectResponse GetProjectResponse(Project project) {
 

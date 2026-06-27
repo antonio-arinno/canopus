@@ -12,6 +12,8 @@ import com.arinno.canopus.entities.UserRequest;
 
 public interface UserService {
 
+    Object registrarYVerificar = null;
+
     List<User> findByCompany(Company company);
 
     List<User> findByTechnologies(List<Technology> technologies);
@@ -27,5 +29,7 @@ public interface UserService {
     void deleteById(Long id);
 
     public List<User> findByNameContainingIgnoreCaseAndCompany(String term, Company company);
+
+    void registrarYVerificar();
 
 }

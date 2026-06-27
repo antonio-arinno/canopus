@@ -4,7 +4,6 @@ import java.util.Base64;
 import java.util.Optional;
 
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.arinno.canopus.entities.Company;
@@ -14,8 +13,11 @@ import com.arinno.canopus.servicies.UserService;
 @Service
 public class UtilImpl implements IUtil {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+	UtilImpl(UserService userService) {
+		this.userService = userService;
+	}
 
     @Override
     public Company getCompany(String auth) {

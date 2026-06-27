@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, Output, EventEmitter } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -15,8 +15,11 @@ import { AuthService } from '@core/services/auth.service';
 })
 export class HeaderComponent {
 
+  @Output() menuClicked = new EventEmitter<boolean>();
+
   authService = inject(AuthService);
   router = inject(Router);
+
 
   logout(): void{
     this.authService.logout();

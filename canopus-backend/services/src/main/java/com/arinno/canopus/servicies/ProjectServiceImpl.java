@@ -1,9 +1,9 @@
 package com.arinno.canopus.servicies;
 
-import java.sql.Date;
+//import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,8 +16,11 @@ import com.arinno.canopus.repositories.ProjectRepository;
 @Service
 public class ProjectServiceImpl implements IProjectService {
 	
-	@Autowired
-	private ProjectRepository projectRepository;
+	private final ProjectRepository projectRepository;
+
+	ProjectServiceImpl(ProjectRepository projectRepository) {
+		this.projectRepository = projectRepository;
+	}
 		
 	@Override
 	@Transactional(readOnly = true)
@@ -93,7 +96,7 @@ public class ProjectServiceImpl implements IProjectService {
 	}
  
 	@Override
-	public List<Project> findByContributorOpenDate(Long id, Date date) {
+	public List<Project> findByContributorOpenDate(Long id, LocalDate date) {
 		return projectRepository.findByContributorOpenDate(id, date);
 	}
 

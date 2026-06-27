@@ -14,10 +14,12 @@ import { SideNavItem } from './side-nave-item';
 export class SideNavComponent {
 
   sideNavContent: SideNavItem[] = [
+    /*
     {
       title: 'dashboard',
       link: 'pvt/dashboard',
     }, 
+    */
     {
       title: 'imputation',
       link: 'pvt/imputation',

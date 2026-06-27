@@ -2,7 +2,6 @@ package com.arinno.canopus.controllers;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 //import org.springframework.security.core.userdetails.User;
@@ -34,17 +33,20 @@ import com.arinno.canopus.util.IUtil;
 @RequestMapping("/product")
 public class ProductController {
 
-    @Autowired
-	private IProductService productService; 
+    private final IProductService productService; 
 
-	@Autowired
-	private IProjectService projectService;
+	private final IProjectService projectService;
 
-	@Autowired
-	private IImputationService imputationService;
+	private final IImputationService imputationService;
 
-	@Autowired
-	private IUtil util;
+	private final IUtil util;
+
+	ProductController(IProductService productService, IProjectService projectService, IImputationService imputationService, IUtil util) {
+		this.productService = productService;
+		this.projectService = projectService;
+		this.imputationService = imputationService;
+		this.util = util;
+	}
 /*
     @GetMapping
 	public List<Product> list2(@RequestHeader(value="Authorization") String auth){	
@@ -208,10 +210,10 @@ and not isnull(date_pre)
 	
 	@PostMapping	
 	@ResponseStatus(HttpStatus.CREATED)
-	public Product create(@RequestBody Product product, @RequestHeader(value="Authorization") String auth) {
+	public void create(@RequestBody Product product, @RequestHeader(value="Authorization") String auth) {
 		System.out.println("crear producto");
 		product.setCompany(util.getCompany(auth));
-		return productService.save(product);
+		productService.save(product);
 	}	
 
 	@DeleteMapping("/{id}")	

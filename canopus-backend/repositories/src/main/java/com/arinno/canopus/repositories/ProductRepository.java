@@ -26,7 +26,7 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
     public List<Product> findByNameContainingIgnoreCaseAndCompany(String term, Company company);
 
-    @Query("select p from Product p left join Project pr on p.id = pr.product.id left join pr.contributors prc where prc.id = ?1 and p.company.id = ?2")
+    @Query("select p from Product p left join Project pr on p.id = pr.product.id left join pr.contributors prc where (prc.id = ?1 or p.responsible.id = ?1) and p.company.id = ?2")
 	public List<Product> findByContributorAndCompany(Long id, Long id2);
 
 /*

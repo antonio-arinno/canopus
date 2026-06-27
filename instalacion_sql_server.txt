@@ -1,0 +1,28 @@
+Lanzar una instancia ec2.
+Añadir grupo de seguridad:
+	Tipo:		MYSQL/Aurora 3306
+	Tipo de origen: Cualquier sitio
+
+Putty
+actualizar ubuntu:	sudo apt update 
+aplicar ubuntu:		sudo apt upgrade
+
+Instalar MYSQL: sudo apt install mysql-server
+Verificar versión: mysql --versión
+Lanzar mysql server siempre que se levante la instacion de EC2: sudo systemctl enable mysql
+
+MySQL:
+sudo mysql
+use mysql
+select host, user, authentication_string from user;
+create user 'canopus'@'%' identified with caching_sha2_password by 'canopus123';
+grant all privileges on *.* to 'canopus'@'%';
+flush privileges;
+exit
+cd /etc/mysql/mysql.conf.d
+sudo nano mysqld.cnf
+bind-address            = 127.0.0.1 -> bind-address            = 0.0.0.0
+grabar-salir
+sudo cat mysqld.cnf
+sudo service mysql restart
+crear bbdd desde workbech

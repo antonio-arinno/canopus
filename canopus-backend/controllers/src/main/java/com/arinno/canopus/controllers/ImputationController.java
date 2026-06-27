@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,11 +33,14 @@ import com.arinno.canopus.util.IUtil;
 @RequestMapping("/imputation")
 public class ImputationController {
   
-	@Autowired
-	private IImputationService imputationService;
+	private final IImputationService imputationService;
 
-	@Autowired
-    private IUtil util;
+	private final IUtil util;
+
+	ImputationController(IImputationService imputationService, IUtil util) {
+		this.imputationService = imputationService;
+		this.util = util;
+	}
 /*	
 	@GetMapping	
 	public List<Imputation> list(@RequestHeader(value="Authorization") String auth){	

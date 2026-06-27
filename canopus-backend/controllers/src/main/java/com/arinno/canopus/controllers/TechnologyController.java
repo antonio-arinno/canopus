@@ -2,7 +2,6 @@ package com.arinno.canopus.controllers;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,21 +30,23 @@ import com.arinno.canopus.util.IUtil;
 @RequestMapping("/technology")
 public class TechnologyController {
 
-    @Autowired
-	private ITechnologyService technologyService; 
+    private final ITechnologyService technologyService; 
 
-	@Autowired
-	private IProductService productService;
+	private final IProductService productService;
 
-	@Autowired
-	private IProjectService projectService;
+	private final IProjectService projectService;
 
-	@Autowired
-	private IImputationService imputationService;
+	private final IImputationService imputationService;
 
+	private final IUtil util;
 
-	@Autowired
-	private IUtil util;
+	TechnologyController(ITechnologyService technologyService, IProductService productService, IProjectService projectService, IImputationService imputationService, IUtil util) {
+		this.technologyService = technologyService;
+		this.productService = productService;
+		this.projectService = projectService;
+		this.imputationService = imputationService;
+		this.util = util;
+	}
 
     @GetMapping
 	public List<TechnologyResponse> list(@RequestHeader(value="Authorization") String auth){	

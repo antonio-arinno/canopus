@@ -153,8 +153,6 @@ export class ProductDetailComponent {
     event.preventDefault();
     if(this.form.valid){
       this.product = this.form.value;
-      console.log(this.product);
-      console.log(this.form.value)
       this.productService.update(this.product).subscribe({
         next: (res: any) => {
           this.router.navigateByUrl('/pvt/product');
@@ -172,6 +170,7 @@ export class ProductDetailComponent {
     event.preventDefault();
     if(this.form.valid){
       this.product = this.form.value;
+      console.log(this.product);
       this.productService.create(this.product).subscribe({
         next: (res: any) => {
           this.router.navigateByUrl('/pvt/product');

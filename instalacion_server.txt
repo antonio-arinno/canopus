@@ -1,0 +1,131 @@
+Lanzar una instancia ec2.
+Añadir grupo de seguridad:
+	Tipo:		MYSQL/Aurora 3306
+	Tipo de origen: Cualquier sitio
+
+	Tipo:		TCP	8080
+	Tipo de origen: Cualquier sitio
+----------------------------------------------
+Putty
+actualizar ubuntu:	sudo apt update 
+aplicar ubuntu:		sudo apt upgrade
+
+----------------------------------------------
+MySQL
+sudo apt install mysql-server
+Verificar versión: mysql --versión
+Lanzar mysql server siempre que se levante la instacion de EC2: sudo systemctl enable mysql
+
+sudo mysql
+use mysql
+select host, user, authentication_string from user;
+create user 'canopus'@'%' identified with caching_sha2_password by 'canopus123';
+grant all privileges on *.* to 'canopus'@'%';
+flush privileges;
+exit
+
+
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+bind-address            = 127.0.0.1 -> bind-address            = 0.0.0.0
+grabar-salir
+sudo cat /etc/mysql/mysql.conf.d/mysqld.cnfsudo
+sudo service mysql restart
+crear bbdd desde workbech
+
+-------------------------------------------
+NGINX
+sudo apt install nginx
+
+-------------------------------------------
+Backend
+Java
+sudo apt install openjdk-21-jdk
+java -versión
+
+FileZilla
+Crear directorio: /home/ubuntu/apps/canopus/
+Crear directorio: /home/ubuntu/canopus/
+
+
+sudo nano /etc/nginx/sites-available/canopus
+server {
+    listen 80;
+    server_name tu-direccion-ip;
+
+    location / {
+        proxy_pass http://127.0.0.1: el-puerto-de-tu-app; 
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+-----------------------------------------------------
+server {
+    listen 8080;
+    server_name 13.36.169.187;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+sudo ln -s /etc/nginx/sites-available/canopus /etc/nginx/sites-enabled/
+
+sudo nano /etc/systemd/system/canopus.service
+
+[Unit]
+Description=Users App
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/java -jar /home/ubuntu/app/app.jar --spring.profiles.active=prod # Poner el directorio de vuestra app
+WorkingDirectory=/home/ubuntu/users-app # Poner el directorio de vuestra app
+User=ubuntu
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
+------------------------------------
+[Unit]
+Description=Canopus
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/java -jar /home/ubuntu/apps/canopus/canopus.jar
+WorkingDirectory=/home/ubuntu/apps/canopus
+User=ubuntu
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
+
+sudo systemctl enable canopus.service
+sudo systemctl start canopus.service
+
+----------------------------------------------
+Frontend
+
+Package json
+    "build": "ng build --base-href /canopus/",
+???
+Crear "/var/www/html/canopus/"
+sudo chmod 777 /var/www/html
+mkdir /var/www/html/canopus/
+
+Crear
+/etc/nginx/sites-available/canopus
+
+
+        location /canopus {
+                alias /var/www/html/canopus;
+                try_files $uri $uri/ /index.html index.html;
+                index index.html;
+        }
+
+
+npm run build

@@ -1,6 +1,6 @@
 package com.arinno.canopus.entities;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -33,23 +33,29 @@ public class Project {
 	private String name;
 
 	private String description;
+
+	private String reference1;
+
+	private String reference2;
 	
+
+
 	/*
 	@Enumerated(EnumType.STRING)
 	private Status status;
 	*/
 	@Column(name = "create_at")
 	@Temporal(TemporalType.DATE)
-	private Date createAt;	
+	private LocalDate createAt;	
 
 	@Temporal(TemporalType.DATE)
-	private Date dateDev;	
+	private LocalDate  dateDev;	
 
 	@Temporal(TemporalType.DATE)
-	private Date datePre;	
+	private LocalDate  datePre;	
 
 	@Temporal(TemporalType.DATE)
-	private Date datePro;	
+	private LocalDate  datePro;	
 		
 	@JoinColumn(nullable = false)	
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "projects" })
@@ -105,35 +111,51 @@ public class Project {
 		this.description = description;
 	}
 	
-	public Date getCreateAt() {
+	public String getReference1() {
+		return reference1;
+	}
+
+	public void setReference1(String reference1) {
+		this.reference1 = reference1;
+	}
+
+	public String getReference2() {
+		return reference2;
+	}
+
+	public void setReference2(String reference2) {
+		this.reference2 = reference2;
+	}
+
+	public LocalDate  getCreateAt() {
 		return createAt;
 	}
 
-	public void setCreateAt(Date createAt) {
+	public void setCreateAt(LocalDate createAt) {
 		this.createAt = createAt;
 	}	
 	
-	public Date getDateDev() {
+	public LocalDate getDateDev() {
 		return dateDev;
 	}
 
-	public void setDateDev(Date dateDev) {
+	public void setDateDev(LocalDate dateDev) {
 		this.dateDev = dateDev;
 	}
 
-	public Date getDatePre() {
+	public LocalDate getDatePre() {
 		return datePre;
 	}
 
-	public void setDatePre(Date datePre) {
+	public void setDatePre(LocalDate datePre) {
 		this.datePre = datePre;
 	}
 
-	public Date getDatePro() {
+	public LocalDate getDatePro() {
 		return datePro;
 	}
 
-	public void setDatePro(Date datePro) {
+	public void setDatePro(LocalDate datePro) {
 		this.datePro = datePro;
 	}
 
@@ -161,6 +183,7 @@ public class Project {
 		this.contributors = contributors;
 	}
 
+
 	public Company getCompany() {
 		return company;
 	}
@@ -168,6 +191,8 @@ public class Project {
 	public void setCompany(Company company) {
 		this.company = company;
 	}
+
+
 	
 
 	

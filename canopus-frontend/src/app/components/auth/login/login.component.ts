@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule} from '@angular
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { User } from '@core/model/user';
 import { AuthService } from '@core/services/auth.service';
 import { UserService } from '@core/services/user.service';
@@ -10,7 +11,7 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
-  imports: [MatCardModule, ReactiveFormsModule, MatInputModule, MatButtonModule],
+  imports: [MatCardModule, ReactiveFormsModule, MatInputModule, MatButtonModule, MatIconModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
@@ -23,6 +24,7 @@ export class LoginComponent implements OnInit{
   private authService = inject(AuthService);
   userService = inject(UserService);
   private router = inject(Router);
+  showPassword = false;
 
   ngOnInit(): void {
     this.formGroup = this.formBuilder.group({
@@ -51,6 +53,10 @@ export class LoginComponent implements OnInit{
         console.log(err);
       },
     });
+  }
+
+  visibility(){
+    this.showPassword=!this.showPassword;
   }
 
 

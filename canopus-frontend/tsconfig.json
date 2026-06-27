@@ -3,12 +3,13 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": "src",
+//    "baseUrl": "src",
     "paths": {
-      "@components/*": ["app/components/*"],
-      "@core/*": ["app/core/*"],
-      "@shared/*": ["app/shared/*"]
+      "@components/*": ["./src/app/components/*"],
+      "@core/*": ["./src/app/core/*"],
+      "@shared/*": ["./src/app/shared/*"]
     },
+    "rootDir": "./src",
     "outDir": "./dist/out-tsc",
     "strict": true,
     "noImplicitOverride": true,

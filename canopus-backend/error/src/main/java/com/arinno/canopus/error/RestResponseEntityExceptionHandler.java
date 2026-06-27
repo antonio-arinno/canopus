@@ -22,12 +22,12 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
     @ExceptionHandler(TechnologyDataIntegrityException.class)
     public ResponseEntity<String> technologyDataIntegrityException(TechnologyDataIntegrityException exception){
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No puedo eliminar este tecnologia, tiene productos asociados");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No puedo eliminar esta tecnologia, tiene productos o usuarios asociados");
     }
 
     @ExceptionHandler(ProductDataIntegrityException.class)
     public ResponseEntity<String> productDataIntegrityException(ProductDataIntegrityException exception){
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No puedo eliminar este producto, tiene projectos asociados");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No puedo eliminar este producto, tiene proyectos asociados");
     }
 
 }

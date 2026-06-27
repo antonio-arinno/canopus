@@ -1,4 +1,0 @@
-polyfills-FFHMD2TL.js:1 Mixed Content: The page at 'https://d33e5hg53d4610.cloudfront.net/auth/login' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://35.181.152.64:8080/login'. This request has been blocked; the content must be served over HTTPS.
-
-
-Access to XMLHttpRequest at 'http://52.47.204.25/login' from origin 'http://13.38.15.63' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.

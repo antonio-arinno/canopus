@@ -3,7 +3,6 @@ package com.arinno.canopus.servicies;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +16,11 @@ import com.arinno.canopus.repositories.ProductRepository;
 @Service
 public class ProductServiceImpl implements IProductService {
 
-    @Autowired
-	private ProductRepository productRepository;
+    private final ProductRepository productRepository;
+
+	ProductServiceImpl(ProductRepository productRepository) {
+		this.productRepository = productRepository;
+	}
    
     @Override
     @Transactional(readOnly = true)

@@ -4,19 +4,19 @@ mat-card {
 
 mat-form-field {
   width: 100%;
-//  margin-right: 12px;
+
 }
 
 .space-between{
     display: flex;
     justify-content: space-between;
 }
-
+/*
 .inline{
   display: inline-flex;
   width: 100%;
 }
-
+*/
 .container {
     width: 400px;
     max-width: 100%;
@@ -72,3 +72,4 @@ mat-form-field {
   .example-list.cdk-drop-list-dragging .example-box:not(.cdk-drag-placeholder) {
     transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
   }  
+  

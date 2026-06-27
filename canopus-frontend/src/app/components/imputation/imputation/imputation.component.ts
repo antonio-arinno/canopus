@@ -50,7 +50,15 @@ export class ImputationComponent {
   }
 
   getDaysFromDate(month: number, year: number) {
-    const startDate = moment.utc(`${year}/${month}/01`)
+//    const startDate = moment.utc(`${year}/${month}/01`)
+
+    const startDate = moment.utc({
+          year: year,
+          month: month - 1, // Si 'month' es 4 (Abril), aquí pasamos 3
+          day: 1
+    });
+
+
     const endDate = startDate.clone().endOf('month')
     this.dateSelect = startDate;
     const diffDays = endDate.diff(startDate, 'days', true)

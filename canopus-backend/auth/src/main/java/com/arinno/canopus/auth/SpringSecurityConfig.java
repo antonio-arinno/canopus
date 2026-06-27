@@ -2,7 +2,7 @@ package com.arinno.canopus.auth;
 
 import java.util.Arrays;
 
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -27,11 +27,16 @@ import com.arinno.canopus.auth.filters.JwtValidationFilter;
 @Configuration
 public class SpringSecurityConfig {
 
-    @Autowired
-    private AuthenticationConfiguration authenticationConfiguration;
+    private final AuthenticationConfiguration authenticationConfiguration;
+
+    SpringSecurityConfig(AuthenticationConfiguration authenticationConfiguration) {
+        this.authenticationConfiguration = authenticationConfiguration;
+    }
 
     @Bean
     AuthenticationManager authenticationManager() throws Exception {
+        System.out.println("AuthenticationManager");
+        System.out.println(authenticationConfiguration.getAuthenticationManager());
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -46,30 +51,26 @@ public class SpringSecurityConfig {
         System.out.println("filterChain");
 
         return http.authorizeHttpRequests(authz -> authz
-//                .requestMatchers(HttpMethod.GET, "/user", "/user/page/{page}").permitAll()
-                .requestMatchers(HttpMethod.GET, "/user/page/{page}").permitAll()
-                .requestMatchers(HttpMethod.GET, "/user/{id}").hasAnyRole("USER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/user").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/user/{id}").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/user/{id}").hasRole("ADMIN")
-                .anyRequest().authenticated())
-                .cors(cors -> cors.configurationSource(configurationSource()))
-                .addFilter(new JwtAuthenticationFilter(authenticationManager()))
-                .addFilter(new JwtValidationFilter(authenticationManager()))                
-                .csrf(config -> config.disable())
-                .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .build();
+            .requestMatchers(HttpMethod.GET, "/user/{id}").hasAnyRole("USER", "ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/user/{id}").hasAnyRole("USER", "ADMIN")
+            .requestMatchers(HttpMethod.POST, "/user").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/user/{id}").hasRole("ADMIN")
+            .anyRequest().authenticated())
+            .cors(cors -> cors.configurationSource(configurationSource()))
+            .addFilter(new JwtAuthenticationFilter(authenticationManager()))
+            .addFilter(new JwtValidationFilter(authenticationManager()))                
+            .csrf(config -> config.disable())
+            .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .build();
     }
 
     @Bean
     CorsConfigurationSource configurationSource(){
         System.out.println("CorsConfigurationSource");
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
-//        config.setAllowedOrigins(Arrays.asList("http://13.37.227.144:80","http://13.37.227.144:8080","http://13.37.227.144:8000","http://13.37.227.144"));
+        config.setAllowedOrigins(Arrays.asList("http://35.180.51.26", "http://localhost:4200"));
         config.setAllowedMethods(Arrays.asList("POST","GET","PUT","DELETE"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-//        config.addAllowedMethod("*");
         config.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

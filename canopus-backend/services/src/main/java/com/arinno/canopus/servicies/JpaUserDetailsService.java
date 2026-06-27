@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,8 +18,11 @@ import com.arinno.canopus.repositories.UserRepository;
 @Service
 public class JpaUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository repository;
+    private final UserRepository repository;
+
+    JpaUserDetailsService(UserRepository repository) {
+        this.repository = repository;
+    }
 
     @Transactional(readOnly = true)
     @Override
@@ -34,14 +36,17 @@ public class JpaUserDetailsService implements UserDetailsService {
 
         User user = optionalUser.orElseThrow();
 
+        System.out.println(user.getUsername());
+        System.out.println(user.getRoles());  
+
         List<GrantedAuthority> authorities = user.getRoles()
                 .stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());
 
         return new org.springframework.security.core.userdetails.User(username,
-//                user.getPassword(),
-                user.giveMePassword(),
+                user.getPassword(),
+//                user.giveMePassword(),
                 true,
                 true,
                 true,

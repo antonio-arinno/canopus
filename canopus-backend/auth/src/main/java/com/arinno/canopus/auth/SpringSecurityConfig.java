@@ -1,6 +1,7 @@
 package com.arinno.canopus.auth;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 //import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.beans.factory.annotation.Value;
@@ -80,10 +81,12 @@ public class SpringSecurityConfig {
 
     @Bean
     FilterRegistrationBean<CorsFilter> corsFilter(){
-        FilterRegistrationBean<CorsFilter> corsBean = new FilterRegistrationBean<CorsFilter>(
-            new CorsFilter(this.configurationSource()));
-        corsBean.setOrder(Ordered.HIGHEST_PRECEDENCE);   
-        return corsBean; 
+        CorsConfigurationSource corsConfigurationSource = Objects.requireNonNull(
+            this.configurationSource(), "cors configuration source must not be null");
+        FilterRegistrationBean<CorsFilter> corsBean = new FilterRegistrationBean<>(
+            new CorsFilter(corsConfigurationSource));
+        corsBean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return corsBean;
     }
 
 }

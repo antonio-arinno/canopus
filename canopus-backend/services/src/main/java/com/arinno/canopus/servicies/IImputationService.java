@@ -3,6 +3,7 @@ package com.arinno.canopus.servicies;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.arinno.canopus.entities.Imputation;
 import com.arinno.canopus.entities.Product;
@@ -14,9 +15,9 @@ public interface IImputationService {
 
     public List<Imputation> findByUser(User user);
 	
-	public Imputation findByIdAndUser(Long id, User user);
+	public Optional<Imputation> findByIdAndUser(Long id, User user);
 	
-	public Imputation findByDateAndUser(Date date, User user);	
+	public Optional<Imputation> findByDateAndUser(Date date, User user);	
 	
 	public Imputation save(Imputation imputation);
 	

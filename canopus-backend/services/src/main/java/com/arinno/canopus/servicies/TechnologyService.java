@@ -1,6 +1,7 @@
 package com.arinno.canopus.servicies;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +26,13 @@ public class TechnologyService implements ITechnologyService {
 
     @Override
     public Technology save(Technology technology) {
-        return technologyRepository.save(technology);
+        return technologyRepository.save(Objects.requireNonNull(technology, "technology must not be null"));
     }
 
     @Override
     public Technology findByIdAndCompany(Long id, Company company) {
-        return technologyRepository.findByIdAndCompany(id, company);
+        Technology technology = technologyRepository.findByIdAndCompany(id, company);
+        return Objects.requireNonNullElse(technology, new Technology());
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.arinno.canopus.servicies;
 //import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,33 +26,34 @@ public class ProjectServiceImpl implements IProjectService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<Project> findByCompany(Company company) {
-		return (List<Project>) projectRepository.findByCompany(company);
+		return projectRepository.findByCompany(company);
 	}
 	
 	@Override
 	public List<Project> findByResponsible(User responsible) {
-		return (List<Project>) projectRepository.findByResponsible(responsible);
+		return projectRepository.findByResponsible(responsible);
 	}
 
 	@Override
 	public List<Project> findByResponsibleAndDateProIsNull(User responsible) {
-		return (List<Project>) projectRepository.findByResponsibleAndDateProIsNull(responsible);
+		return projectRepository.findByResponsibleAndDateProIsNull(responsible);
 	}
 
 	@Override
 	public List<Project> findByCompanyAndDateProIsNull(Company company) {
-		return (List<Project>) projectRepository.findByCompanyAndDateProIsNull(company);
+		return projectRepository.findByCompanyAndDateProIsNull(company);
 	}
 
 	@Override
 	public Project findByIdAndCompany(Long id, Company company) {
-		return projectRepository.findByIdAndCompany(id, company);
+		Project project = projectRepository.findByIdAndCompany(id, company);
+		return Objects.requireNonNullElse(project, new Project());
 	}
 
 	@Override
 	@Transactional	
 	public Project save(Project project) {
-		return projectRepository.save(project);
+		return projectRepository.save(Objects.requireNonNull(project, "project must not be null"));
 	}
 
 	@Override
@@ -118,7 +120,7 @@ public class ProjectServiceImpl implements IProjectService {
 	@Override
 	@Transactional
 	public List<Project> findByProduct(Product product) {
-		return (List<Project>) projectRepository.findByProduct(product);
+		return projectRepository.findByProduct(product);
 	}
 
 }

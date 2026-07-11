@@ -2,6 +2,7 @@ package com.arinno.canopus.servicies;
 
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,13 +26,13 @@ public class ProductServiceImpl implements IProductService {
     @Override
     @Transactional(readOnly = true)
     public List<Product> findByCompany(Company company) {
-        return (List<Product>) productRepository.findByCompany(company);
+        return productRepository.findByCompany(company);
     }
 
 	@Override
 	@Transactional(readOnly = true)
 	public List<Product> findByResponsible(User user) {
-		return (List<Product>) productRepository.findByResponsible(user);
+		return productRepository.findByResponsible(user);
 	}
 
     @Override
@@ -123,7 +124,8 @@ public class ProductServiceImpl implements IProductService {
     @Override
     @Transactional(readOnly = true)
     public Product findByIdAndCompany(Long id, Company company) {
-        return productRepository.findByIdAndCompany(id, company);
+        Product product = productRepository.findByIdAndCompany(id, company);
+        return Objects.requireNonNullElse(product, new Product());
     }
 
     @Override
@@ -135,7 +137,7 @@ public class ProductServiceImpl implements IProductService {
     @Override
     @Transactional
     public Product save(Product product) {
-        return productRepository.save(product);
+        return productRepository.save(Objects.requireNonNull(product, "product must not be null"));
     }
 
     @Override

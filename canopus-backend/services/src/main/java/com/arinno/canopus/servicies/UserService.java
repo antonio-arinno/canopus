@@ -3,8 +3,6 @@ package com.arinno.canopus.servicies;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.lang.NonNull;
-
 import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
@@ -20,7 +18,7 @@ public interface UserService {
 
     Optional<User> findByUsername(String username);
 
-    Optional<User> findById(@NonNull Long id);
+    Optional<User> findById(Long id);
 
     User save(User user);
 

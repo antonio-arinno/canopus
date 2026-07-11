@@ -3,6 +3,8 @@ package com.arinno.canopus.servicies;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,23 +29,23 @@ public class ImputationServiceImpl implements IImputationService {
 	@Override
 	@Transactional(readOnly = true)	
 	public List<Imputation> findByUser(User user) {
-		return (List<Imputation>) imputationRepository.findByUser(user);
+		return imputationRepository.findByUser(user);
 	}
 
 	@Override
-	public Imputation findByIdAndUser(Long id, User user) {
+	public Optional<Imputation> findByIdAndUser(Long id, User user) {
 		return imputationRepository.findByIdAndUser(id, user);
 	}	
 	
 	@Override
-	public Imputation findByDateAndUser(Date date, User user) {
+	public Optional<Imputation> findByDateAndUser(Date date, User user) {
 		return imputationRepository.findByDateAndUser(date, user);
 	}	
 
 	@Override
 	@Transactional
 	public Imputation save(Imputation imputation) {
-		return imputationRepository.save(imputation);
+		return imputationRepository.save(Objects.requireNonNull(imputation, "imputation must not be null"));
 	}
 	
 	@Override
@@ -71,16 +73,20 @@ public class ImputationServiceImpl implements IImputationService {
 	public Integer timeByProductAndUser(Product product, User user) {
 		Integer result = 0;
 	    for (Imputation imputation : imputationRepository.findByUser(user)) {
-			for (ImputationItem item: imputation.getItems()){
-				if (item.getProject().getProduct() == product){
+			if (imputation == null || imputation.getItems() == null) {
+				continue;
+			}
+			for (ImputationItem item : imputation.getItems()) {
+				if (item == null || item.getProject() == null || item.getProject().getProduct() == null) {
+					continue;
+				}
+				if (item.getProject().getProduct() == product) {
 					result += item.getTime();
 				}
 			}
-		}	
+		}
 		return result;
-	}
-
-	@Override
+		}
 	@Transactional
 	public Integer timeByTechnology(Technology technology) {
 		Integer result = imputationRepository.timeByTechnology(technology.getId());
@@ -96,8 +102,14 @@ public class ImputationServiceImpl implements IImputationService {
 		Integer result = 0;
 
 		for (Imputation imputation : imputations) {
-            result += imputation.getItems().stream().mapToInt(ImputationItem::getTime).sum();
-        }
+			if (imputation == null || imputation.getItems() == null) {
+				continue;
+			}
+			result += imputation.getItems().stream()
+					.filter(Objects::nonNull)
+					.mapToInt(item -> item != null ? item.getTime() : 0)
+					.sum();
+		}
 
 		return result;
 

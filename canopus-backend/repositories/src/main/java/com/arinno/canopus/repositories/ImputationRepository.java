@@ -3,6 +3,7 @@ package com.arinno.canopus.repositories;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
@@ -15,9 +16,9 @@ public interface ImputationRepository extends CrudRepository<Imputation, Long> {
 
     public List<Imputation> findByUser(User user);
 	
-	public Imputation findByIdAndUser(Long id, User user);
+	public Optional<Imputation> findByIdAndUser(Long id, User user);
 	
-	public Imputation findByDateAndUser(Date date, User user);
+	public Optional<Imputation> findByDateAndUser(Date date, User user);
 	
 	public void deleteByIdAndUser(Long id, User user);
 

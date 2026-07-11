@@ -2,9 +2,9 @@ package com.arinno.canopus.servicies;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-import org.springframework.lang.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional(readOnly = true)
     public List<User> findByCompany(Company company) {
-        return (List<User>) this.repository.findByCompany(company); 
+        return this.repository.findByCompany(company); 
     }
 
     @Override
@@ -60,8 +60,9 @@ public class UserServiceImpl implements UserService{
  */
     @Transactional(readOnly = true)
     @Override
-    public Optional<User> findById(@NonNull Long id) {
-        return repository.findById(id);
+    public Optional<User> findById(Long id) {
+        Long userId = Objects.requireNonNull(id, "id must not be null");
+        return repository.findById(userId);
     }
 
     @Transactional
@@ -78,8 +79,9 @@ public class UserServiceImpl implements UserService{
     @Transactional
     @Override
     public Optional<User> update(UserRequest user, Long id) {
+        Long userId = Objects.requireNonNull(id, "id must not be null");
         
-        Optional<User> userOptional = repository.findById(id);
+        Optional<User> userOptional = repository.findById(userId);
         
         if (userOptional.isPresent()) {
             User userDb = userOptional.get();
@@ -98,7 +100,8 @@ public class UserServiceImpl implements UserService{
     @Transactional
     @Override
     public void deleteById(Long id) {
-        repository.deleteById(id);
+        Long userId = Objects.requireNonNull(id, "id must not be null");
+        repository.deleteById(userId);
     }
     
     private List<Role> getRoles(IUser user) {

@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.arinno.canopus.entities.Imputation;
 import com.arinno.canopus.entities.ImputationItem;
@@ -59,6 +61,17 @@ public class ImputationController {
 				.time(imputation.getTotal())
 				.build();
 	}
+
+	private ImputationItemResponse GetImputationItemResponse(ImputationItem item) {
+		return ImputationItemResponse.builder()
+				.id(item.getId())
+				.time(item.getTime())
+							.project(ProjectResponse.builder()
+							.id(item.getProject().getId())
+							.name(item.getProject().getName())
+							.build())
+				.build();
+	}
 /*
 	@GetMapping("/{id}")
 	public Imputation imputation(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
@@ -67,13 +80,15 @@ public class ImputationController {
 */
 	@GetMapping("/{id}")
 	public ImputationResponse imputation(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
-		Imputation imputation = imputationService.findByIdAndUser(id, util.getUser(auth));
-
+		
+		Imputation imputation = imputationService.findByIdAndUser(id, util.getUser(auth))
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imputation not found"));
+	
 		return ImputationResponse.builder()
 				.id(imputation.getId())
 				.date(imputation.getDate())
 				.time(imputation.getTotal())
-				.items(imputation.getItems().stream().map(item -> GetImputationItemResponse(item)).toList())
+				.items(imputation.getItems().stream().map(this::GetImputationItemResponse).toList())
 				.build();
 	}
 
@@ -86,25 +101,14 @@ public class ImputationController {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}  	
-		Imputation imputation =  imputationService.findByDateAndUser(date, util.getUser(auth));
+		Imputation imputation =  imputationService.findByDateAndUser(date, util.getUser(auth))
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imputation not found"));
 		
 		return ImputationResponse.builder()
 				.id(imputation.getId())
 				.date(imputation.getDate())
 				.time(imputation.getTotal())
-				.items(imputation.getItems().stream().map(item -> GetImputationItemResponse(item)).toList())
-				.build();
-		
-	}
-	
-	private ImputationItemResponse GetImputationItemResponse (ImputationItem item){
-		return ImputationItemResponse.builder()
-				.id(item.getId())
-				.time(item.getTime())
-				.project(ProjectResponse.builder()
-							.id(item.getProject().getId())
-							.name(item.getProject().getName())
-							.build())
+				.items(imputation.getItems().stream().map(this::GetImputationItemResponse).toList())
 				.build();
 
 	}

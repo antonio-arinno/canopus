@@ -25,7 +25,7 @@ import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserResponse;
 import com.arinno.canopus.servicies.IImputationService;
 import com.arinno.canopus.servicies.IProjectService;
-import com.arinno.canopus.util.IUtil;
+import com.arinno.canopus.servicies.JwtService;
 
 @RestController
 @RequestMapping("/project")
@@ -35,32 +35,32 @@ public class ProjectController {
 
 	private final IImputationService imputationService;
 
-    private final IUtil util;
+	private final JwtService jwtService;
 
-	ProjectController(IProjectService projectService, IImputationService imputationService, IUtil util) {
+	ProjectController(IProjectService projectService, IImputationService imputationService, JwtService jwtService) {
 		this.projectService = projectService;
 		this.imputationService = imputationService;
-		this.util = util;
+		this.jwtService = jwtService;
 	}
 
 	@GetMapping	
 	public List<ProjectResponse> listPersonalOpened(@RequestHeader(value="Authorization") String auth){
-		return projectService.findByResponsibleAndDateProIsNull(util.getUser(auth)).stream().map(project -> GetProjectResponse(project)).toList();
+		return projectService.findByResponsibleAndDateProIsNull(jwtService.getUserFromToken(auth)).stream().map(project -> GetProjectResponse(project)).toList();
 	}
 
 	@GetMapping("/all")
 	public List<ProjectResponse> listPersonalAll(@RequestHeader(value="Authorization") String auth){
-		return projectService.findByResponsible(util.getUser(auth)).stream().map(project -> GetProjectResponse(project)).toList();
+		return projectService.findByResponsible(jwtService.getUserFromToken(auth)).stream().map(project -> GetProjectResponse(project)).toList();
 	}
 
 	@GetMapping("/global")
 	public List<ProjectResponse> listGlobalOpened(@RequestHeader(value="Authorization") String auth){
-		return projectService.findByCompanyAndDateProIsNull(util.getCompany(auth)).stream().map(project -> GetProjectResponse(project)).toList();
+		return projectService.findByCompanyAndDateProIsNull(jwtService.getCompanyFromToken(auth)).stream().map(project -> GetProjectResponse(project)).toList();
 	}
 
 	@GetMapping("/globalall")
 	public List<ProjectResponse> listGlobalAll(@RequestHeader(value="Authorization") String auth){
-		return projectService.findByCompany(util.getCompany(auth)).stream().map(project -> GetProjectResponse(project)).toList();
+		return projectService.findByCompany(jwtService.getCompanyFromToken(auth)).stream().map(project -> GetProjectResponse(project)).toList();
 	}
 
 	@GetMapping("/product/{id}")
@@ -72,7 +72,7 @@ public class ProjectController {
 
 	@GetMapping("/{id}")
 	public ProjectResponse project(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
-		Project project = projectService.findByIdAndCompany(id, util.getCompany(auth));
+		Project project = projectService.findByIdAndCompany(id, jwtService.getCompanyFromToken(auth));
 		return ProjectResponse.builder()
 		.id(project.getId())
 		.name(project.getName())
@@ -111,7 +111,7 @@ public class ProjectController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public Project create(@RequestBody Project project, @RequestHeader(value="Authorization") String auth) {
-		project.setCompany(util.getCompany(auth));	
+		project.setCompany(jwtService.getCompanyFromToken(auth));
 		return projectService.save(project);
 	}
 	
@@ -119,12 +119,12 @@ public class ProjectController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public void edit(@RequestBody Project project, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
 
-		project.setCompany(util.getCompany(auth));	
+		project.setCompany(jwtService.getCompanyFromToken(auth));
 		System.out.println(project.getDateDev());
 		projectService.save(project);
 		System.out.println(project.getDateDev());
 		/*
-		Project projectDb = projectService.findByIdAndCompany(id, util.getCompany(auth));
+		Project projectDb = projectService.findByIdAndCompany(id, jwtService.getCompanyFromToken(auth));
 		projectDb.setName(project.getName());
 		projectDb.setDescription(project.getDescription());
 		projectDb.setProduct(project.getProduct());
@@ -140,22 +140,22 @@ public class ProjectController {
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
-		projectService.deleteByIdAndCompany(id, util.getCompany(auth));
+		projectService.deleteByIdAndCompany(id, jwtService.getCompanyFromToken(auth));
 	}	
 	
 	@GetMapping("/select/{term}")
 	public List<Project> listSelection(@PathVariable String term, @RequestHeader(value="Authorization") String auth){	
-		return projectService.findByNameContainingIgnoreCaseAndCompany(term, util.getCompany(auth));
+		return projectService.findByNameContainingIgnoreCaseAndCompany(term, jwtService.getCompanyFromToken(auth));
 	}		
 	
 	@GetMapping("/contributor")
 	public List<Project> listNotProductionContributor(@RequestHeader(value="Authorization") String auth){
-		return projectService.findByContributorAndNotProduction(util.getUser(auth).getId());
+		return projectService.findByContributorAndNotProduction(jwtService.getUserFromToken(auth).getId());
 	}	
 /*
 	@GetMapping("/contributor/{date}")
 	public List<ProjectResponse> listOpenedContributorDate(@PathVariable Date date, @RequestHeader(value="Authorization") String auth){
-		return projectService.findByContributorOpenDate(util.getUser(auth).getId(), date).stream().map(project -> GetProjectResponse(project)).toList();
+		return projectService.findByContributorOpenDate(jwtService.getUserFromToken(auth).getId(), date).stream().map(project -> GetProjectResponse(project)).toList();
 	}	
 
  */	
@@ -163,12 +163,12 @@ public class ProjectController {
 	public List<ProjectResponse> listOpenedContributorDate(
     @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date, @RequestHeader(value="Authorization") String auth) {
     
-    	return projectService.findByContributorOpenDate(util.getUser(auth).getId(), date)
-        	.stream()
-        	.map(project -> GetProjectResponse(project))
-        	.toList();
-}
-	
+	return projectService.findByContributorOpenDate(jwtService.getUserFromToken(auth).getId(), date)
+		.stream()
+		.map(project -> GetProjectResponse(project))
+		.toList();
+	}
+
 	private ProjectResponse GetProjectResponse(Project project) {
 
 		return ProjectResponse.builder()

@@ -29,7 +29,7 @@ import com.arinno.canopus.entities.ImputationResponse;
 import com.arinno.canopus.entities.ProjectResponse;
 import com.arinno.canopus.error.CustomException;
 import com.arinno.canopus.servicies.IImputationService;
-import com.arinno.canopus.util.IUtil;
+import com.arinno.canopus.servicies.JwtService;
 
 @RestController
 @RequestMapping("/imputation")
@@ -37,21 +37,21 @@ public class ImputationController {
   
 	private final IImputationService imputationService;
 
-	private final IUtil util;
+	private final JwtService jwtService;
 
-	ImputationController(IImputationService imputationService, IUtil util) {
+	ImputationController(IImputationService imputationService, JwtService jwtService) {
 		this.imputationService = imputationService;
-		this.util = util;
+		this.jwtService = jwtService;
 	}
-/*	
+/*
 	@GetMapping	
 	public List<Imputation> list(@RequestHeader(value="Authorization") String auth){	
-		return imputationService.findByUser(util.getUser(auth));	
+		return imputationService.findByUser(jwtService.getUserFromToken(auth));	
 	}
 */
 	@GetMapping	
 	public List<ImputationResponse> list(@RequestHeader(value="Authorization") String auth){	
-		return imputationService.findByUser(util.getUser(auth)).stream().map(imputation -> GetImputationResponse(imputation)).toList();			
+		return imputationService.findByUser(jwtService.getUserFromToken(auth)).stream().map(imputation -> GetImputationResponse(imputation)).toList();			
 	}
 
 	private ImputationResponse GetImputationResponse(Imputation imputation){
@@ -75,13 +75,13 @@ public class ImputationController {
 /*
 	@GetMapping("/{id}")
 	public Imputation imputation(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
-		return imputationService.findByIdAndUser(id, util.getUser(auth));
+		return imputationService.findByIdAndUser(id, jwtService.getUserFromToken(auth));
 	}
 */
 	@GetMapping("/{id}")
 	public ImputationResponse imputation(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
 		
-		Imputation imputation = imputationService.findByIdAndUser(id, util.getUser(auth))
+		Imputation imputation = imputationService.findByIdAndUser(id, jwtService.getUserFromToken(auth))
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imputation not found"));
 	
 		return ImputationResponse.builder()
@@ -101,7 +101,7 @@ public class ImputationController {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}  	
-		Imputation imputation =  imputationService.findByDateAndUser(date, util.getUser(auth))
+		Imputation imputation =  imputationService.findByDateAndUser(date, jwtService.getUserFromToken(auth))
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imputation not found"));
 		
 		return ImputationResponse.builder()
@@ -116,7 +116,7 @@ public class ImputationController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public void create(@RequestBody Imputation imputation, @RequestHeader(value="Authorization") String auth) {
-		imputation.setUser(util.getUser(auth));
+		imputation.setUser(jwtService.getUserFromToken(auth));
 		imputationService.save(imputation);
 	}
 	
@@ -124,35 +124,34 @@ public class ImputationController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public void createCal(@RequestHeader(value="Authorization") String auth) {
 
-		ZoneId defaultZoneId = ZoneId.systemDefault(); 
-        for ( LocalDate day = LocalDate.parse("2023-01-01"); day.getYear() < 2024 ; day = day.plusDays(1)) {
-    		Imputation imputation = new Imputation();
-    		imputation.setUser(util.getUser(auth));
-    		Date date = Date.from(day.atStartOfDay(defaultZoneId).toInstant());
-    		imputation.setDate(date);
-    		imputationService.save(imputation);
-        }		
-	}	
-	
+		ZoneId defaultZoneId = ZoneId.systemDefault();
+		for (LocalDate day = LocalDate.parse("2023-01-01"); day.getYear() < 2024; day = day.plusDays(1)) {
+			Imputation imputation = new Imputation();
+			imputation.setUser(jwtService.getUserFromToken(auth));
+			imputation.setDate(Date.from(day.atStartOfDay(defaultZoneId).toInstant()));
+			imputationService.save(imputation);
+		}
+	}
+
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
 	public void update(@RequestBody Imputation imputation, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) throws CustomException {
 
-		imputationService.deleteByIdAndUser(id, util.getUser(auth));
+		imputationService.deleteByIdAndUser(id, jwtService.getUserFromToken(auth));
 		imputation.setId(null);
 		imputation.getItems().stream().map(item -> {item.setId(null); return item;}).toList();
-		imputation.setUser(util.getUser(auth));
+		imputation.setUser(jwtService.getUserFromToken(auth));
 		try {
 			imputationService.save(imputation);
 		} catch (Exception e) {
 			throw new CustomException(e.getMessage());
-		}	
+		}
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
-		imputationService.deleteByIdAndUser(id, util.getUser(auth));
+		imputationService.deleteByIdAndUser(id, jwtService.getUserFromToken(auth));
 	}	
 
 	@GetMapping("/product/{id}")

@@ -27,8 +27,8 @@ import com.arinno.canopus.entities.UserRequest;
 import com.arinno.canopus.entities.UserResponse;
 import com.arinno.canopus.servicies.IImputationService;
 import com.arinno.canopus.servicies.IProductService;
+import com.arinno.canopus.servicies.JwtService;
 import com.arinno.canopus.servicies.UserService;
-import com.arinno.canopus.util.IUtil;
 
 import jakarta.validation.Valid;
 
@@ -42,19 +42,19 @@ public class UserController {
 
     private final IImputationService imputationService;
 
-    private final IUtil util;
+    private final JwtService jwtService;
 
-    UserController(UserService service, IProductService productService, IImputationService imputationService, IUtil util) {
+    UserController(UserService service, IProductService productService, IImputationService imputationService, JwtService jwtService) {
         this.service = service;
         this.productService = productService;
         this.imputationService = imputationService;
-        this.util = util;
+        this.jwtService = jwtService;
     }
 
     @GetMapping
     public List<UserResponse> list(@RequestHeader(value="Authorization") String auth) {
         service.registrarYVerificar();
-        return service.findByCompany(util.getCompany(auth)).stream().map(user -> GetUserResponse(user)).toList();
+        return service.findByCompany(jwtService.getCompanyFromToken(auth)).stream().map(user -> GetUserResponse(user)).toList();
     }
 
     @GetMapping("/technology/{id}")
@@ -79,7 +79,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<?> user(@RequestHeader(value="Authorization") String auth) {;
-        Optional<User> userOptional = service.findById(util.getUser(auth).getId());
+        Optional<User> userOptional = service.findById(jwtService.getUserFromToken(auth).getId());
         if (userOptional.isPresent()) {
             return ResponseEntity.status(HttpStatus.OK).body(GetUserResponse(userOptional.orElseThrow()));
         }
@@ -116,7 +116,7 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody User user, @RequestHeader(value="Authorization") String auth) {
-        user.setCompany(util.getCompany(auth));
+        user.setCompany(jwtService.getCompanyFromToken(auth));
         user.setPassword(user.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
     }
@@ -155,7 +155,7 @@ public class UserController {
 
 	@GetMapping("/select/{term}")
 	public List<UserResponse> listSelection(@PathVariable String term, @RequestHeader(value="Authorization") String auth){	
-        return service.findByNameContainingIgnoreCaseAndCompany(term, util.getCompany(auth)).stream().map(user -> GetUserResponse(user)).toList();
+        return service.findByNameContainingIgnoreCaseAndCompany(term, jwtService.getCompanyFromToken(auth)).stream().map(user -> GetUserResponse(user)).toList();
 	}	
 
     @GetMapping("/message")

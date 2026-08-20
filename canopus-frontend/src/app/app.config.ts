@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { tokenInterceptor } from '@core/interceptors/token.interceptor';
+import { tokenInterceptor } from '@core/auth/interceptors/token.interceptor';
 
 // 1. Importaciones para el idioma (Español)
 import { registerLocaleData } from '@angular/common';

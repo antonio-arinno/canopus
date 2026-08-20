@@ -1,0 +1,32 @@
+<mat-card appearance="outlined" class="auth-card">
+    <mat-card-header>
+        <mat-card-title>Iniciar sesión</mat-card-title>
+        <mat-card-subtitle>Accede a tu cuenta de Canopus</mat-card-subtitle>
+    </mat-card-header>
+
+    <form [formGroup]="formGroup" (ngSubmit)="submit($event)">
+        <mat-card-content>
+            <mat-form-field>
+                <mat-label>Usuario</mat-label>
+                <input matInput formControlName="username" autocomplete="username">
+            </mat-form-field>
+            
+            <mat-form-field>
+                <mat-label>Contraseña</mat-label>
+                <input matInput formControlName="password" [type]="showPassword ? 'text' : 'password'" autocomplete="current-password">
+                <mat-icon matSuffix (click)="visibility()" class="password-toggle">
+                    {{showPassword ? 'visibility_off' : 'visibility'}}
+                </mat-icon>
+            </mat-form-field>
+
+            <div class="auth-helper">
+                <span>¿No tienes cuenta todavía?</span>
+                <a mat-button color="primary" routerLink="/auth/register">Crear cuenta</a>
+            </div>
+        </mat-card-content>
+        
+        <mat-card-footer>
+            <button type="submit" mat-flat-button color="primary" [disabled]="formGroup.invalid">Entrar</button>
+        </mat-card-footer>
+    </form>
+</mat-card>

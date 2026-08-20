@@ -5,7 +5,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/auth/auth.service';
 
 @Component({
   selector: 'app-header',

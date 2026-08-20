@@ -1,27 +1,29 @@
 <mat-toolbar>
-    <button mat-icon-button (click)="menuClicked.emit()">
+    <button mat-icon-button (click)="menuClicked.emit()" aria-label="Abrir menú">
       <mat-icon>menu</mat-icon>
     </button>
-    <span>Canopus</span>
+
+    <div class="brand-block">
+      <div class="brand-mark">C</div>
+      <span class="brand-name">Canopus</span>
+    </div>
+
     <span class="spacer"></span>
+
     <div class="user-info">
-      <span>
-          Hi, 
-          {{this.authService.user.name}}
-      </span>
-      <button mat-icon-button [matMenuTriggerFor]="userMenu">
+      <span class="user-greeting">Hola, {{this.authService.user.name}}</span>
+      <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="Opciones de usuario">
         <mat-icon>person</mat-icon>
       </button>
     </div>
+
     <mat-menu #userMenu="matMenu">
-      <button mat-menu-item  (click)="logout()">
+      <button mat-menu-item (click)="logout()">
           <mat-icon>logout</mat-icon>
-          <span>Log Out</span>
+          <span>Cerrar sesión</span>
       </button>
       <button mat-menu-item routerLink="user/detail/{{this.authService.user.id}}">
           <mat-icon>account_box</mat-icon>
-          <span>Profile</span>
+          <span>Perfil</span>
       </button>
-    </mat-menu>   
-
-</mat-toolbar>
+    </mat-menu>

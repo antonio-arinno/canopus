@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+.auth-card {
+  padding: 8px 4px 4px;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+}
+
+mat-card-header {
+  justify-content: center;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+mat-card-title {
+  justify-content: center;
+  margin: 8px 0 4px;
+}
+
+mat-card-footer {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px 16px;
+}
+
+.helper-text {
+  margin: 0;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.7);
+}

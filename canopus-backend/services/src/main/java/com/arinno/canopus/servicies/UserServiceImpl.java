@@ -65,6 +65,13 @@ public class UserServiceImpl implements UserService{
         return repository.findById(userId);
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public Optional<User> findByIdAndCompany(Long id, Company company) {
+        Long userId = Objects.requireNonNull(id, "id must not be null");
+        return repository.findByIdAndCompany(userId, company);
+    }
+
     @Transactional
     @Override
     public User save(User user) {
@@ -78,10 +85,10 @@ public class UserServiceImpl implements UserService{
     
     @Transactional
     @Override
-    public Optional<User> update(UserRequest user, Long id) {
+    public Optional<User> update(UserRequest user, Long id, Company company) {
         Long userId = Objects.requireNonNull(id, "id must not be null");
         
-        Optional<User> userOptional = repository.findById(userId);
+        Optional<User> userOptional = repository.findByIdAndCompany(userId, company);
         
         if (userOptional.isPresent()) {
             User userDb = userOptional.get();
@@ -99,9 +106,14 @@ public class UserServiceImpl implements UserService{
     
     @Transactional
     @Override
-    public void deleteById(Long id) {
+    public boolean deleteById(Long id, Company company) {
         Long userId = Objects.requireNonNull(id, "id must not be null");
-        repository.deleteById(userId);
+        Optional<User> userOptional = repository.findByIdAndCompany(userId, company);
+        if (userOptional.isEmpty()) {
+            return false;
+        }
+        repository.delete(userOptional.get());
+        return true;
     }
     
     private List<Role> getRoles(IUser user) {

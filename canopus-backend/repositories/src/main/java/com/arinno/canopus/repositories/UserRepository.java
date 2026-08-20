@@ -16,6 +16,8 @@ public interface UserRepository extends CrudRepository<User, Long> {
 
     List<User> findByCompany(Company company);
 
+    Optional<User> findByIdAndCompany(Long id, Company company);
+
     public List<User> findByNameContainingIgnoreCaseAndCompany(String term, Company company);
 
     public List<User> findByTechnologies(List<Technology> technologies);

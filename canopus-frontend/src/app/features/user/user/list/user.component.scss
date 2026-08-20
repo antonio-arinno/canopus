@@ -1,0 +1,36 @@
+.list-card {
+  margin: 16px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 20px 24px 0;
+}
+
+.header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mat-mdc-row {
+  cursor: pointer;
+}
+
+.mat-mdc-row:hover {
+  background-color: rgba(37, 99, 235, 0.06);
+}
+
+.mat-column-name {
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+mat-card-content {
+  padding: 8px 16px 16px;
+}
+
+mat-card-actions {
+  padding: 6px 24px 16px;
+}

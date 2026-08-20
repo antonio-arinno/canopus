@@ -1,0 +1,64 @@
+<mat-card class="calendar-card">
+  <mat-card-header class="calendar-header">
+    <div class="header-copy">
+      <mat-card-title>Imputaciones</mat-card-title>
+      <mat-card-subtitle>Calendario mensual de horas imputadas</mat-card-subtitle>
+    </div>
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (isLoading()) {
+      <p class="text-muted">Cargando imputaciones...</p>
+    }
+
+    @if (!isLoading() && errorMessage()) {
+      <p class="text-error">{{ errorMessage() }}</p>
+    }
+
+    @if (!isLoading() && !errorMessage() && !hasItems()) {
+      <p class="text-muted">{{ emptyMessage }}</p>
+    }
+
+    @if (!isLoading() && !errorMessage()) {
+      <section class="calendar-shell" aria-label="Calendario de imputaciones">
+        <div class="month-toolbar">
+          <button type="button" class="nav-button" (click)="changeMonth(-1)">Mes anterior</button>
+          <h2>{{ dateSelect | date:'MMMM, yyyy' }}</h2>
+          <button type="button" class="nav-button" (click)="changeMonth(1)">Mes siguiente</button>
+        </div>
+
+        <div class="quick-actions">
+          <button type="button" class="quick-button" (click)="goToCurrentMonth()">Ir a hoy</button>
+        </div>
+
+        <div class="calendar-legend">
+          <span class="legend-item"><span class="legend-dot complete"></span>Día completo (8 h)</span>
+          <span class="legend-item"><span class="legend-dot partial"></span>Día con imputación</span>
+          <span class="legend-item"><span class="legend-dot empty"></span>Sin imputar</span>
+        </div>
+
+        <ol class="calendar-grid">
+          <li *ngFor="let day of week" class="day-name">{{ day | slice:0:3 }}</li>
+
+          <li
+            (click)="clickDay(day)"
+            [style.gridColumnStart]="first ? day?.indexWeek : 'auto'"
+            [class.has-entry]="day?.id"
+            [class.is-complete]="day?.total === 8"
+            [class.is-today]="isToday(day)"
+            (keydown.enter)="clickDay(day)"
+            (keydown.space)="onDaySpace($event, day)"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="getDayAriaLabel(day)"
+            [attr.title]="getDayAriaLabel(day)"
+            *ngFor="let day of monthSelect; let first = first"
+          >
+            <span class="day-number">{{ day?.value }}</span>
+            <span class="day-total" [class.empty]="!day?.total">{{ getDayTotalLabel(day) }}</span>
+          </li>
+        </ol>
+      </section>
+    }
+  </mat-card-content>
+</mat-card>

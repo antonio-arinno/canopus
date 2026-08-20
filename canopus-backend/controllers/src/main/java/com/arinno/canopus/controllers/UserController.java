@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.TechnologyResponse;
 import com.arinno.canopus.entities.User;
@@ -53,7 +54,6 @@ public class UserController {
 
     @GetMapping
     public List<UserResponse> list(@RequestHeader(value="Authorization") String auth) {
-        service.registrarYVerificar();
         return service.findByCompany(jwtService.getCompanyFromToken(auth)).stream().map(user -> GetUserResponse(user)).toList();
     }
 
@@ -68,8 +68,8 @@ public class UserController {
 
     
     @GetMapping("/{id}")
-    public ResponseEntity<?> show(@PathVariable Long id) {;
-        Optional<User> userOptional = service.findById(id);
+    public ResponseEntity<?> show(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
+        Optional<User> userOptional = service.findByIdAndCompany(id, jwtService.getCompanyFromToken(auth));
         if (userOptional.isPresent()) {
             return ResponseEntity.status(HttpStatus.OK).body(GetUserResponse(userOptional.orElseThrow()));
         }
@@ -115,18 +115,20 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody User user, @RequestHeader(value="Authorization") String auth) {
-        user.setCompany(jwtService.getCompanyFromToken(auth));
-        user.setPassword(user.getUsername());
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
+    public ResponseEntity<?> create(@Valid @RequestBody UserRequest request, BindingResult result, @RequestHeader(value="Authorization") String auth) {
+        if (result.hasErrors()) {
+            return validation(result);
+        }
+        User user = toUser(request, jwtService.getCompanyFromToken(auth));
+        return ResponseEntity.status(HttpStatus.CREATED).body(GetUserResponse(service.save(user)));
     }
   
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@Valid @RequestBody UserRequest user, BindingResult result, @PathVariable Long id) {
+    public ResponseEntity<?> update(@Valid @RequestBody UserRequest user, BindingResult result, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
         if (result.hasErrors()) {
             return validation(result);
         }        
-        Optional<User> userOptional = service.update(user, id);
+        Optional<User> userOptional = service.update(user, id, jwtService.getCompanyFromToken(auth));
         if (userOptional.isPresent()) {
             return ResponseEntity.ok(GetUserResponse(userOptional.orElseThrow()));
 //            return ResponseEntity.ok(userOptional.orElseThrow());
@@ -135,10 +137,8 @@ public class UserController {
     }
   
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        Optional<User> userOptional = service.findById(id);
-        if (userOptional.isPresent()) {
-            service.deleteById(id);
+    public ResponseEntity<?> delete(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
+        if (service.deleteById(id, jwtService.getCompanyFromToken(auth))) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
@@ -151,6 +151,19 @@ public class UserController {
         });
         return ResponseEntity.badRequest().body(errors);
     }    
+
+    private User toUser(UserRequest request, Company company) {
+        User user = new User();
+        user.setName(request.getName());
+        user.setLastname(request.getLastname());
+        user.setEmail(request.getEmail());
+        user.setUsername(request.getUsername());
+        user.setAdmin(request.isAdmin());
+        user.setTechnologies(request.getTechnologies());
+        user.setCompany(company);
+        user.setPassword(request.getUsername());
+        return user;
+    }
 
 
 	@GetMapping("/select/{term}")

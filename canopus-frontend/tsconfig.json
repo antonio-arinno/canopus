@@ -7,7 +7,9 @@
     "paths": {
       "@components/*": ["./src/app/components/*"],
       "@core/*": ["./src/app/core/*"],
-      "@shared/*": ["./src/app/shared/*"]
+      "@shared/*": ["./src/app/shared/*"],
+      "@features/*": ["./src/app/features/*"],
+      "@environments/*": ["./src/environments/*"]
     },
     "rootDir": "./src",
     "outDir": "./dist/out-tsc",

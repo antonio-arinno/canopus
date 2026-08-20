@@ -90,6 +90,10 @@ public class ProjectController {
 		.product(ProductResponse.builder()
 			.id(project.getProduct().getId())
 			.name(project.getProduct().getName())
+			.technology(TechnologyResponse.builder()
+				.id(project.getProduct().getTechnology().getId())
+				.name(project.getProduct().getTechnology().getName())
+				.build())
 			.build())
 		.technology(TechnologyResponse.builder()
 			.id(project.getProduct().getTechnology().getId())
@@ -123,18 +127,6 @@ public class ProjectController {
 		System.out.println(project.getDateDev());
 		projectService.save(project);
 		System.out.println(project.getDateDev());
-		/*
-		Project projectDb = projectService.findByIdAndCompany(id, jwtService.getCompanyFromToken(auth));
-		projectDb.setName(project.getName());
-		projectDb.setDescription(project.getDescription());
-		projectDb.setProduct(project.getProduct());
-		projectDb.setDateDev(project.getDateDev());
-		projectDb.setDatePre(project.getDatePre());
-		projectDb.setDatePro(project.getDatePro());
-		projectDb.setResponsible(project.getResponsible());
-		projectDb.setContributors(project.getContributors());
-		projectService.save(projectDb);
-		*/
 	}
 	
 	@DeleteMapping("/{id}")
@@ -152,13 +144,7 @@ public class ProjectController {
 	public List<Project> listNotProductionContributor(@RequestHeader(value="Authorization") String auth){
 		return projectService.findByContributorAndNotProduction(jwtService.getUserFromToken(auth).getId());
 	}	
-/*
-	@GetMapping("/contributor/{date}")
-	public List<ProjectResponse> listOpenedContributorDate(@PathVariable Date date, @RequestHeader(value="Authorization") String auth){
-		return projectService.findByContributorOpenDate(jwtService.getUserFromToken(auth).getId(), date).stream().map(project -> GetProjectResponse(project)).toList();
-	}	
 
- */	
 	@GetMapping("/contributor/{date}")
 	public List<ProjectResponse> listOpenedContributorDate(
     @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date, @RequestHeader(value="Authorization") String auth) {
@@ -183,13 +169,17 @@ public class ProjectController {
 					.name(project.getResponsible().getName())
 					.build())		
 			.product(ProductResponse.builder()
-					.id(project.getProduct().getId())
-					.name(project.getProduct().getName())
+				.id(project.getProduct().getId())
+				.name(project.getProduct().getName())
+				.technology(TechnologyResponse.builder()
+					.id(project.getProduct().getTechnology().getId())
+					.name(project.getProduct().getTechnology().getName())
 					.build())
+				.build())
 			.technology(TechnologyResponse.builder()
-						.id(project.getProduct().getTechnology().getId())
-						.name(project.getProduct().getTechnology().getName())
-						.build())	
+				.id(project.getProduct().getTechnology().getId())
+				.name(project.getProduct().getTechnology().getName())
+				.build())
 			.countContributors(project.getContributors().size())					
 			.time(imputationService.timeByProject(project))				
 			.build();

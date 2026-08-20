@@ -1,20 +1,25 @@
-/*
-mat-sidenav-container {
-  background: #eee;
-}
-
-mat-sidenav {
-  background: red;
-}
-
-mat-sidenav-content {
-  background: blue;
-}
-*/
 .container {
   display: grid;
   grid-template-rows: auto 1fr auto;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #f8fbff 0%, #f3f6fb 100%);
 }
-  
+
+mat-sidenav-container {
+  background: transparent;
+  min-height: 0;
+}
+
+mat-sidenav {
+  border-right: 1px solid #e2e8f0;
+  width: 240px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+mat-sidenav-content {
+  padding: 10px 12px 12px;
+  overflow: auto;
+  min-height: 0;
+}
 

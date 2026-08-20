@@ -20,11 +20,13 @@ public interface UserService {
 
     Optional<User> findById(Long id);
 
+    Optional<User> findByIdAndCompany(Long id, Company company);
+
     User save(User user);
 
-    Optional<User> update(UserRequest user, Long id);
+    Optional<User> update(UserRequest user, Long id, Company company);
 
-    void deleteById(Long id);
+    boolean deleteById(Long id, Company company);
 
     public List<User> findByNameContainingIgnoreCaseAndCompany(String term, Company company);
 

@@ -5,23 +5,23 @@ export const PRIVATE_ROUTES: Routes = [
     { path: '', component: PrivateComponent, children: [
         {
             path: 'imputation',
-            loadChildren: () => import('@components/imputation/imputation.routing').then(m => m.IMPUTATION_ROUTES)
+            loadChildren: () => import('@features/imputation/imputation/imputation.routing').then(m => m.IMPUTATION_ROUTES)
         },
         {
             path: 'project',
-            loadChildren: () => import('@components/project/project.routing').then(m => m.PROJECT_ROUTES)
+            loadChildren: () => import('@features/project/project/project.routing').then(m => m.PROJECT_ROUTES)
         },
         {
             path: 'product',
-            loadChildren: () => import('@components/product/product.routing').then(m => m.PRODUCT_ROUTES)
+            loadChildren: () => import('@features/product/product/product.routing').then(m => m.PRODUCT_ROUTES)
         },     
         {
             path: 'technology',
-            loadChildren: () => import('@components/technology/technology.routing').then(m => m.TECHNOLOGY_ROUTES)
+            loadChildren: () => import('@features/technology/technology/technology.routing').then(m => m.TECHNOLOGY_ROUTES)
         },           
         {
             path: 'user',
-            loadChildren: () => import('@components/user/user.routing').then(m => m.USER_ROUTES)
+            loadChildren: () => import('@features/user/user/user.routing').then(m => m.USER_ROUTES)
         }
     ]}
 ];

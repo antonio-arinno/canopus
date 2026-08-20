@@ -39,13 +39,14 @@ export class Project {
     }
 
     public static fromObject(obj: any):Project { 
-      let projectRef: Project = new Project();
+      const projectRef: Project = new Project();
       Object.assign(projectRef, obj);
+      projectRef.product = obj?.product ? Product.fromObject(obj.product) : new Product();
+      projectRef.technology = obj?.technology ? Technology.fromSummary(obj.technology) : new Technology();
+      projectRef.responsible = obj?.responsible ? User.fromObject(obj.responsible) : new User();
+      projectRef.contributors = Array.isArray(obj?.contributors)
+        ? obj.contributors.map((contributor: User) => User.fromObject(contributor))
+        : [];
       return projectRef;
     }    
   }
-  /*
-      getCountContributors():number {      
-        return this.contributors.length;
-      }
-  */

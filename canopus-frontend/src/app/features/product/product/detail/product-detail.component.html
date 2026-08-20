@@ -1,0 +1,158 @@
+<mat-card class="product-card">
+  <mat-card-header class="card-header">
+    <div class="header-copy">
+      <mat-card-title>Producto</mat-card-title>
+      <mat-card-subtitle>Detalle y seguimiento del producto</mat-card-subtitle>
+    </div>
+  </mat-card-header>
+
+  <mat-card-content>
+    <form [formGroup]="form">
+      <div class="detail-grid">
+        <section class="detail-section">
+          <div class="section-title">Información general</div>
+
+          <mat-form-field>
+            <mat-label>Nombre</mat-label>
+            <input type="text" matInput placeholder="Nombre" formControlName="name">
+            @if (getValidationMessage('name')) {
+              <mat-error>{{ getValidationMessage('name') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Descripción</mat-label>
+            <input type="text" matInput placeholder="Descripción" formControlName="description">
+            @if (getValidationMessage('description')) {
+              <mat-error>{{ getValidationMessage('description') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Tecnología</mat-label>
+            <input type="text" matInput formControlName="technology" [matAutocomplete]="auto">
+            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayTechnology">
+              <mat-option *ngFor="let technology of filteredTechnologies | async" [value]="technology">
+                {{technology.name}}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Responsable</mat-label>
+            <input type="text" matInput formControlName="responsible" [matAutocomplete]="autoResponsible">
+            <mat-autocomplete #autoResponsible="matAutocomplete" [displayWith]="displayFn">
+              <mat-option *ngFor="let user of filteredUsers | async" [value]="user">
+                {{user.name}}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Backup</mat-label>
+            <input type="text" matInput formControlName="backup" [matAutocomplete]="autoResponsible">
+            <mat-autocomplete #autoResponsible="matAutocomplete" [displayWith]="displayFn">
+              <mat-option *ngFor="let user of filteredUsers | async" [value]="user">
+                {{user.name}}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </section>
+
+        <section class="detail-section">
+          <div class="section-title">Indicadores</div>
+
+          <div class="metric-grid">
+            <mat-form-field>
+              <mat-label>Proyectos</mat-label>
+              <input type="text" matInput placeholder="Proyectos" formControlName="projects">
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Contribuidores</mat-label>
+              <input type="text" matInput placeholder="Contribuidores" formControlName="contribuitors">
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Tiempo</mat-label>
+              <input type="text" matInput placeholder="Tiempo" formControlName="time">
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Tiempo medio</mat-label>
+              <input type="text" matInput placeholder="Tiempo medio" formControlName="avgTime">
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Duración media</mat-label>
+              <input type="text" matInput placeholder="Duración media" formControlName="avgDuration">
+            </mat-form-field>
+          </div>
+
+          <div class="table-card">
+            <div class="table-title">Proyectos asociados</div>
+            <table mat-table [dataSource]="projects()" class="projects-table">
+              <ng-container matColumnDef="projectName">
+                <th mat-header-cell *matHeaderCellDef> Proyecto </th>
+                <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef> Estado </th>
+                <td mat-cell *matCellDef="let element"> {{element.getStatus()}} </td>
+              </ng-container>
+
+              <ng-container matColumnDef="countContributors">
+                <th mat-header-cell *matHeaderCellDef> Contribuidores </th>
+                <td mat-cell *matCellDef="let element"> {{element.countContributors}} </td>
+              </ng-container>
+
+              <ng-container matColumnDef="time">
+                <th mat-header-cell *matHeaderCellDef> Tiempo </th>
+                <td mat-cell *matCellDef="let element"> {{element.time}} </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <mat-card-footer class="detail-footer">
+        <div class="footer-actions">
+          @if (!form.get('id')?.value) {
+            <button type="submit" (click)="create($event)" mat-flat-button color="primary" [disabled]="form.invalid">Guardar</button>
+          } @else {
+            <div class="space-between">
+              <button type="submit" (click)="update($event)" mat-flat-button color="primary" [disabled]="form.invalid">Actualizar</button>
+              <button type="submit" (click)="delete($event)" mat-flat-button color="warn" [disabled]="form.invalid">Eliminar</button>
+            </div>
+          }
+        </div>
+
+        <div class="footer-messages">
+          @if (isLoading()) {
+            <p class="text-muted">Cargando producto...</p>
+          }
+
+          @if (isSubmitting()) {
+            <p class="text-muted">Guardando producto...</p>
+          }
+
+          @if (successMessage()) {
+            <p role="status" class="text-success">{{ successMessage() }}</p>
+          }
+
+          @if (errorMessage()) {
+            <div>
+              <mat-error>{{ errorMessage() }}</mat-error>
+            </div>
+          }
+        </div>
+      </mat-card-footer>
+    </form>
+  </mat-card-content>
+</mat-card>
+
+

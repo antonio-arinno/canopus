@@ -3,8 +3,6 @@ package com.arinno.canopus.auth;
 import java.util.Arrays;
 import java.util.Objects;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,7 +50,7 @@ public class SpringSecurityConfig {
         System.out.println("filterChain");
 
         return http.authorizeHttpRequests(authz -> authz
-            .requestMatchers(HttpMethod.GET, "/user/{id}").hasAnyRole("USER", "ADMIN")
+            .requestMatchers(HttpMethod.GET, "/user/**").authenticated()
             .requestMatchers(HttpMethod.PUT, "/user/{id}").hasAnyRole("USER", "ADMIN")
             .requestMatchers(HttpMethod.POST, "/user").hasRole("ADMIN")
             .requestMatchers(HttpMethod.DELETE, "/user/{id}").hasRole("ADMIN")
@@ -67,7 +65,6 @@ public class SpringSecurityConfig {
 
     @Bean
     CorsConfigurationSource configurationSource(){
-        System.out.println("CorsConfigurationSource");
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList("http://35.180.51.26", "http://localhost:4200"));
         config.setAllowedMethods(Arrays.asList("POST","GET","PUT","DELETE"));

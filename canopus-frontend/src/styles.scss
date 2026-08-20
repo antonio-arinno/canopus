@@ -32,6 +32,114 @@
 
 /* You can add global styles to this file, and also import other style files */
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  color: #0f172a;
+  background: #f8fbff;
+}
+
+.auth-card {
+  padding: 8px 4px;
+  margin: 0;
+  width: 100%;
+  max-width: 480px;
+}
+
+mat-card-content {
+  padding-bottom: 0;
+}
+
+.mat-mdc-form-field {
+  margin-bottom: 0;
+}
+
+.auth-card mat-card-header {
+  margin-bottom: 12px;
+}
+
+.auth-card mat-form-field {
+  width: 100%;
+}
+
+.auth-card mat-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 16px 16px;
+}
+
+.auth-helper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.register-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.helper-text {
+  margin: 0;
+  color: #334155;
+}
+
+.helper-text.muted {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.password-toggle {
+  cursor: pointer;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+  width: 100%;
+}
+
+.detail-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.detail-column > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-column .container {
+  margin-bottom: 0;
+}
+
+.detail-footer {
+  padding-top: 8px;
+}
+
+@media (max-width: 960px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .detail-column .inline {
+    flex-direction: column;
+  }
+
+  .detail-column .inline mat-form-field {
+    width: 100%;
+  }
+}
 
 

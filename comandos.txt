@@ -3,3 +3,7 @@ sudo systemctl start app.service
 sudo systemctl status nginx
 sudo nano /etc/nginx/sites-available/app
 sudo journalctl -u app -f
+
+npm start 
+
+npm run build

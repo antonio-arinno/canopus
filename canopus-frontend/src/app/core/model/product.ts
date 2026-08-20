@@ -17,8 +17,12 @@ export class Product {
   projects: Array<Project> = [];
 
   public static fromObject(obj: any):Product { 
-    let productRef: Product = new Product();
+    const productRef: Product = new Product();
     Object.assign(productRef, obj);
+    productRef.technology = obj?.technology ? Technology.fromSummary(obj.technology) : new Technology();
+    productRef.responsible = obj?.responsible ? User.fromObject(obj.responsible) : new User();
+    productRef.backup = obj?.backup ? User.fromObject(obj.backup) : new User();
+    productRef.projects = [];
     return productRef;
   }
 }

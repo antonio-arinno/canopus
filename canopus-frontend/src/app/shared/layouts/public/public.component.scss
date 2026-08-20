@@ -1,0 +1,22 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f4f8ff 0%, #eef4ff 100%);
+}
+
+.public-shell {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.public-content {
+  width: min(100%, 520px);
+  max-height: 100%;
+}
+

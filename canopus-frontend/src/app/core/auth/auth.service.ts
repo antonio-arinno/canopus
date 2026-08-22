@@ -54,10 +54,28 @@ export class AuthService {
     const payload = this.getTokenData(accessToken);
     const user = new User();
     user.username = payload.username;
-    user.roles = payload.authorities;
+    user.roles = this.getRoles(payload.authorities);
 
     this._user = user;
     this.storage.set('user', user);
+  }
+
+  private getRoles(authorities: unknown): string[] {
+    if (Array.isArray(authorities)) {
+      return authorities.map(authority =>
+        typeof authority === 'string' ? authority : authority?.authority
+      ).filter((role): role is string => typeof role === 'string');
+    }
+
+    if (typeof authorities === 'string') {
+      try {
+        return this.getRoles(JSON.parse(authorities));
+      } catch {
+        return [authorities];
+      }
+    }
+
+    return [];
   }
 
   updateUser(user: User): void {

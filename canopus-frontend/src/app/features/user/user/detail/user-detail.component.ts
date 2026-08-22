@@ -27,6 +27,7 @@ import { ModelMapperService } from '@core/model/model-mapper.service';
 import { forkJoin } from 'rxjs';
 import { FormStateService } from '@core/ui/form-state.service';
 import { RequestStateService } from '@core/ui/request-state.service';
+import { AuthService } from '@core/auth/auth.service';
 
 @Component({
   selector: 'app-user-detail',
@@ -55,6 +56,7 @@ export class UserDetailComponent {
   modelMapperService = inject(ModelMapperService);
   formStateService = inject(FormStateService);
   requestStateService = inject(RequestStateService);
+  authService = inject(AuthService);
   router = inject(Router);
   activateRoute = inject(ActivatedRoute);
   fb = inject(FormBuilder);
@@ -74,6 +76,17 @@ export class UserDetailComponent {
   my_technologies:  WritableSignal<Technology[]> = signal([]);
   displayedColumns: string[] = ['product', 'technology', 'responsible', 'countProjects', 'countContributors', 'time'];
   products:         WritableSignal<Product[]> = signal([]);
+  isProfile = false;
+  showPasswordForm: WritableSignal<boolean> = signal(false);
+
+  togglePasswordForm(): void {
+    this.showPasswordForm.update(value => !value);
+  }
+
+  get isAdmin(): boolean {
+    const roles = this.authService.user.roles;
+    return Array.isArray(roles) && roles.includes('ROLE_ADMIN');
+  }
 
 
   ngOnInit(): void {
@@ -82,35 +95,16 @@ export class UserDetailComponent {
       this.formStateService.reset();
       this.buildForm();
       let id = params['id'];
-      if(id){
+      this.isProfile = this.activateRoute.snapshot.routeConfig?.path === 'profile';
+      if(this.isProfile){
+        this.userService.getMe().subscribe({
+          next: (res: User) => this.loadUser(res),
+          error: (err: any) => this.requestStateService.setError(err)
+        });
+      } else if(id){
         this.userService.get(id).subscribe({
           next:(res: User)=> {
-            const mappedUser = this.modelMapperService.mapUser(res);
-            this.form.get('id')?.setValue(mappedUser.id);
-            this.form.get('username')?.setValue(mappedUser.username);
-            this.form.get('password')?.setValue(mappedUser.password);
-            this.form.get('name')?.setValue(mappedUser.name);
-            this.form.get('lastname')?.setValue(mappedUser.lastname);
-            this.form.get('email')?.setValue(mappedUser.email);
-            this.form.get('countProducts')?.setValue(mappedUser.countProducts);
-            this.form.get('countProjects')?.setValue(mappedUser.countProjects);
-            this.form.get('time')?.setValue(mappedUser.time);
-            this.my_technologies.set(mappedUser.technologies);
-
-            forkJoin({
-              allTechnologies: this.technologyService.getAll(),
-              contributorProducts: this.productService.getByContributor(mappedUser.id)
-            }).subscribe({
-              next: ({ allTechnologies, contributorProducts }) => {
-                this.all_technologies.set(this.modelMapperService.mapTechnologyList(allTechnologies as unknown[]));
-                this.all_technologies.update((currentTechs) => currentTechs.filter(
-                  technology => !mappedUser.technologies.some(selectedTech => selectedTech.id === technology.id)
-                ));
-                this.products.set(this.modelMapperService.mapProductList(contributorProducts as unknown[]));
-                this.requestStateService.finish();
-              },
-              error: (err: any) => this.requestStateService.setError(err),
-            });
+            this.loadUser(res);
           },
           error: (err: any) => this.requestStateService.setError(err)
         });
@@ -128,11 +122,46 @@ export class UserDetailComponent {
     });
   }
 
+  private loadUser(res: User): void {
+    const mappedUser = this.modelMapperService.mapUser(res);
+    this.form.patchValue({
+      id: mappedUser.id,
+      username: mappedUser.username,
+      name: mappedUser.name,
+      lastname: mappedUser.lastname,
+      email: mappedUser.email,
+      countProducts: mappedUser.countProducts,
+      countProjects: mappedUser.countProjects,
+      time: mappedUser.time
+    });
+    if (this.isProfile) {
+      this.form.get('username')?.disable();
+    }
+    this.my_technologies.set(mappedUser.technologies);
+
+    forkJoin({
+      allTechnologies: this.technologyService.getAll(),
+      contributorProducts: this.productService.getByContributor(mappedUser.id)
+    }).subscribe({
+      next: ({ allTechnologies, contributorProducts }) => {
+        this.all_technologies.set(this.modelMapperService.mapTechnologyList(allTechnologies as unknown[]));
+        this.all_technologies.update((currentTechs) => currentTechs.filter(
+          technology => !mappedUser.technologies.some(selectedTech => selectedTech.id === technology.id)
+        ));
+        this.products.set(this.modelMapperService.mapProductList(contributorProducts as unknown[]));
+        this.requestStateService.finish();
+      },
+      error: (err: any) => this.requestStateService.setError(err),
+    });
+  }
+
   private buildForm(){
     this.form = this.fb.group({
       id:             [''],
       username:       ['', [Validators.required, Validators.minLength(4), Validators.maxLength(12)]],
       password:       [''],
+      currentPassword: ['', []],
+      newPassword:    ['', [Validators.minLength(8), Validators.maxLength(72)]],
       name:           ['', [Validators.required]],
       lastname:       ['', [Validators.required]],
       email:          ['', [Validators.required, Validators.email]],
@@ -147,9 +176,12 @@ export class UserDetailComponent {
     if(this.form.valid){
       this.formStateService.startSubmit();
       const payload = this.form.getRawValue();
-      this.user = User.fromObject(payload);
-      this.user.technologies = this.my_technologies();
-      this.userService.update(this.user).subscribe({
+      this.userService.updateMe({
+        name: payload.name,
+        lastname: payload.lastname,
+        email: payload.email,
+        technologies: this.my_technologies()
+      }).subscribe({
         next: () => {
           this.formStateService.setSuccess('Usuario actualizado con éxito.');
           this.router.navigateByUrl('/pvt/user');
@@ -163,6 +195,27 @@ export class UserDetailComponent {
       });
     }
   }     
+
+  changePassword(event: Event): void {
+    event.preventDefault();
+    const currentPassword = this.form.get('currentPassword')?.value;
+    const newPassword = this.form.get('newPassword')?.value;
+    if (!currentPassword || !newPassword || this.form.get('newPassword')?.invalid) {
+      this.formStateService.setError('Indica la contraseña actual y una nueva de al menos 8 caracteres.');
+      return;
+    }
+
+    this.formStateService.startSubmit();
+    this.userService.changePassword(currentPassword, newPassword).subscribe({
+      next: () => {
+        this.form.get('currentPassword')?.reset();
+        this.form.get('newPassword')?.reset();
+        this.showPasswordForm.set(false);
+        this.formStateService.setSuccess('Contraseña actualizada con éxito.');
+      },
+      error: (err: any) => this.formStateService.setError(err.error?.message ?? 'No se pudo cambiar la contraseña.')
+    });
+  }
 
   create(event: Event): void {
     event.preventDefault();

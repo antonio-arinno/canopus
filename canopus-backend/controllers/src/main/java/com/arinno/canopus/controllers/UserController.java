@@ -21,11 +21,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.entities.ChangePasswordRequest;
 import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.TechnologyResponse;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserRequest;
 import com.arinno.canopus.entities.UserResponse;
+import com.arinno.canopus.entities.UserProfileRequest;
 import com.arinno.canopus.servicies.IImputationService;
 import com.arinno.canopus.servicies.IProductService;
 import com.arinno.canopus.servicies.JwtService;
@@ -123,17 +125,30 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(GetUserResponse(service.save(user)));
     }
   
-    @PutMapping("/{id}")
-    public ResponseEntity<?> update(@Valid @RequestBody UserRequest user, BindingResult result, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
+    @PutMapping("/me")
+    public ResponseEntity<?> updateMe(@Valid @RequestBody UserProfileRequest user, BindingResult result, @RequestHeader(value="Authorization") String auth) {
         if (result.hasErrors()) {
             return validation(result);
         }        
-        Optional<User> userOptional = service.update(user, id, jwtService.getCompanyFromToken(auth));
+        Optional<User> userOptional = service.updateProfile(user, jwtService.getUserFromToken(auth).getId());
         if (userOptional.isPresent()) {
             return ResponseEntity.ok(GetUserResponse(userOptional.orElseThrow()));
-//            return ResponseEntity.ok(userOptional.orElseThrow());
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request, BindingResult result,
+            @RequestHeader(value="Authorization") String auth) {
+        if (result.hasErrors()) {
+            return validation(result);
+        }
+        boolean changed = service.changePassword(request, jwtService.getUserFromToken(auth).getId());
+        if (!changed) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("message", "La contraseña actual no es válida."));
+        }
+        return ResponseEntity.noContent().build();
     }
   
     @DeleteMapping("/{id}")

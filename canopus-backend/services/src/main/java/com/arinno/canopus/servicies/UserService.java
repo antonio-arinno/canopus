@@ -4,9 +4,10 @@ import java.util.List;
 import java.util.Optional;
 
 import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.entities.ChangePasswordRequest;
 import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
-import com.arinno.canopus.entities.UserRequest;
+import com.arinno.canopus.entities.UserProfileRequest;
 
 public interface UserService {
 
@@ -24,7 +25,9 @@ public interface UserService {
 
     User save(User user);
 
-    Optional<User> update(UserRequest user, Long id, Company company);
+    Optional<User> updateProfile(UserProfileRequest user, Long id);
+
+    boolean changePassword(ChangePasswordRequest request, Long id);
 
     boolean deleteById(Long id, Company company);
 

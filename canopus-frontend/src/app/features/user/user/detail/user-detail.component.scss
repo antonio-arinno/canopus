@@ -43,6 +43,104 @@ mat-form-field {
   margin-bottom: 4px;
 }
 
+.read-only-details,
+.metric-values {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.read-only-details {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metric-values {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.read-only-details div,
+.metric-values div {
+  min-width: 0;
+}
+
+.read-only-details dt,
+.metric-values dt {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.read-only-details dd,
+.metric-values dd {
+  margin: 4px 0 0;
+  color: #1e293b;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.technology-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.read-only-technologies {
+  border-top: 1px solid #dbe4f0;
+  margin-top: 4px;
+  padding-top: 14px;
+}
+
+.password-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  overflow: hidden;
+}
+
+.password-card-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 0;
+  background: #f8fafc;
+  color: #1d4ed8;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.toggle-icon {
+  transition: transform 160ms ease;
+}
+
+.toggle-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.password-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+}
+
+.technology-tags span {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 6px 10px;
+  font-size: 0.86rem;
+}
+
+.technology-tags .empty-value {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  padding: 0;
+}
+
 .drag-section {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -170,6 +268,10 @@ mat-form-field {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .metric-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -178,6 +280,11 @@ mat-form-field {
   }
 
   .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .read-only-details,
+  .metric-values {
     grid-template-columns: 1fr;
   }
 

@@ -1,8 +1,8 @@
 <mat-card class="user-card">
   <mat-card-header class="card-header">
     <div class="header-copy">
-      <mat-card-title>Usuario</mat-card-title>
-      <mat-card-subtitle>Detalle, tecnologías y productos asociados</mat-card-subtitle>
+      <mat-card-title>{{ isProfile ? 'Perfil' : 'Usuario' }}</mat-card-title>
+      <mat-card-subtitle>{{ isProfile ? 'Datos personales, tecnologías y productos asociados' : 'Detalle, tecnologías y productos asociados' }}</mat-card-subtitle>
     </div>
   </mat-card-header>
 
@@ -12,35 +12,64 @@
         <section class="detail-section">
           <div class="section-title">Información general</div>
 
-          <mat-form-field>
-            <mat-label>Usuario</mat-label>
-            <input type="text" matInput placeholder="Usuario" formControlName="username">
-            @if (form.get('username')?.hasError('required')) {
-              <mat-error>El usuario es obligatorio.</mat-error>
-            } @else if (form.get('username')?.hasError('minlength') || form.get('username')?.hasError('maxlength')) {
-              <mat-error>El usuario debe tener entre 4 y 12 caracteres.</mat-error>
+          @if (isProfile || !form.get('id')?.value) {
+            <mat-form-field>
+              <mat-label>Usuario</mat-label>
+              <input type="text" matInput placeholder="Usuario" formControlName="username">
+              @if (form.get('username')?.hasError('required')) {
+                <mat-error>El usuario es obligatorio.</mat-error>
+              } @else if (form.get('username')?.hasError('minlength') || form.get('username')?.hasError('maxlength')) {
+                <mat-error>El usuario debe tener entre 4 y 12 caracteres.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Nombre</mat-label>
+              <input type="text" matInput placeholder="Nombre" formControlName="name">
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Apellidos</mat-label>
+              <input type="text" matInput placeholder="Apellidos" formControlName="lastname">
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Email</mat-label>
+              <input type="email" matInput placeholder="Email" formControlName="email">
+              @if (form.get('email')?.hasError('email')) {
+                <mat-error>Introduce un email válido.</mat-error>
+              }
+            </mat-form-field>
+
+            @if (isProfile) {
+            <div class="password-card">
+              <button type="button" class="password-card-toggle" (click)="togglePasswordForm()">
+                <span>Cambiar contraseña</span>
+                <span class="material-icons toggle-icon" [class.rotated]="showPasswordForm()">expand_more</span>
+              </button>
+
+              @if (showPasswordForm()) {
+                <div class="password-card-body">
+                  <mat-form-field>
+                    <mat-label>Contraseña actual</mat-label>
+                    <input type="password" matInput formControlName="currentPassword" autocomplete="current-password">
+                  </mat-form-field>
+
+                  <mat-form-field>
+                    <mat-label>Nueva contraseña</mat-label>
+                    <input type="password" matInput formControlName="newPassword" autocomplete="new-password">
+                    @if (form.get('newPassword')?.hasError('minlength')) {
+                      <mat-error>La nueva contraseña debe tener al menos 8 caracteres.</mat-error>
+                    }
+                  </mat-form-field>
+
+                  <button type="button" (click)="changePassword($event)" mat-flat-button color="accent" [disabled]="isSubmitting()">Guardar nueva contraseña</button>
+                </div>
+              }
+            </div>
             }
-          </mat-form-field>
 
-          <mat-form-field>
-            <mat-label>Nombre</mat-label>
-            <input type="text" matInput placeholder="Nombre" formControlName="name">
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Apellidos</mat-label>
-            <input type="text" matInput placeholder="Apellidos" formControlName="lastname">
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Email</mat-label>
-            <input type="email" matInput placeholder="Email" formControlName="email">
-            @if (form.get('email')?.hasError('email')) {
-              <mat-error>Introduce un email válido.</mat-error>
-            }
-          </mat-form-field>
-
-          <div class="drag-section">
+            <div class="drag-section">
             <div class="drag-block">
               <div class="drag-title">Tecnologías disponibles</div>
               <div
@@ -70,13 +99,33 @@
                 }
               </div>
             </div>
-          </div>
+            </div>
+          } @else {
+            <dl class="read-only-details">
+              <div><dt>Usuario</dt><dd>{{ form.get('username')?.value }}</dd></div>
+              <div><dt>Nombre</dt><dd>{{ form.get('name')?.value }}</dd></div>
+              <div><dt>Apellidos</dt><dd>{{ form.get('lastname')?.value }}</dd></div>
+              <div><dt>Email</dt><dd>{{ form.get('email')?.value }}</dd></div>
+            </dl>
+
+            <div class="read-only-technologies">
+              <div class="section-title">Tecnologías</div>
+              <div class="technology-tags">
+                @for (item of my_technologies(); track item.id) {
+                  <span>{{ item.name }}</span>
+                } @empty {
+                  <span class="empty-value">Sin tecnologías asignadas</span>
+                }
+              </div>
+            </div>
+          }
         </section>
 
         <section class="detail-section">
           <div class="section-title">Indicadores y productos</div>
 
-          <div class="metric-grid">
+          @if (isProfile || !form.get('id')?.value) {
+            <div class="metric-grid">
             <mat-form-field>
               <mat-label>Productos</mat-label>
               <input type="text" matInput placeholder="Productos" formControlName="countProducts">
@@ -91,7 +140,14 @@
               <mat-label>Tiempo</mat-label>
               <input type="text" matInput placeholder="Tiempo" formControlName="time">
             </mat-form-field>
-          </div>
+            </div>
+          } @else {
+            <dl class="metric-values">
+              <div><dt>Productos</dt><dd>{{ form.get('countProducts')?.value ?? 0 }}</dd></div>
+              <div><dt>Proyectos</dt><dd>{{ form.get('countProjects')?.value ?? 0 }}</dd></div>
+              <div><dt>Tiempo</dt><dd>{{ form.get('time')?.value ?? 0 }}</dd></div>
+            </dl>
+          }
 
           <div class="table-card">
             <div class="table-title">Productos asociados</div>
@@ -137,10 +193,15 @@
         <div class="footer-actions">
           @if (!form.get('id')?.value) {
             <button type="submit" (click)="create($event)" mat-flat-button color="primary" [disabled]="form.invalid">Guardar</button>
-          } @else {
+          } @else if (isProfile) {
             <div class="space-between">
               <button type="submit" (click)="update($event)" mat-flat-button color="primary" [disabled]="form.invalid">Actualizar</button>
-              <button type="submit" (click)="delete($event)" mat-flat-button color="warn" [disabled]="isSubmitting()">Eliminar</button>
+            </div>
+          } @else {
+            <div class="space-between">
+              @if (isAdmin) {
+                <button type="button" (click)="delete($event)" mat-flat-button color="warn" [disabled]="isSubmitting()">Eliminar</button>
+              }
             </div>
           }
         </div>

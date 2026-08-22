@@ -10,11 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.entities.ChangePasswordRequest;
 import com.arinno.canopus.entities.IUser;
 import com.arinno.canopus.entities.Role;
 import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
-import com.arinno.canopus.entities.UserRequest;
+import com.arinno.canopus.entities.UserProfileRequest;
 import com.arinno.canopus.repositories.RoleRepository;
 import com.arinno.canopus.repositories.UserRepository;
 
@@ -85,23 +86,35 @@ public class UserServiceImpl implements UserService{
     
     @Transactional
     @Override
-    public Optional<User> update(UserRequest user, Long id, Company company) {
+    public Optional<User> updateProfile(UserProfileRequest user, Long id) {
         Long userId = Objects.requireNonNull(id, "id must not be null");
         
-        Optional<User> userOptional = repository.findByIdAndCompany(userId, company);
+        Optional<User> userOptional = repository.findById(userId);
         
         if (userOptional.isPresent()) {
             User userDb = userOptional.get();
             userDb.setEmail(user.getEmail());
             userDb.setLastname(user.getLastname());
             userDb.setName(user.getName());
-            userDb.setUsername(user.getUsername());
-            userDb.setRoles(getRoles(user));
             userDb.setTechnologies(user.getTechnologies());
-            System.out.println(userDb.toString());
             return Optional.of(repository.save(userDb));
         }
         return Optional.empty();
+    }
+
+    @Transactional
+    @Override
+    public boolean changePassword(ChangePasswordRequest request, Long id) {
+        Long userId = Objects.requireNonNull(id, "id must not be null");
+        Optional<User> userOptional = repository.findById(userId);
+        if (userOptional.isEmpty() || !passwordEncoder.matches(request.getCurrentPassword(), userOptional.get().getPassword())) {
+            return false;
+        }
+
+        User user = userOptional.get();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        repository.save(user);
+        return true;
     }
     
     @Transactional

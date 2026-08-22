@@ -29,8 +29,12 @@ export class UserService extends ApiBaseService<User> {
     return this.httpGet<User>('/user/me');
   }
 
-  update(user: User): Observable<User> {
-    return this.httpUpdate(user.id!, user);
+  updateMe(user: Partial<User>): Observable<User> {
+    return this.httpPut<User>('/user/me', user);
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.httpPut<void>('/user/me/password', { currentPassword, newPassword });
   }
 
   create(user: User): Observable<User> {

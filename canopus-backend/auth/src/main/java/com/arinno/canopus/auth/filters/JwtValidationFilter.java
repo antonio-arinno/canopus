@@ -53,7 +53,6 @@ public class JwtValidationFilter extends BasicAuthenticationFilter {
         try{
             Claims claims = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
             String username = claims.getSubject();
-        //    String username2 = (String) claims.get("username");
             Object authoritiesClaims = claims.get("authorities");
 
             Collection<? extends GrantedAuthority> roles = Arrays.asList(new ObjectMapper()

@@ -37,13 +37,7 @@ public class Project {
 	private String reference1;
 
 	private String reference2;
-	
 
-
-	/*
-	@Enumerated(EnumType.STRING)
-	private Status status;
-	*/
 	@Column(name = "create_at")
 	@Temporal(TemporalType.DATE)
 	private LocalDate createAt;	
@@ -75,12 +69,6 @@ public class Project {
     )
 	private List<User> contributors;
 
- /*
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "project_id")	
-	private List<ImputationItem> imputationItems;	
-*/
 	@JoinColumn(nullable = false)	
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)	
@@ -191,20 +179,4 @@ public class Project {
 	public void setCompany(Company company) {
 		this.company = company;
 	}
-
-
-	
-
-	
-/*		
-	public Integer getTime() {
-		Integer time = 0;
-		if (imputationItems != null){
-			for(ImputationItem imputationItem: imputationItems) {
-				time += imputationItem.getTime();
-			}
-		}
-		return time;
-	}	
-*/ 
 }

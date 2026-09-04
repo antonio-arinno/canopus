@@ -14,10 +14,5 @@ public interface TechnologyRepository extends CrudRepository<Technology, Long> {
     public List<Technology> findByNameContainingIgnoreCaseAndCompany(String term, Company company);
 
     public void deleteByIdAndCompany(Long id, Company company);
-/*
-    @Modifying
-    @Query(value = "DELETE FROM users_technologies WHERE technology_id = :id", nativeQuery = true)
-    public void deleteRelationsByTechnologyId(@Param("id") Long id);
-*/    
 
 }

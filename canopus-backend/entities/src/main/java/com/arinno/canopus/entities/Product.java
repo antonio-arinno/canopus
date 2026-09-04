@@ -45,12 +45,6 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)		
 	private User backup;
 
-/*    
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "product" })
-	@OneToMany(fetch = FetchType.LAZY, mappedBy="product", cascade = CascadeType.ALL)
-	private List<Project> projects;	
-*/    
-
 	@JoinColumn(nullable = false)	
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "products" })
     @ManyToOne(fetch = FetchType.LAZY)	

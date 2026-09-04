@@ -8,22 +8,17 @@ import org.springframework.data.domain.Pageable;
 
 import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.ChangePasswordRequest;
-import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserListItem;
 import com.arinno.canopus.entities.UserProfileRequest;
 
 public interface UserService {
 
-    Object registrarYVerificar = null;
-
     List<User> findByCompany(Company company);
 
     Page<User> findByCompany(Company company, Pageable pageable);
 
     Page<UserListItem> findListItemsByCompany(Company company, Pageable pageable);
-
-    List<User> findByTechnologies(List<Technology> technologies);
 
     List<User> findByTechnologyAndCompany(Long technologyId, Long companyId);
 
@@ -42,7 +37,5 @@ public interface UserService {
     boolean deleteById(Long id, Company company);
 
     public List<User> findByNameContainingIgnoreCaseAndCompany(String term, Company company);
-
-    void registrarYVerificar();
 
 }

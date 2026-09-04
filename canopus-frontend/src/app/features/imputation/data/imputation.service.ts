@@ -4,6 +4,14 @@ import { Imputation } from '@core/model/imputation';
 import { ImputationSummary } from '@core/model/imputation-summary';
 import { ApiBaseService } from '@core/api/api-base.service';
 
+export interface ImputationRequest {
+  date: string;
+  items: Array<{
+    projectId: number;
+    time: number;
+  }>;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -26,11 +34,11 @@ export class ImputationService extends ApiBaseService<Imputation> {
     return this.httpGet<ImputationSummary[]>(`/imputation/project/${id}`);
   }
 
-  update(imputation: Imputation): Observable<Imputation> {
-    return this.httpUpdate(imputation.id!, imputation);
+  update(id: number, imputation: ImputationRequest): Observable<Imputation> {
+    return this.httpUpdate(id, imputation);
   }
 
-  create(imputation: Imputation): Observable<Imputation> {
+  create(imputation: ImputationRequest): Observable<Imputation> {
     return this.httpCreate(imputation);
   }
 

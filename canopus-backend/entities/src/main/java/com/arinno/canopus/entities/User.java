@@ -126,8 +126,6 @@ public class User implements IUser {
 
     public String getPassword() {return password;}
 
-//    public String giveMePassword(){return password;}
-
     public void setPassword(String password) {
         this.password = password;
     }

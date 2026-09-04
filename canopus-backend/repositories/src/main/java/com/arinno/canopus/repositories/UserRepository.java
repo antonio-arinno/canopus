@@ -12,7 +12,6 @@ import org.springframework.data.repository.CrudRepository;
 import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserListItem;
-import com.arinno.canopus.entities.Technology;
 
 
 public interface UserRepository extends CrudRepository<User, Long> {
@@ -37,8 +36,6 @@ public interface UserRepository extends CrudRepository<User, Long> {
     Optional<User> findByIdAndCompany(Long id, Company company);
 
     public List<User> findByNameContainingIgnoreCaseAndCompany(String term, Company company);
-
-    public List<User> findByTechnologies(List<Technology> technologies);
 
     @Query("select distinct u from User u join u.technologies t where t.id = ?1 and u.company.id = ?2")
     public List<User> findByTechnologyAndCompany(Long technologyId, Long companyId);

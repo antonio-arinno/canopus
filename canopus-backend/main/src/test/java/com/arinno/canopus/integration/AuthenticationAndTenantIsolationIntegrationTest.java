@@ -3,6 +3,7 @@ package com.arinno.canopus.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -44,7 +45,9 @@ class AuthenticationAndTenantIsolationIntegrationTest {
         long adminAId = currentUserId(tokenA);
         long technologyId = createTechnology(tokenA, adminAId);
         long productId = createProduct(tokenA, technologyId, adminAId);
-        createProject(tokenA, productId, adminAId);
+        long projectId = createProject(tokenA, productId, adminAId);
+        long imputationId = createImputation(tokenA, projectId);
+        updateImputation(tokenA, imputationId, projectId);
 
         mockMvc.perform(get("/user").header("Authorization", "Bearer " + tokenA))
                 .andExpect(status().isOk())
@@ -60,7 +63,7 @@ class AuthenticationAndTenantIsolationIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.length()").value(1))
             .andExpect(jsonPath("$.content[0].countProducts").value(1))
-            .andExpect(jsonPath("$.content[0].time").value(0))
+            .andExpect(jsonPath("$.content[0].time").value(6))
             .andExpect(jsonPath("$.content[0].countProjects").doesNotExist())
             .andExpect(jsonPath("$.totalElements").value(2))
             .andExpect(jsonPath("$.totalPages").value(2))
@@ -75,6 +78,13 @@ class AuthenticationAndTenantIsolationIntegrationTest {
         mockMvc.perform(get("/project/globalall").header("Authorization", "Bearer " + tokenB))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(0));
+
+        mockMvc.perform(post("/imputation")
+            .header("Authorization", "Bearer " + tokenB)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new ImputationPayload(projectId))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Proyecto no válido para la empresa."));
     }
 
         private long currentUserId(String token) throws Exception {
@@ -112,13 +122,45 @@ class AuthenticationAndTenantIsolationIntegrationTest {
         return objectMapper.readTree(result.getResponse().getContentAsString()).get(0).get("id").asLong();
         }
 
-        private void createProject(String token, long productId, long responsibleId) throws Exception {
+        private long createProject(String token, long productId, long responsibleId) throws Exception {
         String body = objectMapper.writeValueAsString(new ProjectPayload(productId, responsibleId));
         mockMvc.perform(post("/project")
             .header("Authorization", "Bearer " + token)
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
             .andExpect(status().isCreated());
+
+        MvcResult result = mockMvc.perform(get("/project/globalall").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get(0).get("id").asLong();
+        }
+
+        private long createImputation(String token, long projectId) throws Exception {
+        mockMvc.perform(post("/imputation")
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new ImputationPayload(projectId))))
+            .andExpect(status().isCreated());
+
+        MvcResult result = mockMvc.perform(get("/imputation/date/2026-09-02").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items[0].project.id").value(projectId))
+            .andExpect(jsonPath("$.items[0].time").value(8))
+            .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
+        }
+
+        private void updateImputation(String token, long imputationId, long projectId) throws Exception {
+        mockMvc.perform(put("/imputation/{id}", imputationId)
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new ImputationPayload(projectId, 6))))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/imputation/date/2026-09-02").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items[0].time").value(6));
         }
 
     private void registerCompany(String companyName, String username, String email, String password) throws Exception {
@@ -187,5 +229,17 @@ class AuthenticationAndTenantIsolationIntegrationTest {
         public String getDescription() { return "Integration test project"; }
         public String getDateDev() { return "2026-09-02"; }
         public long[] getContributorIds() { return new long[0]; }
+    }
+
+    private record ImputationPayload(long projectId, int time) {
+        public ImputationPayload(long projectId) {
+            this(projectId, 8);
+        }
+
+        public String getDate() { return "2026-09-02"; }
+        public Object[] getItems() { return new Object[] { new ImputationItemPayload(projectId, time) }; }
+    }
+
+    private record ImputationItemPayload(long projectId, int time) {
     }
 }

@@ -10,11 +10,10 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Imputation } from '@core/model/imputation';
-import { ImputationItem } from '@core/model/imputation-item';
 import { Product } from '@core/model/product';
 import { Project } from '@core/model/project';
 import { AuthService } from '@core/auth/auth.service';
-import { ImputationService } from '@features/imputation/data/imputation.service';
+import { ImputationRequest, ImputationService } from '@features/imputation/data/imputation.service';
 import { ProductService } from '@features/product/data/product.service';
 import { MatSelectModule } from '@angular/material/select';
 import { ProjectService } from '@features/project/data/project.service';
@@ -51,9 +50,7 @@ export class ImputationDetailComponent {
   imputationForm!: FormGroup;
   imputationItemForm!: FormGroup;
   imputation!: Imputation;
-  imputationItem!: ImputationItem;
   product!: Product;
-  project!: Project;
 
   products: WritableSignal<Product[]> = signal([]);
 
@@ -202,8 +199,7 @@ export class ImputationDetailComponent {
         this.formStateService.setError('Debes completar la fecha y al menos una fila valida.');
         return;
       }
-      this.imputation = payload;
-      this.imputationService.create(this.imputation).subscribe({
+      this.imputationService.create(payload).subscribe({
         next: () => {
           this.formStateService.setSuccess('Imputación creada con éxito.');
           this.router.navigateByUrl('/pvt/imputation');
@@ -225,8 +221,12 @@ export class ImputationDetailComponent {
         this.formStateService.setError('Debes completar la fecha y al menos una fila valida.');
         return;
       }
-      this.imputation = payload;
-      this.imputationService.update(this.imputation).subscribe({
+      const id = this.imputationForm.getRawValue().id;
+      if (typeof id !== 'number') {
+        this.formStateService.setError('No se pudo identificar la imputación a actualizar.');
+        return;
+      }
+      this.imputationService.update(id, payload).subscribe({
         next: () => {
           this.formStateService.setSuccess('Imputación actualizada con éxito.');
           this.router.navigateByUrl('/pvt/imputation');
@@ -237,26 +237,6 @@ export class ImputationDetailComponent {
         },
       });      
     }    
-  }
-
-  loadItem(itemForm: any): void{
-    this.imputationItem = new ImputationItem();
-    this.imputationItem.id = itemForm.id;
-    this.project = new Project();
-    this.project.id = itemForm.projectId; //no es necesario para el create
-    this.imputationItem.project = this.project;
-    this.imputationItem.time = itemForm.time;
-    this.imputation.items.push(this.imputationItem);    
-  }
-
-  updateItem(itemForm: any): Boolean{
-    for(let item of this.imputation.items){
-      if(item.project.id==itemForm.projectId){
-        item.time = item.time + itemForm.time;  
-        return true;
-      }
-    }
-    return false;
   }
 
   delete(event: Event): void {
@@ -275,7 +255,7 @@ export class ImputationDetailComponent {
     }
   }     
 
-  private buildImputationPayload(): Imputation | null {
+  private buildImputationPayload(): ImputationRequest | null {
     const payload = this.imputationForm.getRawValue();
     const date = this.normalizeDate(payload.date);
     const items = payload.imputationItemForm as Array<{ id?: number; projectId?: number; time?: number }>;
@@ -284,25 +264,22 @@ export class ImputationDetailComponent {
       return null;
     }
 
-    const imputation = new Imputation();
-    imputation.id = payload.id;
-    imputation.date = date;
-    this.imputation = imputation;
-
+    const mergedItems = new Map<number, number>();
     for (const item of items) {
       if (!item?.projectId || !item?.time) {
         continue;
       }
-      if (!this.updateItem(item)) {
-        this.loadItem(item);
-      }
+      mergedItems.set(item.projectId, (mergedItems.get(item.projectId) ?? 0) + item.time);
     }
 
-    if (imputation.items.length === 0) {
+    if (mergedItems.size === 0) {
       return null;
     }
 
-    return imputation;
+    return {
+      date,
+      items: Array.from(mergedItems, ([projectId, time]) => ({ projectId, time })),
+    };
   }
 
   private normalizeDate(value: unknown): string | null {

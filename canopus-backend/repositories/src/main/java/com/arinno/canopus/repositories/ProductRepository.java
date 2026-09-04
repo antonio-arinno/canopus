@@ -14,14 +14,10 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
     public List<Product> findByCompany(Company company);
 
-    public List<Product> findByResponsible(User user);
-
     public List<Product> findByResponsibleAndCompany(User user, Company company);
 
     @Query("select p from Product p where (p.responsible.id = ?1 or p.backup.id = ?1) and p.company.id = ?2")
     public List<Product> findByResponsibleOrBackupAndCompany(Long userId, Long companyId);
-
-    public List<Product> findByTechnology(Technology technology);
 
     public List<Product> findByTechnologyAndCompany(Technology technology, Company company);
 
@@ -33,14 +29,6 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
     @Query("select p from Product p left join Project pr on p.id = pr.product.id left join pr.contributors prc where (prc.id = ?1 or p.responsible.id = ?1) and p.company.id = ?2")
 	public List<Product> findByContributorAndCompany(Long id, Long id2);
-
-/*
-    @Query("select p from Product p left join p.projects pr on p.id = pr.product.id left join pr.contributors prc where prc.id = ?1 and pr.status <> Status.PRODUCTION and p.company.id = ?2")
-	public List<Product> findByNotProductionAndContributorAndCompany(Long id, Long company_id);
-
-    @Query("select p from Product p left join p.projects pr on p.id = pr.product.id left join pr.contributors prc where prc.id = ?1 and pr.status <> Status.PRODUCTION")
-	public List<Product> findByNotProductionAndContributor(Long id);
-*/
     public Integer countByResponsible(User responsible);
 
     public Integer countByTechnology(Technology technology);

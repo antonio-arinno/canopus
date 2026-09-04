@@ -12,7 +12,6 @@ import {FormControl, ReactiveFormsModule} from '@angular/forms';
 import { Product } from '@core/model/product';
 import { ProductService } from '@features/product/data/product.service';
 import { ProductListViewService } from '@features/product/data/product-list-view.service';
-import { TechnologyService } from '@features/technology/data/technology.service';
 import { Technology } from '@core/model/technology';
 import { ModelMapperService } from '@core/model/model-mapper.service';
 import { RequestStateService } from '@core/ui/request-state.service';
@@ -30,7 +29,6 @@ export class ProductComponent implements OnInit {
 
   accordion = viewChild.required(MatAccordion);
 
-  technologyService = inject(TechnologyService);
   productService = inject(ProductService);
   productListViewService = inject(ProductListViewService);
   modelMapperService = inject(ModelMapperService);
@@ -44,29 +42,6 @@ export class ProductComponent implements OnInit {
   readonly emptyMessage = 'No products found.';
 
   displayedColumns: string[] = ['name', 'description', 'responsible', 'backup', 'time'];
-//  dataSource = this.technologies;
-  booksToDisplay: any;
-/*
-  ngOnInit(): void {
-    this.technologyService.getAll().subscribe({
-      next: (res: Technology[]) => {
-        let technologiesTmp = res.map(function (technology){
-          let technologyTmp = { ...technology }
-          technologyTmp.products = [];
-          technology.products.map(function (product){
-            let productTmp = { ...product }
-            productTmp.projects = []
-            technologyTmp.products.push(Product.fromObject(product))
-          }) 
-          return Technology.fromObject(technologyTmp);
-        });
-        this.technologies.set(technologiesTmp);  
-        console.log(this.technologies());     
-      },
-      error: (err: any) => console.log(err),
-    });
-  }  
-*/
 
   ngOnInit(): void {
 

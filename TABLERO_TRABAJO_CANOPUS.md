@@ -1,6 +1,6 @@
 # Tablero de trabajo de Canopus
 
-Estado actualizado: 2026-08-30.
+Estado actualizado: 2026-09-04.
 
 ## Prioridad 1: Seguridad
 
@@ -17,7 +17,7 @@ Estado actualizado: 2026-08-30.
 | Tarea | Estado actualizado | Evidencia |
 |---|---|---|
 | Crear DTOs para proyectos y tecnologías | Hecho | Existen `ProjectRequest` y `TechnologyRequest`. |
-| No aceptar entidades JPA directamente | Hecho para proyectos y tecnologías | Sus `POST` y `PUT` reciben DTOs planos; aún queda aplicar el criterio a imputaciones. |
+| No aceptar entidades JPA directamente | Hecho | Productos, proyectos, tecnologías e imputaciones reciben DTOs planos; `ImputationRequest` resuelve cada `projectId` dentro de la compañía autenticada. |
 | Centralizar mapeadores | Hecho | Nuevo paquete `controllers.mapper` (`ProductMapper`, `ProjectMapper`, `TechnologyMapper`, `UserMapper`, `ImputationMapper`) concentra toda la conversión entidad↔respuesta; los controladores ya no construyen DTOs de respuesta directamente. |
 | Normalizar formato de errores | Hecho | `ErrorResponseFactory` + `ErrorMessage` (`timestamp`, `status`, `error`, `message`, `fieldErrors`) unifican `ResponseStatusException`, `CustomException`, las excepciones de integridad, la validación automática de `@Valid` y las respuestas manuales de `UserController`/`AuthController`. |
 | Añadir validaciones de relaciones y pertenencia a empresa | Hecho para proyectos y tecnologías | Producto, responsable y colaboradores se resuelven por ID dentro de la compañía autenticada. |
@@ -41,8 +41,9 @@ Estado actualizado: 2026-08-30.
 | Crear pruebas de integración | Hecho | `AuthenticationAndTenantIsolationIntegrationTest` valida por HTTP con H2: registro de dos empresas, login/JWT, permisos de administrador, alta de usuario, creación de tecnología/producto/proyecto y aislamiento entre empresas. |
 | Añadir paginación | Parcialmente hecho | Usuarios usa `/user/page?page={page}&size={size}` con límites de 1-100, metadatos estables en `PageResponse` y `MatPaginator`. Pendiente extender el contrato a producto, proyecto y tecnología, cuyos listados agrupan resultados antes de renderizarlos. |
 | Revisar consultas N+1 | Parcialmente hecho | La lista paginada de usuarios usa `UserListItem`: una proyección agregada calcula `countProducts` y `time` dentro de la consulta paginada, sin `countProjects` no mostrado. Pendiente revisar productos, proyectos y tecnologías. |
-| Sustituir contadores individuales por proyecciones agregadas | Pendiente | Siguen existiendo cálculos y consultas separadas para cada producto, proyecto o tecnología. |
-| Añadir CI para build y tests | Pendiente | No hay pipeline automático de compilación y pruebas. |
+| Sustituir contadores individuales por proyecciones agregadas | Parcialmente hecho | En `user`, `/user/page` usa la proyección `UserListItem` y `findListItemsByCompany` para calcular `countProducts` y `time` en la consulta paginada, eliminando llamadas por usuario. Pendiente aplicarlo a producto, proyecto y tecnología. |
+| Eliminar código antiguo, comentado y métodos sin uso | Hecho | Retirados endpoints de prueba, generador de imputaciones de 2023, métodos no multiempresa sin referencias, servicios que devolvían `null`, archivos `util` vacíos y bloques comentados obsoletos de backend/frontend. |
+| Añadir CI para build y tests | Hecho | `.github/workflows/ci.yml` ejecuta en cada push/PR a `master` los tests Maven con Java 21 y el build Angular con Node.js 22 y `npm ci`. Validado localmente; la primera ejecución en GitHub se producirá en el próximo `git push`. |
 
 ## Prioridad 5: Organización del backend por dominio
 

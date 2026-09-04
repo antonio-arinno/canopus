@@ -41,11 +41,7 @@ public class Technology {
 
     @Transient
     private Integer countProducts;
-/*
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "technology" })
-	@OneToMany(fetch = FetchType.LAZY, mappedBy="technology", cascade = CascadeType.ALL)
-	private List<Product> products;	
-*/
+
     @JoinColumn(nullable = false)	
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)	
@@ -90,18 +86,6 @@ public class Technology {
     public void setResponsible(User responsible) {
         this.responsible = responsible;
     }
-/*
-    public List<Product> getProducts() {
-        return products;
-    }
-
-    public void setProducts(List<Product> products) {
-        this.products = products;
-    }
-*/
-//    public Company getCompany() { return company;}
-
-
 
     public void setCompany(Company company) {
         this.company = company;

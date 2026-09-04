@@ -43,7 +43,6 @@ public class TechnologyService implements ITechnologyService {
     @Override
     @Transactional
     public void deleteByIdAndCompany(Long id, Company company) {
-//        technologyRepository.deleteRelationsByTechnologyId(id);
         technologyRepository.deleteByIdAndCompany(id, company);
     }
 

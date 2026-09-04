@@ -44,33 +44,6 @@ export class ProjectComponent {
   readonly errorMessage = this.requestStateService.errorMessage;
   readonly emptyMessage = 'No projects found.';
 
-/*
-  ngOnInit(): void {
-    this.technologyService.getAll().subscribe({
-      next: (res: Technology[]) => {
-        let technologiesTmp = res.map(function (technology){
-          let technologyTmp = { ...technology }
-          technologyTmp.products = [];
-          technology.products.map(function (product){
-            let productTmp = { ...product }
-            productTmp.projects = []
-            technologyTmp.products.push(Product.fromObject(productTmp))
-            product.projects.map(function (project){
-              productTmp.projects.push(Project.fromObject(project))
-            })
-          }) 
-          return Technology.fromObject(technologyTmp);
-        });
-        this.technologies.set(technologiesTmp);     
-      },
-      error: (err: any) => {
-        this.error = err.error.error;
-        this.message = err.error.message;
-        this.message2 = err.message;
-      },
-    });
-  }  
-*/
   ngOnInit(): void {
     this.projectList();
 
@@ -128,59 +101,3 @@ export class ProjectComponent {
   }
 
 }
-
-
-
-/*
-updateList(){
-  this.technologiesTmp = [];
-  let exist = false;
-  
-  for (let project of this.projects) {
-    exist = false;
-    for (let technology of this.technologiesTmp) {
-      if (project.technology.id === technology.id){
-//          technology.products.push(product)
-        exist = true;
-      }
-    }
-    if (!exist){
-      this.projectsTmp = [];
-      this.projectsTmp.push({
-        id: project.id,
-        name: project.name,
-        description: project.description,
-        product: new Product,
-        technology: new Technology,
-        status: Status.Development,
-        responsible: new User,
-        contributors: [],
-        time: 0,
-        getCountContributors: function (): number {
-          throw new Error('Function not implemented.');
-        }
-      })
-
-      this.productsTmp = [];
-      this.productsTmp.push({
-        id: project.product.id,
-        name: project.product.name,
-        description: '',
-        technology: new Technology,
-        responsible: new User,
-        countProjects: NaN,
-        projects: this.projectsTmp
-
-      });
-      
-      this.technologiesTmp.push({
-        id: project.technology.id,
-        name: project.technology.name,
-        description: '',
-        responsible: new User,
-        countProducts: NaN,
-        products: this.productsTmp
-      });
-    }
-  }
-    */

@@ -35,28 +35,3 @@ export class Product {
     return productRef;
   }
 }
-/* 
-  getTime():number {      
-    let time = 0;
-    this.projects.forEach((item: Project) => {
-      time += item.time;
-    });
-    return time;
-  }
-
-  getCountProjects():number {      
-    return this.projects.length;
-  }
-
-  getCountContributors(): number {
-    let contributors: Array<number> = [];
-    this.projects.forEach((project: Project) => {
-      project.contributors.forEach((user: User) => {
-        if (!contributors.includes(user.id)) {
-          contributors.push(user.id);
-        }
-      })
-    });
-    return contributors.length;
-  }
-*/

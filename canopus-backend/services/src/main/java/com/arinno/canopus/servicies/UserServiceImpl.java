@@ -15,7 +15,6 @@ import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.ChangePasswordRequest;
 import com.arinno.canopus.entities.IUser;
 import com.arinno.canopus.entities.Role;
-import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserListItem;
 import com.arinno.canopus.entities.UserProfileRequest;
@@ -36,13 +35,7 @@ public class UserServiceImpl implements UserService{
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
     }
-/*
-    @Override
-    @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return (List) this.repository.findAll();
-    }
- */
+
     @Override
     @Transactional(readOnly = true)
     public List<User> findByCompany(Company company) {
@@ -138,7 +131,6 @@ public class UserServiceImpl implements UserService{
     private List<Role> getRoles(IUser user) {
         List<Role> roles = new ArrayList<>();
         Optional<Role> optionalRoleUser = roleRepository.findByName("ROLE_USER");
-    //        optionalRoleUser.ifPresent(role -> roles.add(role));
         optionalRoleUser.ifPresent(roles::add);
     
         if(user.isAdmin()){
@@ -153,10 +145,6 @@ public class UserServiceImpl implements UserService{
 	@Transactional
 	public List<User> findByNameContainingIgnoreCaseAndCompany(String term, Company company) {
 		return repository.findByNameContainingIgnoreCaseAndCompany(term, company);
-	}
-    @Override
-    public List<User> findByTechnologies(List<Technology> technologies) {
-        return repository.findByTechnologies(technologies);
     }
 
     @Override
@@ -164,18 +152,5 @@ public class UserServiceImpl implements UserService{
     public List<User> findByTechnologyAndCompany(Long technologyId, Long companyId) {
         return repository.findByTechnologyAndCompany(technologyId, companyId);
     }
-
-    public void registrarYVerificar() {
-        String passwordPlana = "12345";
-
-        // Generar el hash para guardar en la base de datos
-        String passwordHash = passwordEncoder.encode(passwordPlana);
-        System.out.println("Hash generado: " + passwordHash);
-
-        // Verificación correcta al iniciar sesión
-        boolean esValida = passwordEncoder.matches(passwordPlana, passwordHash);
-        System.out.println("¿La contraseña coincide?: " + esValida);
-    }
-
 
 }

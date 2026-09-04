@@ -1,6 +1,5 @@
 package com.arinno.canopus.servicies;
 
-//import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -13,17 +12,11 @@ public interface IProjectService {
 
     public List<Project> findByCompany(Company company);
 
-	public List<Project> findByResponsible(User responsible);
-
-	public List<Project> findByResponsibleAndDateProIsNull(User responsible);
-
 	public List<Project> findByResponsibleAndCompany(User responsible, Company company);
 
 	public List<Project> findByResponsibleAndCompanyAndDateProIsNull(User responsible, Company company);
 
 	public List<Project> findByCompanyAndDateProIsNull(Company company);
-
-	public List<Project> findByProduct(Product product);
 
 	public List<Project> findByProductAndCompany(Product product, Company company);
 	
@@ -34,8 +27,6 @@ public interface IProjectService {
 	public void deleteByIdAndCompany(Long id, Company company);
 	
 	public List<Project> findByNameContainingIgnoreCaseAndCompany(String term, Company company);	
-
-	public List<Project> findByContributorAndNotProduction(Long id);
 
 	public List<Project> findByContributorAndNotProductionAndCompany(Long id, Long companyId);
 
@@ -48,8 +39,6 @@ public interface IProjectService {
     public Integer countContributorsByProduct(Long id);
 
 	public Integer countContributorsByTechnology(Long id);
-
-	List<Project> findByContributorOpenDate(Long id, LocalDate date);
 
 	List<Project> findByContributorOpenDateAndCompany(Long id, LocalDate date, Long companyId);
 

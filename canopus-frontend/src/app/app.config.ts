@@ -6,11 +6,9 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { tokenInterceptor } from '@core/auth/interceptors/token.interceptor';
 
-// 1. Importaciones para el idioma (Español)
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
 
-// 2. Registramos los datos de cultura de España
 registerLocaleData(localeEs);
 
 export const appConfig: ApplicationConfig = {

@@ -59,7 +59,6 @@ public class ImputationServiceImpl implements IImputationService {
 	public Integer timeByProject(Project project) {
 		Integer result = imputationRepository.timeByProject(project.getId());
 		return (result == null) ? 0 : result; 	
-	//	return (imputationRepository.timeByProject(project.getId()) == null) ? 0 : imputationRepository.timeByProject(project.getId()); 	
 	}	
 
 	@Override

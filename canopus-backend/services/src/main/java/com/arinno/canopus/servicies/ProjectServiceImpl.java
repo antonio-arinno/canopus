@@ -1,6 +1,5 @@
 package com.arinno.canopus.servicies;
 
-//import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -29,16 +28,6 @@ public class ProjectServiceImpl implements IProjectService {
 		return projectRepository.findByCompany(company);
 	}
 	
-	@Override
-	public List<Project> findByResponsible(User responsible) {
-		return projectRepository.findByResponsible(responsible);
-	}
-
-	@Override
-	public List<Project> findByResponsibleAndDateProIsNull(User responsible) {
-		return projectRepository.findByResponsibleAndDateProIsNull(responsible);
-	}
-
 	@Override
 	public List<Project> findByResponsibleAndCompany(User responsible, Company company) {
 		return projectRepository.findByResponsibleAndCompany(responsible, company);
@@ -77,19 +66,7 @@ public class ProjectServiceImpl implements IProjectService {
 	public List<Project> findByNameContainingIgnoreCaseAndCompany(String term, Company company) {
 		return projectRepository.findByNameContainingIgnoreCaseAndCompany(term, company);
 	}
-/*
-	@Override
-	@Transactional
-	public List<Project> findByStatus(Status status) {
-		return projectRepository.findByStatus(status);
-	}
 
-	@Override
-	@Transactional
-	public List<Project> findByStatusNotProduction() {
-		return projectRepository.findByStatusNotProduction(Status.PRODUCTION);
-	}
-*/
 	@Override
 	@Transactional
 	public Integer countByResponsible(User responsible) {
@@ -100,16 +77,6 @@ public class ProjectServiceImpl implements IProjectService {
 	@Transactional
 	public Integer countByProduct(Product product) {
 		return projectRepository.countByProduct(product);
-	}
-
-	@Override
-	public List<Project> findByContributorAndNotProduction(Long id) {
-		return projectRepository.findByContributorAndNotProduction(id);
-	}
- 
-	@Override
-	public List<Project> findByContributorOpenDate(Long id, LocalDate date) {
-		return projectRepository.findByContributorOpenDate(id, date);
 	}
 
 	@Override
@@ -125,12 +92,6 @@ public class ProjectServiceImpl implements IProjectService {
 	@Override
 	public Integer countContributorsByTechnology(Long id) {
 		return projectRepository.countContributorsByTechnology(id).size();
-	}
-
-	@Override
-	@Transactional
-	public List<Project> findByProduct(Product product) {
-		return projectRepository.findByProduct(product);
 	}
 
 	@Override

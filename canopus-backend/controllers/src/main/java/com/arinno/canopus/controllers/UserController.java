@@ -143,11 +143,4 @@ public class UserController {
 	public List<UserResponse> listSelection(@PathVariable String term, @RequestHeader(value="Authorization") String auth){	
         return service.findByNameContainingIgnoreCaseAndCompany(term, jwtService.getCompanyFromToken(auth)).stream().map(userMapper::toDetail).toList();
 	}	
-
-    @GetMapping("/message")
-    public String getMessage(){
-        System.out.println("klj");
-        return "Hola Mundo 2";
-    }   
-  
 }

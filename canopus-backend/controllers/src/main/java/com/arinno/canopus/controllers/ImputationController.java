@@ -2,8 +2,6 @@ package com.arinno.canopus.controllers;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -23,11 +21,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.arinno.canopus.controllers.mapper.ImputationMapper;
+import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.Imputation;
+import com.arinno.canopus.entities.ImputationRequest;
 import com.arinno.canopus.entities.ImputationResponse;
+import com.arinno.canopus.entities.Project;
 import com.arinno.canopus.error.CustomException;
 import com.arinno.canopus.servicies.IImputationService;
+import com.arinno.canopus.servicies.IProjectService;
 import com.arinno.canopus.servicies.JwtService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/imputation")
@@ -39,10 +43,14 @@ public class ImputationController {
 
 	private final ImputationMapper imputationMapper;
 
-	ImputationController(IImputationService imputationService, JwtService jwtService, ImputationMapper imputationMapper) {
+	private final IProjectService projectService;
+
+	ImputationController(IImputationService imputationService, JwtService jwtService, ImputationMapper imputationMapper,
+			IProjectService projectService) {
 		this.imputationService = imputationService;
 		this.jwtService = jwtService;
 		this.imputationMapper = imputationMapper;
+		this.projectService = projectService;
 	}
 
 	@GetMapping	
@@ -77,37 +85,9 @@ public class ImputationController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public void create(@RequestBody Imputation imputation, @RequestHeader(value="Authorization") String auth) throws CustomException {
+	public void create(@Valid @RequestBody ImputationRequest request, @RequestHeader(value="Authorization") String auth) throws CustomException {
 		try {
-			imputation.setUser(jwtService.getUserFromToken(auth));
-			imputationService.save(imputation);
-		} catch (Exception e) {
-			throw new CustomException(e.getMessage());
-		}
-	}
-	
-	@GetMapping("/createcal")
-	@ResponseStatus(HttpStatus.CREATED)
-	public void createCal(@RequestHeader(value="Authorization") String auth) {
-
-		ZoneId defaultZoneId = ZoneId.systemDefault();
-		for (LocalDate day = LocalDate.parse("2023-01-01"); day.getYear() < 2024; day = day.plusDays(1)) {
-			Imputation imputation = new Imputation();
-			imputation.setUser(jwtService.getUserFromToken(auth));
-			imputation.setDate(Date.from(day.atStartOfDay(defaultZoneId).toInstant()));
-			imputationService.save(imputation);
-		}
-	}
-
-	@PutMapping("/{id}")
-	@ResponseStatus(HttpStatus.CREATED)
-	public void update(@RequestBody Imputation imputation, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) throws CustomException {
-		try {
-			Imputation imputationDb = imputationService.findByIdAndUser(id, jwtService.getUserFromToken(auth))
-					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imputación no encontrada."));
-			imputationService.deleteByIdAndUser(imputationDb.getId(), jwtService.getUserFromToken(auth));
-			imputation.setId(null);
-			imputation.getItems().forEach(item -> item.setId(null));
+			Imputation imputation = toCompanyScopedImputation(request, auth);
 			imputation.setUser(jwtService.getUserFromToken(auth));
 			imputationService.save(imputation);
 		} catch (ResponseStatusException e) {
@@ -115,6 +95,35 @@ public class ImputationController {
 		} catch (Exception e) {
 			throw new CustomException(e.getMessage());
 		}
+	}
+	
+	@PutMapping("/{id}")
+	@ResponseStatus(HttpStatus.CREATED)
+	public void update(@Valid @RequestBody ImputationRequest request, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) throws CustomException {
+		try {
+			Imputation imputationDb = imputationService.findByIdAndUser(id, jwtService.getUserFromToken(auth))
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imputación no encontrada."));
+			Imputation imputation = toCompanyScopedImputation(request, auth);
+			imputationService.deleteByIdAndUser(imputationDb.getId(), jwtService.getUserFromToken(auth));
+			imputation.setUser(jwtService.getUserFromToken(auth));
+			imputationService.save(imputation);
+		} catch (ResponseStatusException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new CustomException(e.getMessage());
+		}
+	}
+
+	private Imputation toCompanyScopedImputation(ImputationRequest request, String auth) {
+		Company company = jwtService.getCompanyFromToken(auth);
+		List<Project> projects = request.getItems().stream().map(item -> {
+			Project project = projectService.findByIdAndCompany(item.getProjectId(), company);
+			if (project == null || project.getId() == null) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Proyecto no válido para la empresa.");
+			}
+			return project;
+		}).toList();
+		return imputationMapper.toEntity(request, projects);
 	}
 
 	@DeleteMapping("/{id}")

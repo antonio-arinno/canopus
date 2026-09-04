@@ -13,10 +13,9 @@ Lanzar mysql server siempre que se levante la instacion de EC2: sudo systemctl e
 
 MySQL:
 sudo mysql
-use mysql
-select host, user, authentication_string from user;
-create user 'canopus'@'%' identified with caching_sha2_password by 'canopus123';
-grant all privileges on *.* to 'canopus'@'%';
+CREATE DATABASE IF NOT EXISTS db_canopus;
+CREATE USER 'canopus'@'localhost' IDENTIFIED BY 'DEFINE_UNA_CONTRASENA_SEGURA';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, DROP, REFERENCES ON db_canopus.* TO 'canopus'@'localhost';
 flush privileges;
 exit
 cd /etc/mysql/mysql.conf.d

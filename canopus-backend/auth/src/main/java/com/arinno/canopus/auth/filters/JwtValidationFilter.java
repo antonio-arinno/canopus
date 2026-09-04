@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -29,9 +31,11 @@ import jakarta.servlet.http.HttpServletResponse;
 
 
 public class JwtValidationFilter extends BasicAuthenticationFilter {
+    private final SecretKey secretKey;
 
-    public JwtValidationFilter(AuthenticationManager authenticationManager){
+    public JwtValidationFilter(AuthenticationManager authenticationManager, SecretKey secretKey){
         super(authenticationManager);
+        this.secretKey = secretKey;
     }
 
     @Override
@@ -47,7 +51,7 @@ public class JwtValidationFilter extends BasicAuthenticationFilter {
 
         String token = header.replace(PREFIX_TOKEN, "");
         try{
-            Claims claims = Jwts.parser().verifyWith(SECRET_KEY).build().parseSignedClaims(token).getPayload();
+            Claims claims = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
             String username = claims.getSubject();
         //    String username2 = (String) claims.get("username");
             Object authoritiesClaims = claims.get("authorities");

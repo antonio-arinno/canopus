@@ -24,7 +24,7 @@ import {
 
 import { Observable, concat, map, mergeMap, startWith } from 'rxjs';
 
-import { ProjectService } from '@features/project/data/project.service';
+import { ProjectRequest, ProjectService } from '@features/project/data/project.service';
 import { UserService } from '@features/user/data/user.service';
 import { Project } from '@core/model/project';
 import { Product } from '@core/model/product';
@@ -218,12 +218,14 @@ export class ProjectDetailComponent implements OnInit {
   }    
 
   private _getAll(): Observable<Product[]> {
-    return this.productService.getByResponsibleMe();
+    return this.productService.getByResponsibleOrBackupMe();
   }  
 
   private _filter(value: string): Observable<Product[]> {
     const filterValue = value.toLowerCase();
-    return this.productService.getSelection(filterValue);
+    return this._getAll().pipe(
+      map(products => products.filter(product => product.name.toLowerCase().includes(filterValue)))
+    );
   }  
 
   displayFn(product: Product): string {
@@ -275,7 +277,12 @@ export class ProjectDetailComponent implements OnInit {
         this.formStateService.setError('Debes seleccionar Producto y Responsable desde la lista.');
         return;
       }
-      this.projectService.update(payload as Project).subscribe({
+      const id = this.form.getRawValue().id;
+      if (typeof id !== 'number') {
+        this.formStateService.setError('No se pudo identificar el proyecto a actualizar.');
+        return;
+      }
+      this.projectService.update(id, payload).subscribe({
         next: (res: any) => {
           this.formStateService.setSuccess('Proyecto actualizado con éxito.');
           this.router.navigateByUrl('/pvt/project');
@@ -297,7 +304,7 @@ export class ProjectDetailComponent implements OnInit {
         this.formStateService.setError('Debes seleccionar Producto y Responsable desde la lista.');
         return;
       }
-      this.projectService.create(payload as Project).subscribe({
+      this.projectService.create(payload).subscribe({
         next: (res: any) => {
           this.formStateService.setSuccess('Proyecto creado con éxito.');
           this.router.navigateByUrl('/pvt/project');
@@ -326,7 +333,7 @@ export class ProjectDetailComponent implements OnInit {
     }
   }     
 
-  private buildProjectPayload(): Partial<Project> | null {
+  private buildProjectPayload(): ProjectRequest | null {
     const raw = this.form.getRawValue();
     const productId = this.extractEntityId(raw.product);
     const responsibleId = this.extractEntityId(raw.responsible);
@@ -342,8 +349,7 @@ export class ProjectDetailComponent implements OnInit {
       .map((user) => this.extractEntityId(user))
       .filter((id): id is number => id !== null);
 
-    const projectPayload: Partial<Project> = {
-      id: raw.id,
+    return {
       name: raw.name,
       description: raw.description,
       reference1: raw.reference1,
@@ -351,17 +357,10 @@ export class ProjectDetailComponent implements OnInit {
       dateDev,
       datePre,
       datePro,
-      product: { id: productId } as Product,
-      responsible: { id: responsibleId } as User,
-      contributors: contributorIds.map((id) => ({ id } as User)),
+      productId,
+      responsibleId,
+      contributorIds,
     };
-
-    const technologyId = this.extractEntityId(raw.product?.technology);
-    if (technologyId) {
-      projectPayload.technology = { id: technologyId } as any;
-    }
-
-    return projectPayload;
   }
 
   private extractEntityId(value: unknown): number | null {

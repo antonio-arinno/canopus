@@ -14,7 +14,7 @@ import { map, mergeMap, Observable, startWith } from 'rxjs';
 import { User } from '@core/model/user';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatTableModule } from '@angular/material/table';
-import { TechnologyService } from '@features/technology/data/technology.service';
+import { TechnologyRequest, TechnologyService } from '@features/technology/data/technology.service';
 import { ProductService } from '@features/product/data/product.service';
 import { Technology } from '@core/model/technology';
 import { ModelMapperService } from '@core/model/model-mapper.service';
@@ -137,8 +137,7 @@ export class TechnologyDetailComponent {
         this.formStateService.setError('Debes seleccionar Responsable desde la lista.');
         return;
       }
-      this.technology = Technology.fromObject(payload);
-      this.technologyService.create(this.technology).subscribe({
+      this.technologyService.create(payload).subscribe({
         next: (res: any) => {
           this.formStateService.setSuccess('Tecnología creada con éxito.');
           this.router.navigateByUrl('/pvt/technology');
@@ -177,8 +176,12 @@ export class TechnologyDetailComponent {
         this.formStateService.setError('Debes seleccionar Responsable desde la lista.');
         return;
       }
-      this.technology = Technology.fromObject(payload);
-      this.technologyService.update(this.technology).subscribe({
+      const id = this.form.getRawValue().id;
+      if (typeof id !== 'number') {
+        this.formStateService.setError('No se pudo identificar la tecnología a actualizar.');
+        return;
+      }
+      this.technologyService.update(id, payload).subscribe({
         next: (res: any) => {
           this.formStateService.setSuccess('Tecnología actualizada con éxito.');
           this.router.navigateByUrl('/pvt/technology');
@@ -191,7 +194,7 @@ export class TechnologyDetailComponent {
     }
   } 
 
-  private buildTechnologyPayload(): Partial<Technology> | null {
+  private buildTechnologyPayload(): TechnologyRequest | null {
     const raw = this.form.getRawValue();
     const responsibleId = this.extractEntityId(raw.responsible);
 
@@ -200,10 +203,9 @@ export class TechnologyDetailComponent {
     }
 
     return {
-      id: raw.id,
       name: raw.name,
       description: raw.description,
-      responsible: { id: responsibleId } as User,
+      responsibleId,
     };
   }
 

@@ -42,7 +42,7 @@
             <mat-label>Responsable</mat-label>
             <input type="text" matInput formControlName="responsible" [matAutocomplete]="autoResponsible">
             <mat-autocomplete #autoResponsible="matAutocomplete" [displayWith]="displayFn">
-              <mat-option *ngFor="let user of filteredUsers | async" [value]="user">
+              <mat-option *ngFor="let user of filteredResponsibleUsers | async" [value]="user">
                 {{user.name}}
               </mat-option>
             </mat-autocomplete>
@@ -50,9 +50,9 @@
 
           <mat-form-field>
             <mat-label>Backup</mat-label>
-            <input type="text" matInput formControlName="backup" [matAutocomplete]="autoResponsible">
-            <mat-autocomplete #autoResponsible="matAutocomplete" [displayWith]="displayFn">
-              <mat-option *ngFor="let user of filteredUsers | async" [value]="user">
+            <input type="text" matInput formControlName="backup" [matAutocomplete]="autoBackup">
+            <mat-autocomplete #autoBackup="matAutocomplete" [displayWith]="displayFn">
+              <mat-option *ngFor="let user of filteredBackupUsers | async" [value]="user">
                 {{user.name}}
               </mat-option>
             </mat-autocomplete>

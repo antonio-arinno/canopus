@@ -6,8 +6,9 @@ Aplicación web multiempresa para la gestión de proyectos de software: tiempos,
 
 - **Frontend**: Angular 19, standalone components, Angular Material. Carpeta `canopus-frontend`.
 - **Backend**: Spring Boot 3.5.16, Java 21, Maven multi-módulo. Carpeta `canopus-backend`.
-- **Base de datos**: MySQL, base de datos `db_canopus`.
+- **Base de datos**: MySQL, base de datos `db_canopus`. Migraciones gestionadas con Flyway (`db/migration/V1__initial_schema.sql`), con `spring.jpa.hibernate.ddl-auto=validate` en entorno dev.
 - **Autenticación**: JWT (login emite token; `JwtValidationFilter` reconstruye la sesión en cada petición).
+- **Clave JWT**: se carga desde la variable de entorno `APP_JWT_SECRET` en Base64; debe mantenerse estable entre reinicios e instancias.
 
 ### Módulos Maven del backend
 
@@ -26,28 +27,25 @@ Aplicación web multiempresa para la gestión de proyectos de software: tiempos,
 - La entidad `Company` (`id`, `name`, `description`, `createAt`) representa cada empresa cliente.
 - `User` tiene una relación `@ManyToOne` obligatoria con `Company`.
 - Todas las consultas de usuario, producto, tecnología, etc. filtran por la compañía obtenida del JWT (`jwtService.getCompanyFromToken(auth)`), de modo que una empresa nunca ve datos de otra.
-- **Pendiente**: hoy no existe ningún endpoint ni pantalla para dar de alta una empresa nueva. Las compañías se crean manualmente en la base de datos. `POST /user` crea usuarios dentro de la compañía del token de quien los crea, pero no hay forma de crear la primera empresa ni su primer usuario administrador de forma autónoma.
+- `POST /register` crea una compañía nueva junto a su primer usuario administrador (`ROLE_ADMIN`), sin necesidad de autenticación previa.
 
-## Registro (`feature/register`) — inacabado
+## Seguridad — estado actual
+
+- Las consultas de productos por tecnología, usuarios por tecnología, proyectos por producto y proyectos de contribuidores aplican el filtro de compañía.
+- `/user/me` comprueba también la compañía del usuario autenticado.
+- El secreto JWT ya no se genera al arrancar; el backend requiere `APP_JWT_SECRET`.
+- El usuario y la compañía actuales se resuelven desde el `SecurityContext` mediante `CurrentUserContext`; `JwtServiceImpl` mantiene el contrato existente delegando en ese contexto.
+- Los agregados de imputaciones por producto y proyecto exigen también la compañía autenticada.
+- Las altas y ediciones de proyectos y tecnologías verifican que producto, responsable y colaboradores pertenecen a la compañía autenticada antes de persistirlos.
+- `ProjectRequest` y `TechnologyRequest` separan los contratos HTTP de las entidades JPA: reciben atributos editables e IDs de relaciones, que el backend resuelve dentro de la compañía autenticada.
+
+## Registro de empresa (`feature/register`) — completado
 
 - Ruta: `/auth/register`.
-- Componente: `RegisterComponent` (`canopus-frontend/src/app/features/auth/auth/register`).
-- Estado actual: es una vista estática de marcador de posición. Solo muestra un mensaje "Próximamente..." y un enlace para volver al login. No tiene formulario, no llama a ningún servicio.
-- Backend: no existe `CompanyController`, `RegisterRequest` ni ningún endpoint `/register` o `/company`.
-
-### Trabajo pendiente para completar el alta de empresa
-
-1. Backend:
-   - Entidad/DTO de alta: nombre de empresa, datos del primer usuario administrador.
-   - Endpoint público (sin JWT) `POST /register` o `POST /company` que cree la `Company` y su primer `User` con `ROLE_ADMIN`.
-   - Validar que el nombre de empresa o el username no existan ya.
-   - Igual que en el alta de usuario, cifrar la contraseña inicial con `PasswordEncoder`.
-2. Frontend:
-   - Formulario reactivo en `RegisterComponent` (nombre de empresa, nombre/apellidos, usuario, email, contraseña).
-   - Servicio HTTP para consumir el nuevo endpoint público.
-   - Redirección a login tras el alta correcta.
-3. Seguridad:
-   - Añadir la regla de `SpringSecurityConfig` para permitir `POST /register` sin autenticación, igual que ya ocurre con `/login`.
+- Componente: `RegisterComponent` (`canopus-frontend/src/app/features/auth/auth/register`), formulario reactivo con nombre de empresa, nombre, apellidos, email, usuario y contraseña.
+- Backend: `AuthController` (`POST /register`, público) valida los datos, comprueba que el nombre de empresa y el usuario no existan, crea la `Company` y el `User` administrador (contraseña cifrada con `PasswordEncoder`).
+- Piezas nuevas: `RegisterRequest` (entities), `CompanyRepository` (repositories), `CompanyService`/`CompanyServiceImpl` (services), `AuthController` (controllers), regla `permitAll()` para `POST /register` en `SpringSecurityConfig`.
+- Tras un registro correcto, el frontend redirige a `/auth/login` para que el nuevo administrador inicie sesión.
 
 ## Módulo de usuarios (ABM y perfil) — estado actual
 

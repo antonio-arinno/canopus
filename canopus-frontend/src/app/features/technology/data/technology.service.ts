@@ -3,6 +3,12 @@ import { Observable } from 'rxjs';
 import { Technology } from "@core/model/technology";
 import { ApiBaseService } from '@core/api/api-base.service';
 
+export interface TechnologyRequest {
+    name: string;
+    description?: string;
+    responsibleId: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -13,7 +19,7 @@ export class TechnologyService extends ApiBaseService<Technology> {
         return this.httpGet<Technology[]>('/technology');
     }
 
-    create(technology: Technology): Observable<Technology> {
+    create(technology: TechnologyRequest): Observable<Technology> {
         return this.httpCreate(technology);
     }
 
@@ -25,8 +31,8 @@ export class TechnologyService extends ApiBaseService<Technology> {
         return this.httpDeleteById(id);
     }
 
-    update(technology: Technology): Observable<Technology> {
-        return this.httpUpdate(technology.id!, technology);
+    update(id: number, technology: TechnologyRequest): Observable<Technology> {
+        return this.httpUpdate(id, technology);
     }
 
     getSelection(term: string): Observable<Technology[]> {

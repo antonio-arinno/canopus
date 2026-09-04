@@ -18,7 +18,12 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
     public List<Product> findByResponsibleAndCompany(User user, Company company);
 
+    @Query("select p from Product p where (p.responsible.id = ?1 or p.backup.id = ?1) and p.company.id = ?2")
+    public List<Product> findByResponsibleOrBackupAndCompany(Long userId, Long companyId);
+
     public List<Product> findByTechnology(Technology technology);
+
+    public List<Product> findByTechnologyAndCompany(Technology technology, Company company);
 
     public Product findByIdAndCompany(Long id, Company company);
 

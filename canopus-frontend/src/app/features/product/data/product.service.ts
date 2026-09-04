@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Product } from '@core/model/product';
+import { Product, ProductRequest } from '@core/model/product';
 import { ApiBaseService } from '@core/api/api-base.service';
 
 @Injectable({
@@ -27,6 +27,10 @@ export class ProductService extends ApiBaseService<Product> {
     return this.httpGet<Product[]>('/product/responsible');
   }
 
+  getByResponsibleOrBackupMe(): Observable<Product[]> {
+    return this.httpGet<Product[]>('/product/responsible-or-backup');
+  }
+
   getByContributor(id: number): Observable<Product[]> {
     return this.httpGet<Product[]>(`/product/contributor/${id}`);
   }
@@ -39,11 +43,11 @@ export class ProductService extends ApiBaseService<Product> {
     return this.httpGetById(id);
   }
 
-  update(product: Product): Observable<Product> {
+  update(product: ProductRequest): Observable<Product> {
     return this.httpUpdate(product.id!, product);
   }
 
-  create(product: Product): Observable<Product> {
+  create(product: ProductRequest): Observable<Product> {
     return this.httpCreate(product);
   }
 

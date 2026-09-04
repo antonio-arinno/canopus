@@ -16,3 +16,12 @@ y revisión de accesibilidad y rendimiento.
 Si quieres, puedo seguir con un último paso más “de producto” para dejarla mucho más cercana a un estándar profesional real.
 
 Canopus frontend refactor session state
+
+
+Analiza este proyecto, se trata de una aplicación web, para gestionar proyectos de software (tiempos y evoluciones de los mismos).
+El frontend esta construida con angular, el backend con spring y la base de datos con MySQL.
+Necesito que me ayudes a terminar la parte de usuario, altas, bajas y modificaciones.
+
+El desplegable Tecnología del HTML product-detail.component, solo debe mostrar las tecnologías del usuario que intentan crear o actualizar un producto y no todas como hasta ahora. Hazlo.
+
+El desplegable de responsable y backup deben ser usuario que tengan esas tecnologías, pero yo los cargaba al entrar el form, ahora habría que hacerlo al elegir la tecnología, dame un plan para hacerlo.

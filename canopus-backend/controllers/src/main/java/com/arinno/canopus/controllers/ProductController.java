@@ -14,19 +14,23 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.arinno.canopus.controllers.mapper.ProductMapper;
 import com.arinno.canopus.entities.Product;
 import com.arinno.canopus.entities.ProductResponse;
+import com.arinno.canopus.entities.ProductRequest;
+import com.arinno.canopus.entities.Company;
 import com.arinno.canopus.entities.Technology;
-import com.arinno.canopus.entities.TechnologyResponse;
 import com.arinno.canopus.entities.User;
-import com.arinno.canopus.entities.UserResponse;
 import com.arinno.canopus.error.CustomException;
 import com.arinno.canopus.error.ProductDataIntegrityException;
-import com.arinno.canopus.servicies.IImputationService;
 import com.arinno.canopus.servicies.IProductService;
-import com.arinno.canopus.servicies.IProjectService;
 import com.arinno.canopus.servicies.JwtService;
+import com.arinno.canopus.servicies.ITechnologyService;
+import com.arinno.canopus.servicies.UserService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/product")
@@ -34,30 +38,41 @@ public class ProductController {
 
     private final IProductService productService; 
 
-	private final IProjectService projectService;
-
-	private final IImputationService imputationService;
-
 	private final JwtService jwtService;
 
-	ProductController(IProductService productService, IProjectService projectService, IImputationService imputationService, JwtService jwtService) {
+		private final ITechnologyService technologyService;
+
+		private final UserService userService;
+
+		private final ProductMapper productMapper;
+
+		ProductController(IProductService productService, JwtService jwtService, ITechnologyService technologyService, UserService userService, ProductMapper productMapper) {
 		this.productService = productService;
-		this.projectService = projectService;
-		this.imputationService = imputationService;
 		this.jwtService = jwtService;
+		this.technologyService = technologyService;
+		this.userService = userService;
+		this.productMapper = productMapper;
 	}
 
 	@GetMapping
 	public List<ProductResponse> list(@RequestHeader(value="Authorization") String auth){	
 		return productService.findByCompany(jwtService.getCompanyFromToken(auth)).stream()
-			.map(product -> toProductResponse(product))
+			.map(productMapper::toSummary)
 			.toList();
 	}
 
 	@GetMapping("/responsible")
 	public List<ProductResponse> listResponsibleMe(@RequestHeader(value="Authorization") String auth){	
-		return productService.findByResponsible(jwtService.getUserFromToken(auth)).stream()
-			.map(product -> toProductResponse(product))
+		return productService.findByResponsibleAndCompany(jwtService.getUserFromToken(auth), jwtService.getCompanyFromToken(auth)).stream()
+			.map(productMapper::toSummary)
+			.toList();
+	}
+
+	@GetMapping("/responsible-or-backup")
+	public List<ProductResponse> listResponsibleOrBackupMe(@RequestHeader(value="Authorization") String auth){
+		Company company = jwtService.getCompanyFromToken(auth);
+		return productService.findByResponsibleOrBackupAndCompany(jwtService.getUserFromToken(auth).getId(), company.getId()).stream()
+			.map(productMapper::toSummary)
 			.toList();
 	}
 
@@ -65,7 +80,7 @@ public class ProductController {
 	public List<ProductResponse> listTechnology(@PathVariable Long id, @RequestHeader(value="Authorization") String auth){	
 		Technology technology = new Technology();
 		technology.setId(id);
-		return productService.findByTechnology(technology).stream().map(product -> toProductResponse(product)).toList();
+		return productService.findByTechnologyAndCompany(technology, jwtService.getCompanyFromToken(auth)).stream().map(productMapper::toSummary).toList();
 	}
 	
 	@GetMapping("/contributor/{id}")
@@ -74,103 +89,80 @@ public class ProductController {
 		user.setId(id);
 		return productService.findByContributorAndCompany(id, jwtService.getCompanyFromToken(auth).getId())
 		.stream()
-		.map(product -> GetProductResponseForUser(product, user))
+		.map(product -> productMapper.toResponseForUser(product, user))
 		.toList();		
-	}
-
-	private ProductResponse GetProductResponseForUser(Product product, User user) {
-		return ProductResponse.builder()
-				.name(product.getName())
-				.description(product.getDescription())
-				.countProjects(projectService.countByProduct(product))
-				.countContributors(projectService.countContributorsByProduct(product.getId()))
-				.technology(TechnologyResponse.builder()
-								.name(product.getTechnology().getName())
-								.build())
-				.responsible(UserResponse.builder()
-								.name(product.getResponsible().getName())
-								.build())
-				.time(imputationService.timeByProductAndUser(product, user))				
-				.build();
-	}
-
-private ProductResponse toProductResponse(Product product) {
-		return ProductResponse.builder()
-				.id(product.getId())
-				.name(product.getName())
-				.description(product.getDescription())
-				.technology(TechnologyResponse.builder()
-								.id(product.getTechnology().getId())
-								.name(product.getTechnology().getName())
-								.build())	
-				.responsible(UserResponse.builder()
-								.id(product.getResponsible().getId())
-								.name(product.getResponsible().getName())
-								.lastname(product.getResponsible().getLastname())
-								.build())
-				.backup(UserResponse.builder()
-								.id(product.getBackup().getId())
-								.name(product.getBackup().getName())
-								.lastname(product.getBackup().getLastname())
-								.build())		
-				.time(imputationService.timeByProduct(product))				
-				.build();
 	}
 
 	@GetMapping("/{id}")
 	public ProductResponse product(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
 		Product product = productService.findByIdAndCompany(id, jwtService.getCompanyFromToken(auth));
-
-		return ProductResponse.builder()
-		.id(product.getId())
-		.name(product.getName())
-		.description(product.getDescription())
-		.technology(TechnologyResponse.builder()
-						.id(product.getTechnology().getId())
-						.name(product.getTechnology().getName())
-						.build())	
-		.responsible(UserResponse.builder()
-						.id(product.getResponsible().getId())
-						.name(product.getResponsible().getName())
-						.lastname(product.getResponsible().getLastname())
-						.build())
-		.backup(UserResponse.builder()
-						.id(product.getBackup().getId())
-						.name(product.getBackup().getName())
-						.lastname(product.getBackup().getLastname())
-						.build())				
-		.countProjects(projectService.countByProduct(product))
-		.countContributors(projectService.countContributorsByProduct(product.getId()))
-		.time(imputationService.timeByProduct(product))		
-		.avgTime(imputationService.avgTimeByProduct(product))
-		.avgDuration(imputationService.avgDurationByProduct(product))			
-		.build();
+		return productMapper.toDetail(product);
 	}	
 		
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public Product update(@RequestBody Product product, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
-		Product productDb = productService.findByIdAndCompany(id, jwtService.getCompanyFromToken(auth));
-		productDb.setName(product.getName());
-		productDb.setDescription(product.getDescription());
-		productDb.setTechnology(product.getTechnology());
-		productDb.setResponsible(product.getResponsible());
-		productDb.setBackup(product.getBackup());
-		return productService.save(productDb);
-	}	
+	public Product update(@Valid @RequestBody ProductRequest request, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) throws Exception {
+		try {
+			Product productDb = productService.findByIdAndCompany(id, jwtService.getCompanyFromToken(auth));
+			if (productDb == null || productDb.getId() == null) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado para la empresa.");
+			}
+			applyRequest(productDb, request, jwtService.getCompanyFromToken(auth));
+			return productService.save(productDb);
+		} catch (ResponseStatusException e) {
+			throw e;
+		} catch (DataIntegrityViolationException e) {
+			throw new ProductDataIntegrityException();
+		} catch (Exception e) {
+			throw new CustomException(e.getMessage());
+		}
+	}
 	
 	@PostMapping	
 	@ResponseStatus(HttpStatus.CREATED)
-	public void create(@RequestBody Product product, @RequestHeader(value="Authorization") String auth) {
-		product.setCompany(jwtService.getCompanyFromToken(auth));
-		productService.save(product);
-	}	
+	public void create(@Valid @RequestBody ProductRequest request, @RequestHeader(value="Authorization") String auth) throws Exception {
+		try {
+			Company company = jwtService.getCompanyFromToken(auth);
+			Product product = new Product();
+			applyRequest(product, request, company);
+			product.setCompany(company);
+			productService.save(product);
+		} catch (DataIntegrityViolationException e) {
+			throw new ProductDataIntegrityException();
+		} catch (ResponseStatusException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new CustomException(e.getMessage());
+		}
+	}
+
+	private void applyRequest(Product product, ProductRequest request, Company company) {
+		Technology technology = technologyService.findByIdAndCompany(request.getTechnologyId(), company);
+		User responsible = userService.findByIdAndCompany(request.getResponsibleId(), company).orElse(null);
+		User backup = userService.findByIdAndCompany(request.getBackupId(), company).orElse(null);
+
+		if (technology.getId() == null || responsible == null || backup == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tecnología, responsable o backup no válido para la empresa.");
+		}
+
+		product.setName(request.getName());
+		product.setDescription(request.getDescription());
+		product.setTechnology(technology);
+		product.setResponsible(responsible);
+		product.setBackup(backup);
+	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) throws Exception {
 		try {
+			Product product = productService.findByIdAndCompany(id, jwtService.getCompanyFromToken(auth));
+			if (product == null || product.getId() == null) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado para la empresa.");
+			}
 			productService.deleteByIdAndCompany(id, jwtService.getCompanyFromToken(auth));
+		} catch (ResponseStatusException e) {
+			throw e;
 		} catch (DataIntegrityViolationException e) {
 			throw new ProductDataIntegrityException();
 		} catch (Exception e) {

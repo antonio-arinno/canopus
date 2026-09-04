@@ -41,11 +41,11 @@ export abstract class CrudApiService<T> {
     return this.http.get<T>(this.buildDetailUrl(id));
   }
 
-  protected httpUpdate(id: number | string, body: T) {
+  protected httpUpdate(id: number | string, body: unknown) {
     return this.http.put<T>(this.buildDetailUrl(id), body);
   }
 
-  protected httpCreate(body: T) {
+  protected httpCreate(body: unknown) {
     return this.http.post<T>(this.buildUrl(this.resourcePath), body);
   }
 

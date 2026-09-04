@@ -17,13 +17,15 @@ public interface IProjectService {
 
 	public List<Project> findByResponsibleAndDateProIsNull(User responsible);
 
+	public List<Project> findByResponsibleAndCompany(User responsible, Company company);
+
+	public List<Project> findByResponsibleAndCompanyAndDateProIsNull(User responsible, Company company);
+
 	public List<Project> findByCompanyAndDateProIsNull(Company company);
 
 	public List<Project> findByProduct(Product product);
-	
-//	public List<Project> findByStatus(Status status);
-	
-//	public List<Project> findByStatusNotProduction();
+
+	public List<Project> findByProductAndCompany(Product product, Company company);
 	
 	public Project findByIdAndCompany(Long id, Company company);
 	
@@ -35,18 +37,20 @@ public interface IProjectService {
 
 	public List<Project> findByContributorAndNotProduction(Long id);
 
+	public List<Project> findByContributorAndNotProductionAndCompany(Long id, Long companyId);
+
 	public Integer countByResponsible(User responsible);
 
     public Integer countByProduct(Product product);
 
 	public Integer countByTechnology(Long id);
 
-    //List<Project> findByContributorOpenDate(Long id, Date date);
-
     public Integer countContributorsByProduct(Long id);
 
 	public Integer countContributorsByTechnology(Long id);
 
 	List<Project> findByContributorOpenDate(Long id, LocalDate date);
+
+	List<Project> findByContributorOpenDateAndCompany(Long id, LocalDate date, Long companyId);
 
 }

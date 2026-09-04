@@ -3,11 +3,14 @@ package com.arinno.canopus.auth;
 import java.util.Arrays;
 import java.util.Objects;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,15 +30,16 @@ import com.arinno.canopus.auth.filters.JwtValidationFilter;
 public class SpringSecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
+    private final SecretKey jwtSecretKey;
 
-    SpringSecurityConfig(AuthenticationConfiguration authenticationConfiguration) {
+    SpringSecurityConfig(AuthenticationConfiguration authenticationConfiguration,
+            @Value("${app.jwt.secret}") String encodedJwtSecret) {
         this.authenticationConfiguration = authenticationConfiguration;
+        this.jwtSecretKey = TokenJwtConfig.secretKey(encodedJwtSecret);
     }
 
     @Bean
     AuthenticationManager authenticationManager() throws Exception {
-        System.out.println("AuthenticationManager");
-        System.out.println(authenticationConfiguration.getAuthenticationManager());
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -46,10 +50,10 @@ public class SpringSecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
-        System.out.println("filterChain");
-
         return http.authorizeHttpRequests(authz -> authz
+            .requestMatchers(HttpMethod.POST, "/register").permitAll()
+            .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+            .requestMatchers("/actuator/**").hasRole("ADMIN")
             .requestMatchers(HttpMethod.GET, "/user/**").authenticated()
             .requestMatchers(HttpMethod.PUT, "/user/me").authenticated()
             .requestMatchers(HttpMethod.PUT, "/user/me/password").authenticated()
@@ -57,8 +61,8 @@ public class SpringSecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/user/*").hasRole("ADMIN")
             .anyRequest().authenticated())
             .cors(cors -> cors.configurationSource(configurationSource()))
-            .addFilter(new JwtAuthenticationFilter(authenticationManager()))
-            .addFilter(new JwtValidationFilter(authenticationManager()))                
+            .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtSecretKey))
+            .addFilter(new JwtValidationFilter(authenticationManager(), jwtSecretKey))                
             .csrf(config -> config.disable())
             .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .build();
@@ -67,7 +71,7 @@ public class SpringSecurityConfig {
     @Bean
     CorsConfigurationSource configurationSource(){
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList("http://35.180.51.26", "http://localhost:4200"));
+        config.setAllowedOrigins(Arrays.asList("http://35.180.10.221", "http://localhost:4200"));
         config.setAllowedMethods(Arrays.asList("POST","GET","PUT","DELETE"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(true);

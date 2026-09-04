@@ -20,9 +20,15 @@ public interface ProjectRepository extends CrudRepository<Project, Long> {
 
 	public List<Project> findByResponsibleAndDateProIsNull(User responsible);
 
+	public List<Project> findByResponsibleAndCompany(User responsible, Company company);
+
+	public List<Project> findByResponsibleAndCompanyAndDateProIsNull(User responsible, Company company);
+
 	public List<Project> findByCompanyAndDateProIsNull(Company company);
 
 	public List<Project> findByProduct(Product product);
+
+	public List<Project> findByProductAndCompany(Product product, Company company);
 /*
 	public List<Project> findByStatus(Status status);
 	
@@ -38,6 +44,9 @@ public interface ProjectRepository extends CrudRepository<Project, Long> {
 	@Query("select p from Project p left join p.contributors prc where prc.id = ?1 and p.datePro is null")
 	public List<Project> findByContributorAndNotProduction(Long id);
 
+	@Query("select p from Project p left join p.contributors prc where prc.id = ?1 and p.datePro is null and p.company.id = ?2")
+	public List<Project> findByContributorAndNotProductionAndCompany(Long id, Long companyId);
+
 	public Integer countByResponsible(User responsible);
 
     public Integer countByProduct(Product product);
@@ -51,6 +60,9 @@ public interface ProjectRepository extends CrudRepository<Project, Long> {
 */
 	@Query("select p from Project p left join p.contributors prc where prc.id = ?1 and p.dateDev <= ?2 and (p.datePro >= ?2 or p.datePro is null)")
 	public List<Project> findByContributorOpenDate(Long id, LocalDate date);
+
+	@Query("select p from Project p left join p.contributors prc where prc.id = ?1 and p.dateDev <= ?2 and (p.datePro >= ?2 or p.datePro is null) and p.company.id = ?3")
+	public List<Project> findByContributorOpenDateAndCompany(Long id, LocalDate date, Long companyId);
 
 
 	@Query

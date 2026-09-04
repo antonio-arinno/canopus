@@ -90,6 +90,7 @@ public class User implements IUser {
 
     public User() {
         this.roles = new ArrayList<>();
+        this.technologies = new ArrayList<>();
     }
 
     public Long getId() {
@@ -136,7 +137,7 @@ public class User implements IUser {
     }
 
     public void setRoles(List<Role> roles) {
-        this.roles = roles;
+        this.roles = roles == null ? new ArrayList<>() : new ArrayList<>(roles);
     }
 
     public List<Technology> getTechnologies() {
@@ -144,7 +145,7 @@ public class User implements IUser {
     }
 
     public void setTechnologies(List<Technology> technologies) {
-        this.technologies = technologies;
+        this.technologies = technologies == null ? new ArrayList<>() : new ArrayList<>(technologies);
     }
 
     public boolean isAdmin() {

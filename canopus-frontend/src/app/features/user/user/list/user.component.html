@@ -29,6 +29,17 @@
           *matRowDef="let row; columns: displayedColumns;">
         </tr>
     </table>
+    @if (!isLoading() && errorMessage()) {
+      <p role="alert">{{ errorMessage() }}</p>
+    }
+    <mat-paginator
+      [length]="totalUsers"
+      [pageIndex]="pageIndex"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[10, 25, 50]"
+      (page)="changePage($event)"
+      aria-label="Paginación de usuarios">
+    </mat-paginator>
   </mat-card-content>  
   <mat-card-actions>
     <button mat-raised-button (click)="create()">

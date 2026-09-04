@@ -10,14 +10,12 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { ProductService } from '@features/product/data/product.service';
 import { UserService } from '@features/user/data/user.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Product } from '@core/model/product';
-import { map, mergeMap, Observable, startWith } from 'rxjs';
+import { Product, ProductRequest } from '@core/model/product';
+import { combineLatest, distinctUntilChanged, map, Observable, of, shareReplay, startWith, switchMap } from 'rxjs';
 import { User } from '@core/model/user';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatTableModule } from '@angular/material/table';
 import { Technology } from '@core/model/technology';
-import { TechnologyService } from '@features/technology/data/technology.service';
-import { ImputationService } from '@features/imputation/data/imputation.service';
 import { ProjectService } from '@features/project/data/project.service';
 import { Project } from '@core/model/project';
 import { ModelMapperService } from '@core/model/model-mapper.service';
@@ -35,9 +33,7 @@ export class ProductDetailComponent {
 
   productService = inject(ProductService);
   projectService = inject(ProjectService);
-//  imputationService = inject(ImputationService);
   userService = inject(UserService);
-  technologyService = inject(TechnologyService);
   modelMapperService = inject(ModelMapperService);
   formStateService = inject(FormStateService);
   formValidationService = inject(FormValidationService);
@@ -51,8 +47,11 @@ export class ProductDetailComponent {
 
   product!: Product;
 
-  filteredUsers: Observable<User[]> | undefined;  
+  filteredResponsibleUsers: Observable<User[]> | undefined;
+  filteredBackupUsers: Observable<User[]> | undefined;
   filteredTechnologies: Observable<Technology[]> | undefined;
+  private userTechnologies$!: Observable<Technology[]>;
+  private usersByTechnology$!: Observable<User[]>;
 
   readonly isSubmitting = this.formStateService.isSubmitting;
   readonly successMessage = this.formStateService.successMessage;
@@ -100,43 +99,74 @@ export class ProductDetailComponent {
       }
     });
 
-    this.filteredUsers = this.form.get('responsible')?.valueChanges
+    this.userTechnologies$ = this.userService.getMe().pipe(
+      map(user => user.technologies ?? []),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    this.usersByTechnology$ = this.form.get('technology')!.valueChanges
     .pipe(
       startWith(''),
-      map(value => typeof value === 'string' ? value : value.description),
-      mergeMap(value => value ? this._filter(value) : this._getAll())
-    );    
-    
+      map(value => (value && typeof value === 'object' && (value as Technology).id) ? (value as Technology).id : null),
+      distinctUntilChanged(),
+      switchMap(technologyId => technologyId ? this.userService.getByTechnology(technologyId) : of([])),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    this.filteredResponsibleUsers = combineLatest([
+      this.usersByTechnology$,
+      this.form.get('responsible')!.valueChanges.pipe(startWith(''))
+    ]).pipe(
+      map(([users, value]) => this._filterUsers(users, value))
+    );
+
+    this.filteredBackupUsers = combineLatest([
+      this.usersByTechnology$,
+      this.form.get('backup')!.valueChanges.pipe(startWith(''))
+    ]).pipe(
+      map(([users, value]) => this._filterUsers(users, value))
+    );
+
+    // al cambiar de tecnología, responsable/backup dejan de ser válidos para la nueva lista
+    this.form.get('technology')!.valueChanges
+    .pipe(
+      map(value => (value && typeof value === 'object' && (value as Technology).id) ? (value as Technology).id : null),
+      distinctUntilChanged()
+    )
+    .subscribe(() => {
+      this.form.get('responsible')?.setValue(null);
+      this.form.get('backup')?.setValue(null);
+    });
+
     this.filteredTechnologies = this.form.get('technology')?.valueChanges
     .pipe(
       startWith(''),
-      map(value => typeof value === 'string' ? value : value.description),
-      mergeMap(value => value ? this._filterTechnology(value) : this._getAllTechnologies())
+      map(value => typeof value === 'string' ? value : value?.name ?? ''),
+      switchMap(value => this.userTechnologies$.pipe(
+        map(technologies => this._filterTechnologies(technologies, value))
+      ))
     );   
 
   }
 
-  private _getAll(): Observable<User[]> {    
-    return this.userService.getAll();
-  }  
-
-  private _filter(value: string): Observable<User[]> {
-    const filterValue = value.toLowerCase();
-    return this.userService.getSelection(filterValue);
-  }    
+  private _filterUsers(users: User[], value: string | User): User[] {
+    const term = typeof value === 'string' ? value : value?.name ?? '';
+    const filterValue = term.toLowerCase();
+    return filterValue
+      ? users.filter(user => user.name?.toLowerCase().includes(filterValue))
+      : users;
+  }
 
   displayFn(user: User): string {
     return user && user.name ? user.name : '';
   }
 
-  private _getAllTechnologies(): Observable<Technology[]> {    
-    return this.technologyService.getAll();
-  }  
-
-  private _filterTechnology(value: string): Observable<Technology[]> {
+  private _filterTechnologies(technologies: Technology[], value: string): Technology[] {
     const filterValue = value.toLowerCase();
-    return this.technologyService.getSelection(filterValue);
-  }    
+    return filterValue
+      ? technologies.filter(technology => technology.name?.toLowerCase().includes(filterValue))
+      : technologies;
+  }
 
   displayTechnology(technology: Technology): string {
     return technology && technology.name ? technology.name : '';
@@ -172,8 +202,7 @@ export class ProductDetailComponent {
         this.formStateService.setError('Debes seleccionar Tecnologia, Responsable y Backup desde la lista.');
         return;
       }
-      this.product = Product.fromObject(payload);
-      this.productService.update(this.product).subscribe({
+      this.productService.update(payload).subscribe({
         next: () => {
           this.formStateService.setSuccess('Producto actualizado con éxito.');
           this.router.navigateByUrl('/pvt/product');
@@ -195,8 +224,7 @@ export class ProductDetailComponent {
         this.formStateService.setError('Debes seleccionar Tecnologia, Responsable y Backup desde la lista.');
         return;
       }
-      this.product = Product.fromObject(payload);
-      this.productService.create(this.product).subscribe({
+      this.productService.create(payload).subscribe({
         next: () => {
           this.formStateService.setSuccess('Producto creado con éxito.');
           this.router.navigateByUrl('/pvt/product');
@@ -227,7 +255,7 @@ export class ProductDetailComponent {
     }
   }
 
-  private buildProductPayload(): Partial<Product> | null {
+  private buildProductPayload(): ProductRequest | null {
     const raw = this.form.getRawValue();
     const technologyId = this.extractEntityId(raw.technology);
     const responsibleId = this.extractEntityId(raw.responsible);
@@ -238,12 +266,12 @@ export class ProductDetailComponent {
     }
 
     return {
-      id: raw.id,
+      ...(raw.id ? { id: raw.id } : {}),
       name: raw.name,
       description: raw.description,
-      technology: { id: technologyId } as Technology,
-      responsible: { id: responsibleId } as User,
-      backup: { id: backupId } as User,
+      technologyId,
+      responsibleId,
+      backupId,
     };
   }
 

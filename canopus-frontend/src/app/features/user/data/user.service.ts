@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { User } from '@core/model/user';
 import { ApiBaseService } from '@core/api/api-base.service';
+import { PageResponse } from '@core/api/page-response';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +12,10 @@ export class UserService extends ApiBaseService<User> {
 
   getAll(): Observable<User[]> {
     return this.httpGet<User[]>('/user');
+  }
+
+  getPage(page: number, size: number): Observable<PageResponse<User>> {
+    return this.httpGet<PageResponse<User>>(`/user/page?page=${page}&size=${size}`);
   }
 
   getAllIdName(): Observable<User[]> {

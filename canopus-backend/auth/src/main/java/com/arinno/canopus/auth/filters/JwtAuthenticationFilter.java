@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -30,11 +32,11 @@ import static com.arinno.canopus.auth.TokenJwtConfig.*;
 public class JwtAuthenticationFilter  extends UsernamePasswordAuthenticationFilter {
 
     private AuthenticationManager authenticationManager;
+    private final SecretKey secretKey;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager) {
-        System.out.println("JwtAuthenticationFilter");
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, SecretKey secretKey) {
         this.authenticationManager = authenticationManager;
-        System.out.println(this.authenticationManager);
+        this.secretKey = secretKey;
     }
 
     @Override
@@ -48,19 +50,18 @@ public class JwtAuthenticationFilter  extends UsernamePasswordAuthenticationFilt
             User user = new ObjectMapper().readValue(request.getInputStream(), User.class);
             username = user.getUsername();
             password = user.getPassword();
-        //    password = user.giveMePassword();
         } catch (StreamReadException e) {
-            e.printStackTrace();
+            throw new AuthenticationException("Solicitud de autenticación no válida", e) {
+            };
         } catch (DatabindException e) {
-            e.printStackTrace();
+            throw new AuthenticationException("Solicitud de autenticación no válida", e) {
+            };
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new AuthenticationException("Solicitud de autenticación no válida", e) {
+            };
         }
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-        System.out.println(username);
-        System.out.println(authenticationToken);
-        System.out.println(password);
         return this.authenticationManager.authenticate(authenticationToken);
     }
 
@@ -68,10 +69,7 @@ public class JwtAuthenticationFilter  extends UsernamePasswordAuthenticationFilt
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
             Authentication authResult) throws IOException, ServletException {
 
-        System.out.println("successfulAuthentication");
-        System.out.println(authResult.getPrincipal());
         org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authResult.getPrincipal();
-        System.out.println(user);
 
         String username = user.getUsername();
   
@@ -89,7 +87,7 @@ public class JwtAuthenticationFilter  extends UsernamePasswordAuthenticationFilt
         String jwt = Jwts.builder()
             .subject(username)
             .claims(claims)
-            .signWith(SECRET_KEY)
+            .signWith(secretKey)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + 3600000))
             .compact();

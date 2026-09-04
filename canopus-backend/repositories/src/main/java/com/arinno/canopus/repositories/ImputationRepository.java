@@ -38,17 +38,18 @@ public interface ImputationRepository extends CrudRepository<Imputation, Long> {
 	 "left join imputations_items on imputations.id = imputations_items.imputation_id "+
 	 "left join projects on imputations_items.project_id = projects.id "+
 	 "left join products on projects.product_id = products.id "+
-	 "where products.id = ?1 "+
+	 "where products.id = ?1 and products.company_id = ?2 "+
 	 "group by project_id, product_id")
-	public List<Map<String, Object>> findByProduct(Long id);
+	public List<Map<String, Object>> findByProductAndCompany(Long id, Long companyId);
 
 	@NativeQuery
-	("select name, sum(time) as time from imputations "+
+	("select users.name as name, sum(imputations_items.time) as time from imputations "+
 	 "left join users on imputations.user_id = users.id "+
 	 "left join imputations_items on imputations.id = imputations_items.imputation_id "+
-	 "where project_id = ?1 "+
-	 "group by user_id")
-	public List<Map<String, Object>> findByProject(Long id);
+	 "left join projects on imputations_items.project_id = projects.id "+
+	 "where imputations_items.project_id = ?1 and projects.company_id = ?2 "+
+	 "group by users.id, users.name")
+	public List<Map<String, Object>> findByProjectAndCompany(Long id, Long companyId);
 
 	@NativeQuery
 	("select sum(time) / count(distinct project_id) from projects "+

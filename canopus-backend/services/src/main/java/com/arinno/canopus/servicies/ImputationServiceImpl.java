@@ -117,14 +117,14 @@ public class ImputationServiceImpl implements IImputationService {
 	}
 
 	@Override
-	public List<Map<String, Object>> findByProduct(Long id) {
-		return imputationRepository.findByProduct(id);
+	public List<Map<String, Object>> findByProductAndCompany(Long id, Long companyId) {
+		return imputationRepository.findByProductAndCompany(id, companyId);
 	}
 
 	@Override
 	@Transactional
-	public List<Map<String, Object>> findByProject(Long id) {
-		return imputationRepository.findByProject(id);
+	public List<Map<String, Object>> findByProjectAndCompany(Long id, Long companyId) {
+		return imputationRepository.findByProjectAndCompany(id, companyId);
 	}
 
 	@Override

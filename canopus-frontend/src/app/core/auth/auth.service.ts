@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { User } from '@core/model/user';
+import { RegisterRequest } from '@core/model/register-request';
 import { environment } from '@environments/environment';
 import { StorageService } from '@core/storage/storage.service';
 
@@ -48,6 +49,11 @@ export class AuthService {
     const url = `${environment.apiUrl}/login`;
 
     return this.http.post<any>(url, { username, password });
+  }
+
+  register(request: RegisterRequest) {
+    const url = `${environment.apiUrl}/register`;
+    return this.http.post<any>(url, request);
   }
 
   saveUser(accessToken: string): void {

@@ -16,7 +16,11 @@ public interface IProductService {
 
     public List<Product> findByResponsibleAndCompany(User user, Company company);
 
+    public List<Product> findByResponsibleOrBackupAndCompany(Long userId, Long companyId);
+
     public List<Product> findByTechnology(Technology technology);
+
+    public List<Product> findByTechnologyAndCompany(Technology technology, Company company);
     
     Product findByIdAndCompany(Long id, Company company);
     

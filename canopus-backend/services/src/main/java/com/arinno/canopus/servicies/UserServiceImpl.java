@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ import com.arinno.canopus.entities.IUser;
 import com.arinno.canopus.entities.Role;
 import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
+import com.arinno.canopus.entities.UserListItem;
 import com.arinno.canopus.entities.UserProfileRequest;
 import com.arinno.canopus.repositories.RoleRepository;
 import com.arinno.canopus.repositories.UserRepository;
@@ -48,17 +51,22 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @Transactional(readOnly = true)
+    public Page<User> findByCompany(Company company, Pageable pageable) {
+        return repository.findByCompany(company, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UserListItem> findListItemsByCompany(Company company, Pageable pageable) {
+        return repository.findListItemsByCompany(company, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<User> findByUsername(String username) {
         return this.repository.findByUsername(username);
     }
 
-/*
-    @Override
-    @Transactional(readOnly = true)
-    public Page<User> findAll(Pageable pageable) {
-        return this.repository.findAll(pageable);
-    }
- */
     @Transactional(readOnly = true)
     @Override
     public Optional<User> findById(Long id) {
@@ -78,8 +86,6 @@ public class UserServiceImpl implements UserService{
     public User save(User user) {
         user.setRoles(getRoles(user));       
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-//        user.setPassword(passwordEncoder.encode(user.giveMePassword()));
-        System.out.println(user.toString());
         return repository.save(user);
     }
 
@@ -151,6 +157,12 @@ public class UserServiceImpl implements UserService{
     @Override
     public List<User> findByTechnologies(List<Technology> technologies) {
         return repository.findByTechnologies(technologies);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<User> findByTechnologyAndCompany(Long technologyId, Long companyId) {
+        return repository.findByTechnologyAndCompany(technologyId, companyId);
     }
 
     public void registrarYVerificar() {

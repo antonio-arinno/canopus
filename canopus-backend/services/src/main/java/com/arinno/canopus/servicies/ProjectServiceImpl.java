@@ -40,6 +40,16 @@ public class ProjectServiceImpl implements IProjectService {
 	}
 
 	@Override
+	public List<Project> findByResponsibleAndCompany(User responsible, Company company) {
+		return projectRepository.findByResponsibleAndCompany(responsible, company);
+	}
+
+	@Override
+	public List<Project> findByResponsibleAndCompanyAndDateProIsNull(User responsible, Company company) {
+		return projectRepository.findByResponsibleAndCompanyAndDateProIsNull(responsible, company);
+	}
+
+	@Override
 	public List<Project> findByCompanyAndDateProIsNull(Company company) {
 		return projectRepository.findByCompanyAndDateProIsNull(company);
 	}
@@ -121,6 +131,22 @@ public class ProjectServiceImpl implements IProjectService {
 	@Transactional
 	public List<Project> findByProduct(Product product) {
 		return projectRepository.findByProduct(product);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Project> findByProductAndCompany(Product product, Company company) {
+		return projectRepository.findByProductAndCompany(product, company);
+	}
+
+	@Override
+	public List<Project> findByContributorAndNotProductionAndCompany(Long id, Long companyId) {
+		return projectRepository.findByContributorAndNotProductionAndCompany(id, companyId);
+	}
+
+	@Override
+	public List<Project> findByContributorOpenDateAndCompany(Long id, LocalDate date, Long companyId) {
+		return projectRepository.findByContributorOpenDateAndCompany(id, date, companyId);
 	}
 
 }

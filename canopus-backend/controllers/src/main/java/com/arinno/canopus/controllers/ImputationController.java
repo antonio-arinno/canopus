@@ -22,11 +22,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.arinno.canopus.controllers.mapper.ImputationMapper;
 import com.arinno.canopus.entities.Imputation;
-import com.arinno.canopus.entities.ImputationItem;
-import com.arinno.canopus.entities.ImputationItemResponse;
 import com.arinno.canopus.entities.ImputationResponse;
-import com.arinno.canopus.entities.ProjectResponse;
 import com.arinno.canopus.error.CustomException;
 import com.arinno.canopus.servicies.IImputationService;
 import com.arinno.canopus.servicies.JwtService;
@@ -39,85 +37,53 @@ public class ImputationController {
 
 	private final JwtService jwtService;
 
-	ImputationController(IImputationService imputationService, JwtService jwtService) {
+	private final ImputationMapper imputationMapper;
+
+	ImputationController(IImputationService imputationService, JwtService jwtService, ImputationMapper imputationMapper) {
 		this.imputationService = imputationService;
 		this.jwtService = jwtService;
+		this.imputationMapper = imputationMapper;
 	}
-/*
-	@GetMapping	
-	public List<Imputation> list(@RequestHeader(value="Authorization") String auth){	
-		return imputationService.findByUser(jwtService.getUserFromToken(auth));	
-	}
-*/
+
 	@GetMapping	
 	public List<ImputationResponse> list(@RequestHeader(value="Authorization") String auth){	
-		return imputationService.findByUser(jwtService.getUserFromToken(auth)).stream().map(imputation -> GetImputationResponse(imputation)).toList();			
+		return imputationService.findByUser(jwtService.getUserFromToken(auth)).stream().map(imputationMapper::toResponse).toList();			
 	}
 
-	private ImputationResponse GetImputationResponse(Imputation imputation){
-		return ImputationResponse.builder()
-				.id(imputation.getId())
-				.date(imputation.getDate())
-				.time(imputation.getTotal())
-				.build();
-	}
-
-	private ImputationItemResponse GetImputationItemResponse(ImputationItem item) {
-		return ImputationItemResponse.builder()
-				.id(item.getId())
-				.time(item.getTime())
-							.project(ProjectResponse.builder()
-							.id(item.getProject().getId())
-							.name(item.getProject().getName())
-							.build())
-				.build();
-	}
-/*
-	@GetMapping("/{id}")
-	public Imputation imputation(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
-		return imputationService.findByIdAndUser(id, jwtService.getUserFromToken(auth));
-	}
-*/
 	@GetMapping("/{id}")
 	public ImputationResponse imputation(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
 		
 		Imputation imputation = imputationService.findByIdAndUser(id, jwtService.getUserFromToken(auth))
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imputation not found"));
 	
-		return ImputationResponse.builder()
-				.id(imputation.getId())
-				.date(imputation.getDate())
-				.time(imputation.getTotal())
-				.items(imputation.getItems().stream().map(this::GetImputationItemResponse).toList())
-				.build();
+		return imputationMapper.toDetailResponse(imputation);
 	}
 
 	
 	@GetMapping("/date/{dateString}")
-	public ImputationResponse imputationByDate(@PathVariable String dateString, @RequestHeader(value="Authorization") String auth) {		 
-		Date date = null;
+	public ImputationResponse imputationByDate(@PathVariable String dateString, @RequestHeader(value="Authorization") String auth) {
+		Date date;
 		try {
 			date = new SimpleDateFormat("yyyy-MM-dd").parse(dateString);
 		} catch (ParseException e) {
-			e.printStackTrace();
-		}  	
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha debe tener el formato yyyy-MM-dd.");
+		}
 		Imputation imputation =  imputationService.findByDateAndUser(date, jwtService.getUserFromToken(auth))
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imputation not found"));
 		
-		return ImputationResponse.builder()
-				.id(imputation.getId())
-				.date(imputation.getDate())
-				.time(imputation.getTotal())
-				.items(imputation.getItems().stream().map(this::GetImputationItemResponse).toList())
-				.build();
+		return imputationMapper.toDetailResponse(imputation);
 
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public void create(@RequestBody Imputation imputation, @RequestHeader(value="Authorization") String auth) {
-		imputation.setUser(jwtService.getUserFromToken(auth));
-		imputationService.save(imputation);
+	public void create(@RequestBody Imputation imputation, @RequestHeader(value="Authorization") String auth) throws CustomException {
+		try {
+			imputation.setUser(jwtService.getUserFromToken(auth));
+			imputationService.save(imputation);
+		} catch (Exception e) {
+			throw new CustomException(e.getMessage());
+		}
 	}
 	
 	@GetMapping("/createcal")
@@ -136,13 +102,16 @@ public class ImputationController {
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
 	public void update(@RequestBody Imputation imputation, @PathVariable Long id, @RequestHeader(value="Authorization") String auth) throws CustomException {
-
-		imputationService.deleteByIdAndUser(id, jwtService.getUserFromToken(auth));
-		imputation.setId(null);
-		imputation.getItems().stream().map(item -> {item.setId(null); return item;}).toList();
-		imputation.setUser(jwtService.getUserFromToken(auth));
 		try {
+			Imputation imputationDb = imputationService.findByIdAndUser(id, jwtService.getUserFromToken(auth))
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imputación no encontrada."));
+			imputationService.deleteByIdAndUser(imputationDb.getId(), jwtService.getUserFromToken(auth));
+			imputation.setId(null);
+			imputation.getItems().forEach(item -> item.setId(null));
+			imputation.setUser(jwtService.getUserFromToken(auth));
 			imputationService.save(imputation);
+		} catch (ResponseStatusException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new CustomException(e.getMessage());
 		}
@@ -150,18 +119,26 @@ public class ImputationController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void delete(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) {
-		imputationService.deleteByIdAndUser(id, jwtService.getUserFromToken(auth));
+	public void delete(@PathVariable Long id, @RequestHeader(value="Authorization") String auth) throws CustomException {
+		try {
+			Imputation imputation = imputationService.findByIdAndUser(id, jwtService.getUserFromToken(auth))
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imputación no encontrada."));
+			imputationService.deleteByIdAndUser(imputation.getId(), jwtService.getUserFromToken(auth));
+		} catch (ResponseStatusException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new CustomException(e.getMessage());
+		}
 	}	
 
 	@GetMapping("/product/{id}")
 	public List<Map<String, Object>> findByProduct(@PathVariable Long id, @RequestHeader(value="Authorization") String auth){	
-		return imputationService.findByProduct(id);
+		return imputationService.findByProductAndCompany(id, jwtService.getCompanyFromToken(auth).getId());
 	}	
 
 	@GetMapping("/project/{id}")
 	public List<Map<String, Object>> findByProject(@PathVariable Long id, @RequestHeader(value="Authorization") String auth){	
-		return imputationService.findByProject(id);
+		return imputationService.findByProjectAndCompany(id, jwtService.getCompanyFromToken(auth).getId());
 	}
 
 

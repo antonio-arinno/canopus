@@ -3,6 +3,19 @@ import { Observable } from 'rxjs';
 import { Project } from '@core/model/project';
 import { ApiBaseService } from '@core/api/api-base.service';
 
+export interface ProjectRequest {
+  name: string;
+  description?: string;
+  reference1?: string;
+  reference2?: string;
+  dateDev: string;
+  datePre?: string;
+  datePro?: string;
+  productId: number;
+  responsibleId: number;
+  contributorIds: number[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -47,11 +60,11 @@ export class ProjectService extends ApiBaseService<Project> {
     return this.httpGet<Project[]>(`/project/product/${id}`);
   }
 
-  update(project: Project): Observable<Project> {
-    return this.httpUpdate(project.id!, project);
+  update(id: number, project: ProjectRequest): Observable<Project> {
+    return this.httpUpdate(id, project);
   }
 
-  create(project: Project): Observable<Project> {
+  create(project: ProjectRequest): Observable<Project> {
     return this.httpCreate(project);
   }
 

@@ -164,8 +164,20 @@ public class ProductServiceImpl implements IProductService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	public List<Product> findByResponsibleOrBackupAndCompany(Long userId, Long companyId) {
+		return productRepository.findByResponsibleOrBackupAndCompany(userId, companyId);
+	}
+
+	@Override
 	public List<Product> findByTechnology(Technology technology) {
 		return productRepository.findByTechnology(technology);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Product> findByTechnologyAndCompany(Technology technology, Company company) {
+		return productRepository.findByTechnologyAndCompany(technology, company);
 	}
 
 	@Override

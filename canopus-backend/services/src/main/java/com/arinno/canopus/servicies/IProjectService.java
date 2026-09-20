@@ -3,7 +3,7 @@ package com.arinno.canopus.servicies;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.Product;
 import com.arinno.canopus.entities.Project;
 import com.arinno.canopus.entities.User;
@@ -19,8 +19,8 @@ public interface IProjectService {
 	public List<Project> findByCompanyAndDateProIsNull(Company company);
 
 	public List<Project> findByProductAndCompany(Product product, Company company);
-	
-	public Project findByIdAndCompany(Long id, Company company);
+
+	Project findByIdAndCompany(Long id, Company company);
 	
 	public Project save(Project project);
 	

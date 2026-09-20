@@ -11,24 +11,24 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.ChangePasswordRequest;
 import com.arinno.canopus.entities.IUser;
 import com.arinno.canopus.entities.Role;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserListItem;
 import com.arinno.canopus.entities.UserProfileRequest;
+import com.arinno.canopus.error.InvalidPasswordException;
+import com.arinno.canopus.error.UserNotFoundException;
 import com.arinno.canopus.repositories.RoleRepository;
 import com.arinno.canopus.repositories.UserRepository;
 
 @Service
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService {
 
-    private UserRepository repository;
-
-    private RoleRepository roleRepository;
-
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository repository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
     
     public UserServiceImpl(UserRepository repository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         this.repository = repository;
@@ -67,11 +67,12 @@ public class UserServiceImpl implements UserService{
         return repository.findById(userId);
     }
 
-    @Transactional(readOnly = true)
     @Override
-    public Optional<User> findByIdAndCompany(Long id, Company company) {
+    @Transactional(readOnly = true)
+    public User findByIdAndCompany(Long id, Company company) {
         Long userId = Objects.requireNonNull(id, "id must not be null");
-        return repository.findByIdAndCompany(userId, company);
+        return repository.findByIdAndCompany(userId, company)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el id: " + userId));
     }
 
     @Transactional
@@ -82,50 +83,44 @@ public class UserServiceImpl implements UserService{
         return repository.save(user);
     }
 
-    
     @Transactional
     @Override
-    public Optional<User> updateProfile(UserProfileRequest user, Long id) {
+    public User updateProfile(UserProfileRequest userDto, Long id) {
         Long userId = Objects.requireNonNull(id, "id must not be null");
         
-        Optional<User> userOptional = repository.findById(userId);
+        User userDb = repository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("No se pudo actualizar el perfil, usuario no encontrado."));
         
-        if (userOptional.isPresent()) {
-            User userDb = userOptional.get();
-            userDb.setEmail(user.getEmail());
-            userDb.setLastname(user.getLastname());
-            userDb.setName(user.getName());
-            userDb.setTechnologies(user.getTechnologies());
-            return Optional.of(repository.save(userDb));
-        }
-        return Optional.empty();
+        userDb.setEmail(userDto.getEmail());
+        userDb.setLastname(userDto.getLastname());
+        userDb.setName(userDto.getName());
+        userDb.setTechnologies(userDto.getTechnologies());
+        
+        return repository.save(userDb);
     }
 
     @Transactional
     @Override
-    public boolean changePassword(ChangePasswordRequest request, Long id) {
+    public void changePassword(ChangePasswordRequest request, Long id) {
         Long userId = Objects.requireNonNull(id, "id must not be null");
-        Optional<User> userOptional = repository.findById(userId);
-        if (userOptional.isEmpty() || !passwordEncoder.matches(request.getCurrentPassword(), userOptional.get().getPassword())) {
-            return false;
+        
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado."));
+        
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new InvalidPasswordException("La contraseña actual no es válida.");
         }
 
-        User user = userOptional.get();
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         repository.save(user);
-        return true;
     }
-    
+
     @Transactional
     @Override
-    public boolean deleteById(Long id, Company company) {
-        Long userId = Objects.requireNonNull(id, "id must not be null");
-        Optional<User> userOptional = repository.findByIdAndCompany(userId, company);
-        if (userOptional.isEmpty()) {
-            return false;
-        }
-        repository.delete(userOptional.get());
-        return true;
+    public void deleteById(Long id, Company company) {
+        User user = repository.findByIdAndCompany(id, company)
+                .orElseThrow(() -> new UserNotFoundException("No se encontró el usuario a eliminar con id: " + id));
+        repository.delete(user);
     }
     
     private List<Role> getRoles(IUser user) {
@@ -133,7 +128,7 @@ public class UserServiceImpl implements UserService{
         Optional<Role> optionalRoleUser = roleRepository.findByName("ROLE_USER");
         optionalRoleUser.ifPresent(roles::add);
     
-        if(user.isAdmin()){
+        if (user.isAdmin()) {
             Optional<Role> optionalRoleAdmin = roleRepository.findByName("ROLE_ADMIN");
             optionalRoleAdmin.ifPresent(roles::add);
         }
@@ -152,5 +147,5 @@ public class UserServiceImpl implements UserService{
     public List<User> findByTechnologyAndCompany(Long technologyId, Long companyId) {
         return repository.findByTechnologyAndCompany(technologyId, companyId);
     }
-
 }
+

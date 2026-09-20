@@ -17,28 +17,36 @@ import { RequestStateService } from '@core/ui/request-state.service';
 })
 export class TechnologyComponent implements OnInit {
 
-  technologyService = inject(TechnologyService);
-  requestStateService = inject(RequestStateService);
-  router = inject(Router);
+  // Uso de inyección de dependencias moderna y consistente
+  private readonly technologyService = inject(TechnologyService);
+  private readonly requestStateService = inject(RequestStateService);
+  private readonly modelMapperService = inject(ModelMapperService);
+  private readonly router = inject(Router);
 
   technologies: WritableSignal<Technology[]> = signal([]);
+  
+  // Enlazamos directamente los estados reactivos globales de UI
   readonly isLoading = this.requestStateService.isLoading;
   readonly errorMessage = this.requestStateService.errorMessage;
   readonly emptyMessage = 'No technologies found.';
+  
   displayedColumns: string[] = ['name', 'description', 'countProducts', 'countProjects', 'countContributors', 'time'];
   dataSource = this.technologies;
 
-  modelMapperService = inject(ModelMapperService);
-
   ngOnInit(): void {
+    // 1. Iniciamos el spinner y reseteamos errores previos automáticos
     this.requestStateService.start();
+
     this.technologyService.getAll().subscribe({
       next: (res: Technology[]) => {
         const technologyTmp = this.modelMapperService.mapTechnologyList(res as unknown[]);
         this.technologies.set(technologyTmp);
+        // 2. Apagamos el estado de carga al recibir los datos con éxito
         this.requestStateService.finish();
-      },
-      error: (err: any) => this.requestStateService.setError(err),
+      }
+      // NOTA: El bloque 'error' se elimina por completo. 
+      // El 'errorInterceptor' interceptará cualquier fallo de Spring Boot (ej. 401, 500) 
+      // y actualizará el state global provocando que la UI pinte el mat-error automáticamente.
     });
   }
 
@@ -46,12 +54,11 @@ export class TechnologyComponent implements OnInit {
     return this.technologies().length > 0;
   }
 
-  edit(id: number):void {
+  edit(id: number): void {
     this.router.navigate(['/pvt/technology/detail', id]);
   }
 
-  create(){
+  create(): void {
     this.router.navigate(['/pvt/technology/detail']);  
   }
-
 }

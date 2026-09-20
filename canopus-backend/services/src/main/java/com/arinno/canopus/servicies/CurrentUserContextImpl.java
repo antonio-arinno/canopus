@@ -4,7 +4,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.User;
 
 @Service

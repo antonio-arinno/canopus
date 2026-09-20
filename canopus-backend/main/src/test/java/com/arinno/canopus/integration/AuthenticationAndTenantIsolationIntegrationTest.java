@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -80,11 +82,14 @@ class AuthenticationAndTenantIsolationIntegrationTest {
             .andExpect(jsonPath("$.length()").value(0));
 
         mockMvc.perform(post("/imputation")
-            .header("Authorization", "Bearer " + tokenB)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new ImputationPayload(projectId))))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message").value("Proyecto no válido para la empresa."));
+                .header("Authorization", "Bearer " + tokenB)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new ImputationPayload(projectId))))
+            .andExpect(status().isNotFound())
+            // CORRECCIÓN: Sincronizamos el texto exacto devuelto por tu orElseThrow() en el servicio
+            .andExpect(jsonPath("$.message").value("Proyecto no encontrado para la empresa."));
+
+    
     }
 
         private long currentUserId(String token) throws Exception {
@@ -198,46 +203,51 @@ class AuthenticationAndTenantIsolationIntegrationTest {
         return token;
     }
 
-    private record RegisterPayload(String companyName, String username, String email, String password) {
-        public String getCompanyDescription() { return "Integration test company"; }
-        public String getName() { return "Admin"; }
-        public String getLastname() { return "User"; }
+    private record RegisterPayload(String companyName, String companyDescription, String name, String lastname,
+            String email, String username, String password) {
+        RegisterPayload(String companyName, String username, String email, String password) {
+            this(companyName, "Integration test company", "Admin", "User", email, username, password);
+        }
     }
 
     private record LoginPayload(String username, String password) {
     }
 
-    private record UserPayload(String username, String email) {
-        public String getName() { return "Member"; }
-        public String getLastname() { return "User"; }
-        public boolean isAdmin() { return false; }
+    private record UserPayload(String name, String lastname, String email, String username, boolean admin) {
+        UserPayload(String username, String email) {
+            this("Member", "User", email, username, false);
+        }
     }
 
-    private record TechnologyPayload(long responsibleId) {
-        public String getName() { return "Integration technology"; }
-        public String getDescription() { return "Integration test technology"; }
+    private record TechnologyPayload(String name, String description, long responsibleId) {
+        TechnologyPayload(long responsibleId) {
+            this("Integration technology", "Integration test technology", responsibleId);
+        }
     }
 
-    private record ProductPayload(long technologyId, long responsibleId) {
-        public String getName() { return "Integration product"; }
-        public String getDescription() { return "Integration test product"; }
-        public long getBackupId() { return responsibleId; }
+    private record ProductPayload(String name, String description, long technologyId, long responsibleId,
+            long backupId) {
+        ProductPayload(long technologyId, long responsibleId) {
+            this("Integration product", "Integration test product", technologyId, responsibleId, responsibleId);
+        }
     }
 
-    private record ProjectPayload(long productId, long responsibleId) {
-        public String getName() { return "Integration project"; }
-        public String getDescription() { return "Integration test project"; }
-        public String getDateDev() { return "2026-09-02"; }
-        public long[] getContributorIds() { return new long[0]; }
+    private record ProjectPayload(String name, String description, String dateDev, Long productId, Long responsibleId,
+            List<Long> contributorIds) {
+        ProjectPayload(long productId, long responsibleId) {
+            this("Integration project", "Integration test project", "2026-09-02", productId, responsibleId,
+                    List.of());
+        }
     }
 
-    private record ImputationPayload(long projectId, int time) {
+    private record ImputationPayload(String date, List<ImputationItemPayload> items) {
         public ImputationPayload(long projectId) {
-            this(projectId, 8);
+            this("2026-09-02", List.of(new ImputationItemPayload(projectId, 8)));
         }
 
-        public String getDate() { return "2026-09-02"; }
-        public Object[] getItems() { return new Object[] { new ImputationItemPayload(projectId, time) }; }
+        public ImputationPayload(long projectId, int time) {
+            this("2026-09-02", List.of(new ImputationItemPayload(projectId, time)));
+        }
     }
 
     private record ImputationItemPayload(long projectId, int time) {

@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.application.CompanyService;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.RegisterRequest;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.error.CustomException;
 import com.arinno.canopus.error.ErrorResponseFactory;
-import com.arinno.canopus.servicies.CompanyService;
 import com.arinno.canopus.servicies.UserService;
 
 import jakarta.validation.Valid;

@@ -32,9 +32,12 @@
             <mat-label>Tecnología</mat-label>
             <input type="text" matInput formControlName="technology" [matAutocomplete]="auto">
             <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayTechnology">
-              <mat-option *ngFor="let technology of filteredTechnologies | async" [value]="technology">
-                {{technology.name}}
-              </mat-option>
+              <!-- MEJORA: Transición a bloque @for nativo y seguro con track en Angular 19 -->
+              @for (technology of (filteredTechnologies | async) ?? []; track technology.id) {
+                <mat-option [value]="technology">
+                  {{ technology.name }}
+                </mat-option>
+              }
             </mat-autocomplete>
           </mat-form-field>
 
@@ -42,9 +45,12 @@
             <mat-label>Responsable</mat-label>
             <input type="text" matInput formControlName="responsible" [matAutocomplete]="autoResponsible">
             <mat-autocomplete #autoResponsible="matAutocomplete" [displayWith]="displayFn">
-              <mat-option *ngFor="let user of filteredResponsibleUsers | async" [value]="user">
-                {{user.name}}
-              </mat-option>
+              <!-- MEJORA: Transición a bloque @for nativo para el listado de responsables filtrados -->
+              @for (user of (filteredResponsibleUsers | async) ?? []; track user.id) {
+                <mat-option [value]="user">
+                  {{ user.name }}
+                </mat-option>
+              }
             </mat-autocomplete>
           </mat-form-field>
 
@@ -52,9 +58,12 @@
             <mat-label>Backup</mat-label>
             <input type="text" matInput formControlName="backup" [matAutocomplete]="autoBackup">
             <mat-autocomplete #autoBackup="matAutocomplete" [displayWith]="displayFn">
-              <mat-option *ngFor="let user of filteredBackupUsers | async" [value]="user">
-                {{user.name}}
-              </mat-option>
+              <!-- MEJORA: Transición a bloque @for nativo para el listado de backups filtrados -->
+              @for (user of (filteredBackupUsers | async) ?? []; track user.id) {
+                <mat-option [value]="user">
+                  {{ user.name }}
+                </mat-option>
+              }
             </mat-autocomplete>
           </mat-form-field>
         </section>
@@ -154,5 +163,6 @@
     </form>
   </mat-card-content>
 </mat-card>
+
 
 

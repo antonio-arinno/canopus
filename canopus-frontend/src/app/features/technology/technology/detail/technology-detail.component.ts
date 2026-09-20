@@ -1,21 +1,21 @@
-import { Component, inject, WritableSignal, signal } from '@angular/core';
+import { Component, inject, WritableSignal, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule} from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { map, mergeMap, Observable, startWith } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { UserService } from '@features/user/data/user.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Product } from '@core/model/product';
-import { map, mergeMap, Observable, startWith } from 'rxjs';
-import { User } from '@core/model/user';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatTableModule } from '@angular/material/table';
-import { TechnologyRequest, TechnologyService } from '@features/technology/data/technology.service';
+
+import { UserService } from '@features/user/data/user.service';
 import { ProductService } from '@features/product/data/product.service';
+import { TechnologyRequest, TechnologyService } from '@features/technology/data/technology.service';
+import { Product } from '@core/model/product';
+import { User } from '@core/model/user';
 import { Technology } from '@core/model/technology';
 import { ModelMapperService } from '@core/model/model-mapper.service';
 import { FormStateService } from '@core/ui/form-state.service';
@@ -24,90 +24,101 @@ import { RequestStateService } from '@core/ui/request-state.service';
 
 @Component({
   selector: 'app-technology-detail',
-  imports: [CommonModule, MatCardModule, ReactiveFormsModule, MatInputModule, MatAutocompleteModule, MatButtonModule, MatGridListModule, MatTableModule],
+  imports: [
+    CommonModule, 
+    MatCardModule, 
+    ReactiveFormsModule, 
+    MatInputModule, 
+    MatAutocompleteModule, 
+    MatButtonModule, 
+    MatGridListModule, 
+    MatTableModule
+  ],
   templateUrl: './technology-detail.component.html',
   styleUrl: './technology-detail.component.scss'
 })
-export class TechnologyDetailComponent {
+export class TechnologyDetailComponent implements OnInit {
 
-  technologyService = inject(TechnologyService);
-  productService = inject(ProductService);
-  userService = inject(UserService);
-  modelMapperService = inject(ModelMapperService);
-  formStateService = inject(FormStateService);
-  formValidationService = inject(FormValidationService);
-  requestStateService = inject(RequestStateService);
-  router = inject(Router);
-  activateRoute = inject(ActivatedRoute);
-  fb = inject(FormBuilder);
+  // Inyección funcional encapsulada con private readonly
+  private readonly technologyService = inject(TechnologyService);
+  private readonly productService = inject(ProductService);
+  private readonly userService = inject(UserService);
+  private readonly modelMapperService = inject(ModelMapperService);
+  private readonly formStateService = inject(FormStateService);
+  private readonly formValidationService = inject(FormValidationService);
+  private readonly requestStateService = inject(RequestStateService);
+  private readonly router = inject(Router);
+  private readonly activateRoute = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
 
-  products:         WritableSignal<Product[]> = signal([]);
+  products: WritableSignal<Product[]> = signal([]);
   displayedColumns: string[] = ['product', 'responsible', 'backup', 'time'];
   form!: FormGroup;
 
   technology!: Technology;
   user!: User;
-
   filteredUsers: Observable<User[]> | undefined;  
 
+  // Atributos reactivos compartidos con el HTML
   readonly isSubmitting = this.formStateService.isSubmitting;
   readonly successMessage = this.formStateService.successMessage;
-  readonly errorMessage = this.formStateService.errorMessage;
+  readonly errorMessage = this.requestStateService.errorMessage;
   readonly isLoading = this.requestStateService.isLoading;
 
   ngOnInit(): void {
+    this.formStateService.clear();
     this.requestStateService.start();
-    this.activateRoute.params.subscribe(params => {
-      this.buildForm();
-      let id = params['id']
-      if(id){
-        this.technologyService.get(id).subscribe({
-          next:(res: Technology)=> {
-            const technologiesTmp = this.modelMapperService.mapTechnology(res);
-            this.form.get('id')?.setValue(technologiesTmp.id);
-            this.form.get('name')?.setValue(technologiesTmp.name);
-            this.form.get('description')?.setValue(technologiesTmp.description);
-            this.form.get('responsible')?.setValue(technologiesTmp.responsible);
-            this.form.get('products')?.setValue(technologiesTmp.countProducts);
-            this.form.get('projects')?.setValue(technologiesTmp.countProjects);
-            this.form.get('contribuitors')?.setValue(technologiesTmp.countContributors);
-            this.form.get('time')?.setValue(technologiesTmp.time);
+    this.buildForm();
 
-            this.productService.getByTechnology(res.id).subscribe({
-              next: (res: Product[]) => {
-                this.products.set(this.modelMapperService.mapProductList(res as unknown[]));
-                this.requestStateService.finish();
-              },
-              error: (err: any) => this.requestStateService.setError(err),
+    this.activateRoute.params.subscribe(params => {
+      const id = params['id'];
+      if (id) {
+        this.technologyService.get(id).subscribe({
+          next: (res: Technology) => {
+            const technologiesTmp = this.modelMapperService.mapTechnology(res);
+            this.form.patchValue({
+              id: technologiesTmp.id,
+              name: technologiesTmp.name,
+              description: technologiesTmp.description,
+              responsible: technologiesTmp.responsible,
+              products: technologiesTmp.countProducts,
+              projects: technologiesTmp.countProjects,
+              contribuitors: technologiesTmp.countContributors,
+              time: technologiesTmp.time
             });
 
-          },
-          error: (err: any) => this.requestStateService.setError(err)
+            this.productService.getByTechnology(res.id).subscribe({
+              next: (resProducts: Product[]) => {
+                this.products.set(this.modelMapperService.mapProductList(resProducts as unknown[]));
+                this.requestStateService.finish();
+              }
+              // El error local se delega automáticamente al interceptor global
+            });
+          }
         });
-      }else{
+      } else {
         this.technology = new Technology();
         this.requestStateService.finish();
       }
     });
 
-    this.filteredUsers = this.form.get('responsible')?.valueChanges
-    .pipe(
+    this.filteredUsers = this.form.get('responsible')?.valueChanges.pipe(
       startWith(''),
-      map(value => typeof value === 'string' ? value : value.description),
+      map(value => typeof value === 'string' ? value : (value?.description ?? '')),
       mergeMap(value => value ? this._filter(value) : this._getAll())
     );     
   }
 
-  private buildForm(){
+  private buildForm(): void {
     this.form = this.fb.group({
       id: [''],
       name: ['', [Validators.required]],
       description: ['', [Validators.required]],
       responsible: ['', [Validators.required]],
-      products: [{value: '', disabled: true}, Validators.required],
-      projects: [{value: '', disabled: true}, Validators.required],
-      contribuitors: [{value: '', disabled: true}, Validators.required],
-      time: [{value: '', disabled: true}, Validators.required]
+      products: [{ value: '', disabled: true }, Validators.required],
+      projects: [{ value: '', disabled: true }, Validators.required],
+      contribuitors: [{ value: '', disabled: true }, Validators.required],
+      time: [{ value: '', disabled: true }, Validators.required]
     });  
   }  
 
@@ -130,7 +141,7 @@ export class TechnologyDetailComponent {
  
   create(event: Event): void {
     event.preventDefault();
-    if(this.form.valid){
+    if (this.form.valid) {
       this.formStateService.startSubmit();
       const payload = this.buildTechnologyPayload();
       if (!payload) {
@@ -138,38 +149,31 @@ export class TechnologyDetailComponent {
         return;
       }
       this.technologyService.create(payload).subscribe({
-        next: (res: any) => {
+        next: () => {
           this.formStateService.setSuccess('Tecnología creada con éxito.');
           this.router.navigateByUrl('/pvt/technology');
-        },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
+        }
+        // Eliminado bloque 'error:' -> Lo gestiona el interceptor actualizando el requestState / formState
       });
     }    
   } 
 
   delete(event: Event): void {
     event.preventDefault();
-    if(this.form.valid){
+    if (this.form.valid) {
       const payload = this.form.getRawValue();
       this.technology = Technology.fromObject(payload);
       this.technologyService.delete(this.technology.id).subscribe({
-        next: (res: any) => {
+        next: () => {
           this.router.navigateByUrl('/pvt/technology');
-        },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
+        }
       });
     }
   }
 
   update(event: Event): void {
     event.preventDefault();
-    if(this.form.valid){
+    if (this.form.valid) {
       this.formStateService.startSubmit();
       const payload = this.buildTechnologyPayload();
       if (!payload) {
@@ -182,14 +186,10 @@ export class TechnologyDetailComponent {
         return;
       }
       this.technologyService.update(id, payload).subscribe({
-        next: (res: any) => {
+        next: () => {
           this.formStateService.setSuccess('Tecnología actualizada con éxito.');
           this.router.navigateByUrl('/pvt/technology');
-        },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
+        }
       });
     }
   } 
@@ -216,50 +216,6 @@ export class TechnologyDetailComponent {
         return id;
       }
     }
-
     return null;
   }
-
-  private extractErrorMessage(err: any): string {
-    const backendError = err?.error;
-
-    if (typeof backendError === 'string' && backendError.trim().length > 0) {
-      return backendError;
-    }
-
-    if (backendError?.message) {
-      return backendError.message;
-    }
-
-    if (backendError?.detail) {
-      return backendError.detail;
-    }
-
-    if (backendError?.title) {
-      return backendError.title;
-    }
-
-    if (Array.isArray(backendError?.errors) && backendError.errors.length > 0) {
-      const firstError = backendError.errors[0];
-      if (typeof firstError === 'string') {
-        return firstError;
-      }
-      if (firstError?.message) {
-        return firstError.message;
-      }
-    }
-
-    if (backendError?.errors && typeof backendError.errors === 'object') {
-      const firstErrorList = Object.values(backendError.errors).find(
-        (entry) => Array.isArray(entry) && entry.length > 0
-      ) as string[] | undefined;
-
-      if (firstErrorList?.[0]) {
-        return firstErrorList[0];
-      }
-    }
-
-    return err?.message ?? 'No se pudo completar la solicitud.';
-  }
- 
 }

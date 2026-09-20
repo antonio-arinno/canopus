@@ -4,14 +4,15 @@ package com.arinno.canopus.servicies;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.Product;
 import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
-import com.arinno.canopus.error.CustomException;
 import com.arinno.canopus.repositories.ProductRepository;
 
 @Service
@@ -32,16 +33,19 @@ public class ProductServiceImpl implements IProductService {
     @Override
     @Transactional(readOnly = true)
     public Product findByIdAndCompany(Long id, Company company) {
-        Product product = productRepository.findByIdAndCompany(id, company);
-        return Objects.requireNonNullElse(product, new Product());
+    	return productRepository.findByIdAndCompany(id, company)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado para la empresa."));
     }
 
-    @Override
-    @Transactional
-    public void deleteByIdAndCompany(Long id, Company company) throws CustomException {
-        productRepository.deleteByIdAndCompany(id, company);
-    }
-        
+	@Transactional
+	@Override
+	public void deleteByIdAndCompany(Long id, Company company) {
+		Product product = productRepository.findByIdAndCompany(id, company)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado para la empresa."));
+
+		productRepository.delete(product);
+	}
+			
     @Override
     @Transactional
     public Product save(Product product) {

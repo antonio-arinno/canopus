@@ -1,83 +1,76 @@
+import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Component, inject, WritableSignal, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatTableModule } from '@angular/material/table';
-import { ActivatedRoute, Router } from '@angular/router';
-
-import {
-  CdkDragDrop,
-  moveItemInArray,
-  transferArrayItem,
-  CdkDrag,
-  CdkDropList,
-} from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, transferArrayItem, CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
 
 import { User } from '@core/model/user';
+import { Technology } from '@core/model/technology';
+import { Product } from '@core/model/product';
 import { UserService } from '@features/user/data/user.service';
 import { TechnologyService } from '@features/technology/data/technology.service';
-import { Technology } from '@core/model/technology';
 import { ProductService } from '@features/product/data/product.service';
-import { Product } from '@core/model/product';
 import { ModelMapperService } from '@core/model/model-mapper.service';
-import { forkJoin } from 'rxjs';
 import { FormStateService } from '@core/ui/form-state.service';
 import { RequestStateService } from '@core/ui/request-state.service';
 import { AuthService } from '@core/auth/auth.service';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-user-detail',
-  imports: [CommonModule, MatCardModule, ReactiveFormsModule, MatInputModule, MatAutocompleteModule, MatButtonModule, CdkDropList, CdkDrag, MatGridListModule, MatTableModule],
+  imports: [
+    CommonModule, 
+    MatCardModule, 
+    ReactiveFormsModule, 
+    MatInputModule, 
+    MatAutocompleteModule, 
+    MatButtonModule, 
+    CdkDropList, 
+    CdkDrag, 
+    MatGridListModule, 
+    MatTableModule,
+    MatIconModule // <-- AGREGAR ESTA IMPORTACIÓN AQUÍ
+  ],
   templateUrl: './user-detail.component.html',
   styleUrl: './user-detail.component.scss'
 })
-export class UserDetailComponent {
+export class UserDetailComponent implements OnInit {
 
-  drop(event: CdkDragDrop<any[]>) {
-    if (event.previousContainer === event.container) {
-      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex,
-      );
-    }
-  } 
+  private readonly userService = inject(UserService);
+  private readonly technologyService = inject(TechnologyService);
+  private readonly productService = inject(ProductService);
+  private readonly modelMapperService = inject(ModelMapperService);
+  private readonly formStateService = inject(FormStateService);
+  private readonly requestStateService = inject(RequestStateService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly activateRoute = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
 
-  userService = inject(UserService);
-  technologyService = inject(TechnologyService);
-  productService = inject(ProductService);
-  modelMapperService = inject(ModelMapperService);
-  formStateService = inject(FormStateService);
-  requestStateService = inject(RequestStateService);
-  authService = inject(AuthService);
-  router = inject(Router);
-  activateRoute = inject(ActivatedRoute);
-  fb = inject(FormBuilder);
   form!: FormGroup;
   user!: User;
-
-  error!: string;
-  message!: string;
-  message2!: string;
+  isProfile = false;
+  
+      // Atributos reactivos expuestos al HTML
   readonly isSubmitting = this.formStateService.isSubmitting;
-  readonly successMessage = this.formStateService.successMessage;
-  readonly errorMessage = this.formStateService.errorMessage;
   readonly isLoading = this.requestStateService.isLoading;
-  readonly requestErrorMessage = this.requestStateService.errorMessage;
+  readonly showPasswordForm = signal(false);
+
 
   all_technologies: WritableSignal<Technology[]> = signal([]);
   my_technologies:  WritableSignal<Technology[]> = signal([]);
-  displayedColumns: string[] = ['product', 'technology', 'responsible', 'countProjects', 'countContributors', 'time'];
   products:         WritableSignal<Product[]> = signal([]);
-  isProfile = false;
-  showPasswordForm: WritableSignal<boolean> = signal(false);
+  
+  displayedColumns: string[] = ['product', 'technology', 'responsible', 'countProjects', 'countContributors', 'time'];
+  showPassword = false;
 
   togglePasswordForm(): void {
     this.showPasswordForm.update(value => !value);
@@ -88,35 +81,35 @@ export class UserDetailComponent {
     return Array.isArray(roles) && roles.includes('ROLE_ADMIN');
   }
 
-
   ngOnInit(): void {
+
     this.requestStateService.start();
+    this.formStateService.clear();
+
+
     this.activateRoute.params.subscribe(params => {
-      this.formStateService.reset();
       this.buildForm();
-      let id = params['id'];
+      const id = params['id'];
       this.isProfile = this.activateRoute.snapshot.routeConfig?.path === 'profile';
-      if(this.isProfile){
+      
+      if (this.isProfile) {
         this.userService.getMe().subscribe({
           next: (res: User) => this.loadUser(res),
-          error: (err: any) => this.requestStateService.setError(err)
+          error: () => this.requestStateService.finish()
         });
-      } else if(id){
+      } else if (id) {
         this.userService.get(id).subscribe({
-          next:(res: User)=> {
-            this.loadUser(res);
-          },
-          error: (err: any) => this.requestStateService.setError(err)
+          next: (res: User) => this.loadUser(res),
+          error: () => this.requestStateService.finish()
         });
-      }else{
+      } else {
         this.user = new User();
-        this.technologyService.getAll()
-        .subscribe({
+        this.technologyService.getAll().subscribe({
           next: (all_technologies) => {
             this.all_technologies.set(this.modelMapperService.mapTechnologyList(all_technologies as unknown[]));
             this.requestStateService.finish();
           },
-          error: (err: any) => this.requestStateService.setError(err)
+          error: () => this.requestStateService.finish()
         });
       }
     });
@@ -134,6 +127,7 @@ export class UserDetailComponent {
       countProjects: mappedUser.countProjects,
       time: mappedUser.time
     });
+    
     if (this.isProfile) {
       this.form.get('username')?.disable();
     }
@@ -151,31 +145,32 @@ export class UserDetailComponent {
         this.products.set(this.modelMapperService.mapProductList(contributorProducts as unknown[]));
         this.requestStateService.finish();
       },
-      error: (err: any) => this.requestStateService.setError(err),
+      error: () => this.requestStateService.finish()
     });
   }
 
-  private buildForm(){
+  private buildForm(): void {
     this.form = this.fb.group({
-      id:             [''],
-      username:       ['', [Validators.required, Validators.minLength(4), Validators.maxLength(12)]],
-      password:       [''],
-      currentPassword: ['', []],
-      newPassword:    ['', [Validators.minLength(8), Validators.maxLength(72)]],
-      name:           ['', [Validators.required]],
-      lastname:       ['', [Validators.required]],
-      email:          ['', [Validators.required, Validators.email]],
-      countProducts:  [{value: '', disabled: true}, Validators.required],
-      countProjects:  [{value: '', disabled: true}, Validators.required],
-      time:           [{value: '', disabled: true}, Validators.required]
+      id: [''],
+      username: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(12)]],
+      password: [''],
+      currentPassword: [''],
+      newPassword: ['', [Validators.minLength(8), Validators.maxLength(72)]],
+      name: ['', [Validators.required]],
+      lastname: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]],
+      countProducts: [{value: '', disabled: true}, Validators.required],
+      countProjects: [{value: '', disabled: true}, Validators.required],
+      time: [{value: '', disabled: true}, Validators.required]
     });  
   }  
 
   update(event: Event): void {
     event.preventDefault();
-    if(this.form.valid){
+    if (this.form.valid) {
       this.formStateService.startSubmit();
       const payload = this.form.getRawValue();
+      
       this.userService.updateMe({
         name: payload.name,
         lastname: payload.lastname,
@@ -187,11 +182,8 @@ export class UserDetailComponent {
           this.router.navigateByUrl('/pvt/user');
         },
         error: (err: any) => {
-          const message = err.error?.message ?? 'No se pudo completar la solicitud.';
-          this.formStateService.setError(message);
-          this.error = err.error?.error ?? 'Error desconocido';
-          this.message = message;
-        },
+          this.handleFormError(err, 'No tienes permisos para realizar esta acción.');
+        }
       });
     }
   }     
@@ -200,6 +192,7 @@ export class UserDetailComponent {
     event.preventDefault();
     const currentPassword = this.form.get('currentPassword')?.value;
     const newPassword = this.form.get('newPassword')?.value;
+    
     if (!currentPassword || !newPassword || this.form.get('newPassword')?.invalid) {
       this.formStateService.setError('Indica la contraseña actual y una nueva de al menos 8 caracteres.');
       return;
@@ -213,28 +206,26 @@ export class UserDetailComponent {
         this.showPasswordForm.set(false);
         this.formStateService.setSuccess('Contraseña actualizada con éxito.');
       },
-      error: (err: any) => this.formStateService.setError(err.error?.message ?? 'No se pudo cambiar la contraseña.')
+      error: () => this.formStateService.reset()
     });
   }
 
   create(event: Event): void {
     event.preventDefault();
-    if(this.form.valid){
+    if (this.form.valid) {
       this.formStateService.startSubmit();
       const payload = this.form.getRawValue();
       this.user = User.fromObject(payload);
       this.user.technologies = this.my_technologies();
+      
       this.userService.create(this.user).subscribe({
         next: () => {
           this.formStateService.setSuccess('Usuario creado con éxito.');
           this.router.navigateByUrl('/pvt/user');
         },
         error: (err: any) => {
-          const message = err.error?.message ?? 'No se pudo completar la solicitud.';
-          this.formStateService.setError(message);
-          this.error = err.error?.error ?? 'Error desconocido';
-          this.message = message;
-        },
+          this.handleFormError(err, 'No se pudo completar la solicitud debido a restricciones del sistema.');
+        }
       });
     }    
   } 
@@ -242,7 +233,7 @@ export class UserDetailComponent {
   delete(event: Event): void {
     event.preventDefault();
     const id = this.form.get('id')?.value;
-    if(id){
+    if (id) {
       this.formStateService.startSubmit();
       this.userService.delete(id).subscribe({
         next: () => {
@@ -250,13 +241,35 @@ export class UserDetailComponent {
           this.router.navigateByUrl('/pvt/user');
         },
         error: (err: any) => {
-          const message = err.error?.message ?? err.message ?? 'No se pudo completar la solicitud.';
-          this.formStateService.setError(message);
-          this.error = err.name ?? 'Error desconocido';
-          this.message = message;
-        },
+          this.handleFormError(err, 'No se pudo eliminar debido a dependencias en el sistema.');
+        }
       });
     }
   }
 
+  // 🔥 FACTOR COMÚN: Método centralizado para procesar fallos de la API en este formulario
+  private handleFormError(err: any, fallbackMessage: string): void {
+    if (err?.status === 403) {
+      this.formStateService.setError('No tienes permisos para realizar esta acción.');
+    } else {
+      const backendMessage = err?.error?.message || fallbackMessage;
+      this.formStateService.setError(backendMessage);
+    }
+  }
+
+
+
+
+  drop(event: CdkDragDrop<Technology[]>): void {
+    if (event.previousContainer === event.container) {
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+    } else {
+      transferArrayItem(
+        event.previousContainer.data,
+        event.container.data,
+        event.previousIndex,
+        event.currentIndex
+      );
+    }
+  } 
 }

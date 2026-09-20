@@ -1,22 +1,22 @@
-import { Component, inject, signal, WritableSignal } from '@angular/core';
+import { Component, inject, signal, WritableSignal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule} from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { combineLatest, distinctUntilChanged, map, Observable, of, shareReplay, startWith, switchMap } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { ProductService } from '@features/product/data/product.service';
-import { UserService } from '@features/user/data/user.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Product, ProductRequest } from '@core/model/product';
-import { combineLatest, distinctUntilChanged, map, Observable, of, shareReplay, startWith, switchMap } from 'rxjs';
-import { User } from '@core/model/user';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatTableModule } from '@angular/material/table';
-import { Technology } from '@core/model/technology';
+
+import { ProductService } from '@features/product/data/product.service';
+import { UserService } from '@features/user/data/user.service';
 import { ProjectService } from '@features/project/data/project.service';
+import { Product, ProductRequest } from '@core/model/product';
+import { User } from '@core/model/user';
+import { Technology } from '@core/model/technology';
 import { Project } from '@core/model/project';
 import { ModelMapperService } from '@core/model/model-mapper.service';
 import { FormStateService } from '@core/ui/form-state.service';
@@ -25,75 +25,90 @@ import { RequestStateService } from '@core/ui/request-state.service';
 
 @Component({
   selector: 'app-product-detail',
-  imports: [CommonModule, MatCardModule, ReactiveFormsModule, MatInputModule, MatAutocompleteModule, MatButtonModule, MatGridListModule, MatTableModule],
+  imports: [
+    CommonModule, 
+    MatCardModule, 
+    ReactiveFormsModule, 
+    MatInputModule, 
+    MatAutocompleteModule, 
+    MatButtonModule, 
+    MatGridListModule, 
+    MatTableModule
+  ],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.scss'
 })
-export class ProductDetailComponent {
+export class ProductDetailComponent implements OnInit {
 
-  productService = inject(ProductService);
-  projectService = inject(ProjectService);
-  userService = inject(UserService);
-  modelMapperService = inject(ModelMapperService);
-  formStateService = inject(FormStateService);
-  formValidationService = inject(FormValidationService);
-  requestStateService = inject(RequestStateService);
-  router = inject(Router);
-  activateRoute = inject(ActivatedRoute);
-  fb = inject(FormBuilder);
-  projects2: Project[] = [];
-  projects:         WritableSignal<Project[]> = signal([]);
+  // Inyección funcional encapsulada con modificadores de acceso óptimos
+  private readonly productService = inject(ProductService);
+  private readonly projectService = inject(ProjectService);
+  private readonly userService = inject(UserService);
+  private readonly modelMapperService = inject(ModelMapperService);
+  private readonly formStateService = inject(FormStateService);
+  private readonly formValidationService = inject(FormValidationService);
+  private readonly requestStateService = inject(RequestStateService);
+  private readonly router = inject(Router);
+  private readonly activateRoute = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
+
+  projects: WritableSignal<Project[]> = signal([]);
   form!: FormGroup;
-
   product!: Product;
 
   filteredResponsibleUsers: Observable<User[]> | undefined;
   filteredBackupUsers: Observable<User[]> | undefined;
   filteredTechnologies: Observable<Technology[]> | undefined;
+  
   private userTechnologies$!: Observable<Technology[]>;
   private usersByTechnology$!: Observable<User[]>;
 
+  // Atributos reactivos compartidos con el HTML mediante Signals
   readonly isSubmitting = this.formStateService.isSubmitting;
   readonly successMessage = this.formStateService.successMessage;
-  readonly errorMessage = this.formStateService.errorMessage;
   readonly isLoading = this.requestStateService.isLoading;
+  readonly errorMessage = this.requestStateService.errorMessage;
+
+  
   displayedColumns: string[] = ['projectName', 'status', 'countContributors', 'time'];
 
-
   ngOnInit(): void {
+    this.buildForm();
+    this.formStateService.clear();
     this.requestStateService.start();
+
     this.activateRoute.params.subscribe(params => {
-      this.buildForm();
-      let id = params['id']
-      if(id){
+      const id = params['id'];
+      if (id) {
         this.productService.get(id).subscribe({
-          next:(res: Product)=> {
+          next: (res: Product) => {
             const productsTmp = this.modelMapperService.mapProduct(res);
-            this.form.get('id')?.setValue(productsTmp.id);
-            this.form.get('name')?.setValue(productsTmp.name);
-            this.form.get('description')?.setValue(productsTmp.description);
-            this.form.get('technology')?.setValue(productsTmp.technology);
-            this.form.get('responsible')?.setValue(productsTmp.responsible);
-            this.form.get('backup')?.setValue(productsTmp.backup);
-            this.form.get('projects')?.setValue(productsTmp.countProjects);
-            this.form.get('contribuitors')?.setValue(productsTmp.countContributors);
-            this.form.get('time')?.setValue(productsTmp.time);
-            this.form.get('avgTime')?.setValue(productsTmp.avgTime);
-            this.form.get('avgDuration')?.setValue(productsTmp.avgDuration);
+            
+            // Rellenado atómico del formulario
+            this.form.patchValue({
+              id: productsTmp.id,
+              name: productsTmp.name,
+              description: productsTmp.description,
+              technology: productsTmp.technology,
+              responsible: productsTmp.responsible,
+              backup: productsTmp.backup,
+              projects: productsTmp.countProjects,
+              contribuitors: productsTmp.countContributors,
+              time: productsTmp.time,
+              avgTime: productsTmp.avgTime,
+              avgDuration: productsTmp.avgDuration
+            });
 
             this.projectService.getByProduct(res.id).subscribe({
-              next: (res: Project[]) => {
-                const mappedProjects = this.modelMapperService.mapProjectList(res as unknown[]);
-                this.projects2 = mappedProjects;
-                this.projects.set(this.projects2);
+              next: (resProjects: Project[]) => {
+                const mappedProjects = this.modelMapperService.mapProjectList(resProjects as unknown[]);
+                this.projects.set(mappedProjects);
                 this.requestStateService.finish();
-              },
-              error: (err: any) => this.requestStateService.setError(err),
+              }
             });
-          },
-          error: (err: any) => this.requestStateService.setError(err)
+          }
         });
-      }else{
+      } else {
         this.product = new Product();
         this.requestStateService.finish();
       }
@@ -104,8 +119,8 @@ export class ProductDetailComponent {
       shareReplay({ bufferSize: 1, refCount: true })
     );
 
-    this.usersByTechnology$ = this.form.get('technology')!.valueChanges
-    .pipe(
+    // Reactividad en cascada al cambiar la tecnología
+    this.usersByTechnology$ = this.form.get('technology')!.valueChanges.pipe(
       startWith(''),
       map(value => (value && typeof value === 'object' && (value as Technology).id) ? (value as Technology).id : null),
       distinctUntilChanged(),
@@ -127,97 +142,42 @@ export class ProductDetailComponent {
       map(([users, value]) => this._filterUsers(users, value))
     );
 
-    // al cambiar de tecnología, responsable/backup dejan de ser válidos para la nueva lista
-    this.form.get('technology')!.valueChanges
-    .pipe(
+    this.form.get('technology')!.valueChanges.pipe(
       map(value => (value && typeof value === 'object' && (value as Technology).id) ? (value as Technology).id : null),
       distinctUntilChanged()
-    )
-    .subscribe(() => {
-      this.form.get('responsible')?.setValue(null);
-      this.form.get('backup')?.setValue(null);
+    ).subscribe(() => {
+      this.form.get('responsible')?.setValue(null, { emitEvent: false });
+      this.form.get('backup')?.setValue(null, { emitEvent: false });
     });
 
-    this.filteredTechnologies = this.form.get('technology')?.valueChanges
-    .pipe(
+    this.filteredTechnologies = this.form.get('technology')?.valueChanges.pipe(
       startWith(''),
       map(value => typeof value === 'string' ? value : value?.name ?? ''),
       switchMap(value => this.userTechnologies$.pipe(
         map(technologies => this._filterTechnologies(technologies, value))
       ))
     );   
-
   }
 
-  private _filterUsers(users: User[], value: string | User): User[] {
-    const term = typeof value === 'string' ? value : value?.name ?? '';
-    const filterValue = term.toLowerCase();
-    return filterValue
-      ? users.filter(user => user.name?.toLowerCase().includes(filterValue))
-      : users;
-  }
-
-  displayFn(user: User): string {
-    return user && user.name ? user.name : '';
-  }
-
-  private _filterTechnologies(technologies: Technology[], value: string): Technology[] {
-    const filterValue = value.toLowerCase();
-    return filterValue
-      ? technologies.filter(technology => technology.name?.toLowerCase().includes(filterValue))
-      : technologies;
-  }
-
-  displayTechnology(technology: Technology): string {
-    return technology && technology.name ? technology.name : '';
-  }
-
-  getValidationMessage(controlName: string): string | null {
-    return this.formValidationService.getErrorMessage(this.form.get(controlName));
-  }
-
-
-  private buildForm(){
+  private buildForm(): void {
     this.form = this.fb.group({
-      id:             [''],
-      name:           ['', [Validators.required]],
-      description:    ['', [Validators.required]],
-      technology:     ['', [Validators.required]],
-      responsible:    ['', [Validators.required]],
-      backup:         ['', [Validators.required]],
-      projects:       [{value: '', disabled: true}, Validators.required],
-      contribuitors:  [{value: '', disabled: true}, Validators.required],
-      time:           [{value: '', disabled: true}, Validators.required],
-      avgTime:        [{value: '', disabled: true}, Validators.required],
-      avgDuration:    [{value: '', disabled: true}, Validators.required]
+      id: [''],
+      name: ['', [Validators.required]],
+      description: ['', [Validators.required]],
+      technology: ['', [Validators.required]],
+      responsible: ['', [Validators.required]],
+      backup: ['', [Validators.required]],
+      projects: [{ value: '', disabled: true }, Validators.required],
+      contribuitors: [{ value: '', disabled: true }, Validators.required],
+      time: [{ value: '', disabled: true }, Validators.required],
+      avgTime: [{ value: '', disabled: true }, Validators.required],
+      avgDuration: [{ value: '', disabled: true }, Validators.required]
     });  
   }  
 
-  update(event: Event): void {
-    event.preventDefault();
-    if(this.form.valid){
-      this.formStateService.startSubmit();
-      const payload = this.buildProductPayload();
-      if (!payload) {
-        this.formStateService.setError('Debes seleccionar Tecnologia, Responsable y Backup desde la lista.');
-        return;
-      }
-      this.productService.update(payload).subscribe({
-        next: () => {
-          this.formStateService.setSuccess('Producto actualizado con éxito.');
-          this.router.navigateByUrl('/pvt/product');
-        },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
-      });
-    }
-  }     
-
   create(event: Event): void {
     event.preventDefault();
-    if(this.form.valid){
+    if (this.form.valid) {
       this.formStateService.startSubmit();
       const payload = this.buildProductPayload();
       if (!payload) {
@@ -229,28 +189,41 @@ export class ProductDetailComponent {
           this.formStateService.setSuccess('Producto creado con éxito.');
           this.router.navigateByUrl('/pvt/product');
         },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
+         error: () => this.formStateService.reset()
       });
     }    
   } 
 
+  update(event: Event): void {
+    event.preventDefault();
+    if (this.form.valid) {
+      this.formStateService.startSubmit();
+      const payload = this.buildProductPayload();
+      if (!payload) {
+        this.formStateService.setError('Debes seleccionar Tecnologia, Responsable y Backup desde la lista.');
+        return;
+      }
+      this.productService.update(payload).subscribe({
+        next: () => {
+          this.formStateService.setSuccess('Producto actualizado con éxito.');
+          this.router.navigateByUrl('/pvt/product');
+        },
+        error: () => this.formStateService.reset()
+      });
+    }
+  } 
+
   delete(event: Event): void {
     event.preventDefault();
-    if(this.form.valid){
+    if (this.form.valid) {
       this.formStateService.startSubmit();
       const payload = this.form.getRawValue();
       this.product = Product.fromObject(payload);
       this.productService.delete(this.product.id).subscribe({
-        next: (res: any) => {
+        next: () => {
           this.router.navigateByUrl('/pvt/product');
         },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
+        error: () => this.formStateService.reset()
       });
     }
   }
@@ -282,55 +255,29 @@ export class ProductDetailComponent {
         return id;
       }
     }
-
     return null;
   }
 
-  private extractErrorMessage(err: any): string {
-    const backendError = err?.error;
-
-    if (typeof backendError === 'string' && backendError.trim().length > 0) {
-      return backendError;
-    }
-
-    if (backendError?.message) {
-      return backendError.message;
-    }
-
-    if (backendError?.error && typeof backendError.error === 'string') {
-      return backendError.error;
-    }
-
-    if (backendError?.detail) {
-      return backendError.detail;
-    }
-
-    if (backendError?.title) {
-      return backendError.title;
-    }
-
-    if (Array.isArray(backendError?.errors) && backendError.errors.length > 0) {
-      const firstError = backendError.errors[0];
-      if (typeof firstError === 'string') {
-        return firstError;
-      }
-      if (firstError?.message) {
-        return firstError.message;
-      }
-    }
-
-    if (backendError?.errors && typeof backendError.errors === 'object') {
-      const firstErrorList = Object.values(backendError.errors).find(
-        (entry) => Array.isArray(entry) && entry.length > 0
-      ) as string[] | undefined;
-
-      if (firstErrorList?.[0]) {
-        return firstErrorList[0];
-      }
-    }
-
-    return err?.message ?? 'No se pudo completar la solicitud.';
+  private _filterUsers(users: User[], value: string | User): User[] {
+    const term = typeof value === 'string' ? value : value?.name ?? '';
+    const filterValue = term.toLowerCase();
+    return filterValue? users.filter(user => user.name?.toLowerCase().includes(filterValue)): users;
   }
-
-
+  
+  displayFn(user: User): string {
+    return user && user.name ? user.name : '';
+  }
+  
+  private _filterTechnologies(technologies: Technology[], value: string): Technology[] {
+    const filterValue = value.toLowerCase();
+    return filterValue? technologies.filter(technology => technology.name?.toLowerCase().includes(filterValue)): technologies;
+  }
+  
+  displayTechnology(technology: Technology): string {
+    return technology && technology.name ? technology.name : '';
+  }
+  
+  getValidationMessage(controlName: string): string | null {
+    return this.formValidationService.getErrorMessage(this.form.get(controlName));
+  }
 }

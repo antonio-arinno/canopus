@@ -1,4 +1,4 @@
-<mat-card class="project-card">
+<mat-card class="project-detail-card">
   <mat-card-header class="card-header">
     <div class="header-copy">
       <mat-card-title>Proyecto</mat-card-title>
@@ -9,6 +9,8 @@
   <mat-card-content>
     <form [formGroup]="form">
       <div class="detail-grid">
+        
+        <!-- SECCIÓN: INFORMACIÓN GENERAL -->
         <section class="detail-section">
           <div class="section-title">Información general</div>
 
@@ -30,126 +32,152 @@
 
           <mat-form-field>
             <mat-label>Producto</mat-label>
-            <input type="text" matInput formControlName="product" [matAutocomplete]="auto">
-            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
-              <mat-option *ngFor="let product of filteredProducts | async" [value]="product">
-                {{product.name}}
-              </mat-option>
+            <input type="text" matInput formControlName="product" [matAutocomplete]="autoProduct">
+            <mat-autocomplete #autoProduct="matAutocomplete" [displayWith]="displayFn">
+              @for (product of (filteredProducts | async) ?? []; track product.id) {
+                <mat-option [value]="product">
+                  {{ product.name }}
+                </mat-option>
+              }
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Responsable</mat-label>
+            <input type="text" matInput formControlName="responsible" [matAutocomplete]="autoResponsible">
+            <mat-autocomplete #autoResponsible="matAutocomplete" [displayWith]="displayUserFn">
+              @for (user of (filteredUsers | async) ?? []; track user.id) {
+                <mat-option [value]="user">
+                  {{ user.name }}
+                </mat-option>
+              }
             </mat-autocomplete>
           </mat-form-field>
 
           <mat-form-field>
             <mat-label>Estado</mat-label>
-            <input type="text" matInput placeholder="Estado" formControlName="status">
+            <input type="text" matInput formControlName="status">
           </mat-form-field>
-
-          <div class="date-grid">
-            <mat-form-field>
-              <mat-label>Desarrollo</mat-label>
-              <input matInput [matDatepicker]="picker" formControlName="dateDev">
-              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-              <mat-datepicker #picker></mat-datepicker>
-            </mat-form-field>
-
-            <mat-form-field>
-              <mat-label>Preproducción</mat-label>
-              <input matInput [matDatepicker]="picker2" formControlName="datePre">
-              <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
-              <mat-datepicker #picker2></mat-datepicker>
-            </mat-form-field>
-
-            <mat-form-field>
-              <mat-label>Producción</mat-label>
-              <input matInput [matDatepicker]="picker3" formControlName="datePro">
-              <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
-              <mat-datepicker #picker3></mat-datepicker>
-            </mat-form-field>
-          </div>
-
-          <mat-form-field>
-            <mat-label>Responsable</mat-label>
-            <input type="text" matInput formControlName="responsible" [matAutocomplete]="autoUser">
-            <mat-autocomplete #autoUser="matAutocomplete" [displayWith]="displayUserFn">
-              <mat-option *ngFor="let user of filteredUsers | async" [value]="user">
-                {{user.name}}
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-
-          <div class="drag-section">
-            <div class="drag-block">
-              <div class="drag-title">Usuarios</div>
-              <div
-                cdkDropList
-                #todoList="cdkDropList"
-                [cdkDropListData]="users()"
-                [cdkDropListConnectedTo]="[doneList]"
-                class="list"
-                (cdkDropListDropped)="drop($event)">
-                @for (item of users(); track item) {
-                  <div class="box" cdkDrag>{{item.name}}</div>
-                }
-              </div>
-            </div>
-
-            <div class="drag-block">
-              <div class="drag-title">Contribuidores</div>
-              <div
-                cdkDropList
-                #doneList="cdkDropList"
-                [cdkDropListData]="contribuitors()"
-                [cdkDropListConnectedTo]="[todoList]"
-                class="list"
-                (cdkDropListDropped)="drop($event)">
-                @for (item of contribuitors(); track item) {
-                  <div class="box" cdkDrag>{{item.name}}</div>
-                }
-              </div>
-            </div>
-          </div>
         </section>
 
+        <!-- SECCIÓN: HITOS Y FECHAS -->
+        <section class="detail-section">
+          <div class="section-title">Hitos de despliegue</div>
+
+          <!-- 1. Fecha Desarrollo -->
+          <mat-form-field>
+            <mat-label>Fecha Desarrollo</mat-label>
+            <!-- MEJORA: Añadido el atributo matInput aquí -->
+            <input matInput [matDatepicker]="pickerDev" formControlName="dateDev">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerDev"></mat-datepicker-toggle>
+            <mat-datepicker #pickerDev></mat-datepicker>
+          </mat-form-field>
+
+          <!-- 2. Fecha Preproducción -->
+          <mat-form-field>
+            <mat-label>Fecha Preproducción</mat-label>
+            <!-- MEJORA: Añadido el atributo matInput aquí -->
+            <input matInput [matDatepicker]="pickerPre" formControlName="datePre">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerPre"></mat-datepicker-toggle>
+            <mat-datepicker #pickerPre></mat-datepicker>
+          </mat-form-field>
+
+          <!-- 3. Fecha Producción -->
+          <mat-form-field>
+            <mat-label>Fecha Producción</mat-label>
+            <!-- MEJORA: Añadido el atributo matInput aquí -->
+            <input matInput [matDatepicker]="pickerPro" formControlName="datePro">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerPro"></mat-datepicker-toggle>
+            <mat-datepicker #pickerPro></mat-datepicker>
+          </mat-form-field>
+
+
+        </section>
+
+        <!-- SECCIÓN: DRAG AND DROP DE EQUIPO -->
+        <section class="detail-section team-assignment">
+          <div class="section-title">Configuración del equipo</div>
+ 
+          <div class="drag-section">
+              <div class="drag-block">
+                <div class="drag-title">Usuarios</div>
+                <div
+                  cdkDropList
+                  #todoList="cdkDropList"
+                  [cdkDropListData]="users()"
+                  [cdkDropListConnectedTo]="[doneList]"
+                  class="list"
+                  (cdkDropListDropped)="drop($event)">
+                  @for (item of users(); track item.id) {
+                    <div class="box" cdkDrag>{{ item.name }}</div>
+                  } @empty {
+                    <div class="drag-empty">Sin usuarios adicionales para la tecnología</div>
+                  }
+                </div>
+              </div>
+
+              <div class="drag-block">
+                <div class="drag-title">Contribuidores</div>
+                <div
+                  cdkDropList
+                  #doneList="cdkDropList"
+                  [cdkDropListData]="contribuitors()"
+                  [cdkDropListConnectedTo]="[todoList]"
+                  class="list"
+                  (cdkDropListDropped)="drop($event)">
+                  @for (item of contribuitors(); track item.id) {
+                    <div class="box" cdkDrag>{{ item.name }}</div>
+                  } @empty {
+                    <div class="drag-empty">Arrastra usuarios aquí para asignarlos</div>
+                  }
+                </div>
+              </div>
+          </div>          
+        </section>
+
+        <!-- SECCIÓN: INDICADORES IMPUTACIONES -->
         <section class="detail-section">
           <div class="section-title">Referencias e indicadores</div>
-
-          <mat-form-field>
-            <mat-label>Release</mat-label>
-            <input type="text" matInput placeholder="Release" formControlName="reference1">
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>FrontWork</mat-label>
-            <input type="text" matInput placeholder="FrontWork" formControlName="reference2">
-          </mat-form-field>
-
+          
           <div class="metric-grid">
             <mat-form-field>
+              <mat-label>Release</mat-label>
+              <input type="text" matInput formControlName="reference1">
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>FrontWork</mat-label>
+              <input type="text" matInput formControlName="reference2">
+            </mat-form-field>
+
+            <mat-form-field>
               <mat-label>Contribuidores</mat-label>
-              <input type="text" matInput placeholder="Contribuidores" formControlName="countContributors">
+              <input type="text" matInput formControlName="countContributors">
             </mat-form-field>
 
             <mat-form-field>
               <mat-label>Tiempo</mat-label>
-              <input type="text" matInput placeholder="Tiempo" formControlName="time">
+              <input type="text" matInput formControlName="time">
             </mat-form-field>
 
             <mat-form-field>
               <mat-label>Duración</mat-label>
-              <input type="text" matInput placeholder="Duración" formControlName="duration">
+              <input type="text" matInput formControlName="duration">
             </mat-form-field>
           </div>
 
           <div class="table-card">
-            <div class="table-title">Imputaciones</div>
-            <table mat-table [dataSource]="imputationSummaries()" class="summary-table">
+            <div class="table-title">Imputaciones de tiempo</div>
+            <table mat-table [dataSource]="imputationSummaries()" class="imputations-table">
+              
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef> Nombre </th>
-                <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+                <td mat-cell *matCellDef="let element"> {{ element.name }} </td>
               </ng-container>
 
               <ng-container matColumnDef="time">
-                <th mat-header-cell *matHeaderCellDef> Tiempo </th>
-                <td mat-cell *matCellDef="let element"> {{element.time}} </td>
+                <th mat-header-cell *matHeaderCellDef> Tiempo (h) </th>
+                <td mat-cell *matCellDef="let element"> {{ element.time }} </td>
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -157,8 +185,10 @@
             </table>
           </div>
         </section>
+
       </div>
 
+      <!-- FOOTER: ACCIONES Y MENSAJES DE ESTADO -->
       <mat-card-footer class="detail-footer">
         <div class="footer-actions">
           @if (!form.get('id')?.value) {
@@ -166,7 +196,7 @@
           } @else {
             <div class="space-between">
               <button type="submit" (click)="update($event)" mat-flat-button color="primary" [disabled]="form.invalid || !dateOk">Actualizar</button>
-              <button type="submit" (click)="delete($event)" mat-flat-button color="warn" [disabled]="form.invalid || !dateOk">Eliminar</button>
+              <button type="submit" (click)="delete($event)" mat-flat-button color="warn">Eliminar</button>
             </div>
           }
         </div>
@@ -183,18 +213,19 @@
           @if (successMessage()) {
             <p role="status" class="text-success">{{ successMessage() }}</p>
           }
-
+          
           @if (errorMessage()) {
             <div>
               <mat-error>{{ errorMessage() }}</mat-error>
             </div>
           }
 
-          @if(form.get('dateDev')?.value > form.get('datePre')?.value && form.get('datePre')?.value){
-            <mat-error>Fecha de PreProducción no puede ser inferior a fecha de Desarrollo</mat-error>
+          <!-- MENSAJES DE VALIDACIÓN DE FECHAS DINÁMICAS -->
+          @if (form.get('dateDev')?.value > form.get('datePre')?.value && form.get('datePre')?.value) {
+            <p role="alert" class="text-danger">Fecha de PreProducción no puede ser inferior a fecha de Desarrollo</p>
           }
-          @if(form.get('datePre')?.value > form.get('datePro')?.value && form.get('datePro')?.value){
-            <mat-error>Fecha de Producción no puede ser inferior a fecha de PreProducción</mat-error>
+          @if (form.get('datePre')?.value > form.get('datePro')?.value && form.get('datePro')?.value) {
+            <p role="alert" class="text-danger">Fecha de Producción no puede ser inferior a fecha de PreProducción</p>
           }
         </div>
       </mat-card-footer>

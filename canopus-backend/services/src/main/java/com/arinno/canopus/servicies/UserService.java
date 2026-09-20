@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.ChangePasswordRequest;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserListItem;
@@ -26,16 +26,15 @@ public interface UserService {
 
     Optional<User> findById(Long id);
 
-    Optional<User> findByIdAndCompany(Long id, Company company);
+    User findByIdAndCompany(Long id, Company company);
 
     User save(User user);
 
-    Optional<User> updateProfile(UserProfileRequest user, Long id);
+    User updateProfile(UserProfileRequest user, Long id);
 
-    boolean changePassword(ChangePasswordRequest request, Long id);
+    void changePassword(ChangePasswordRequest request, Long id);
 
-    boolean deleteById(Long id, Company company);
+    void deleteById(Long id, Company company);
 
-    public List<User> findByNameContainingIgnoreCaseAndCompany(String term, Company company);
-
+    List<User> findByNameContainingIgnoreCaseAndCompany(String term, Company company);
 }

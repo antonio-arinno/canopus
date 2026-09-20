@@ -3,8 +3,6 @@ package com.arinno.canopus.controllers;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -13,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.arinno.canopus.controllers.mapper.TechnologyMapper;
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.TechnologyRequest;
 import com.arinno.canopus.servicies.ITechnologyService;
 import com.arinno.canopus.servicies.JwtService;
@@ -34,21 +32,31 @@ class TechnologyControllerSecurityTests {
     @Mock
     private TechnologyMapper technologyMapper;
 
+
+
     @Test
     void createRejectsResponsibleFromAnotherCompany() throws Exception {
+        // Arrange (Preparación)
         Company company = new Company();
         company.setId(1L);
         TechnologyRequest request = new TechnologyRequest();
         request.setResponsibleId(2L);
 
         when(jwtService.getCompanyFromToken("Bearer token")).thenReturn(company);
-        when(userService.findByIdAndCompany(2L, company)).thenReturn(Optional.empty());
+        
+        // Configura el mock para que simule el nuevo comportamiento del servicio:
+        // Al no encontrar el usuario, lanza directamente un ResponseStatusException con NOT_FOUND (404)
+        when(userService.findByIdAndCompany(2L, company))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no se encontró"));
 
         TechnologyController controller = new TechnologyController(technologyService, jwtService, userService, technologyMapper);
 
+        // Act & Assert (Acción y Verificación)
         assertThatThrownBy(() -> controller.save(request, "Bearer token"))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting(exception -> ((ResponseStatusException) exception).getStatusCode())
-                .isEqualTo(HttpStatus.BAD_REQUEST);
+                // Verificamos que ahora el sistema responda con NOT_FOUND (404) en lugar de BAD_REQUEST
+                .isEqualTo(HttpStatus.NOT_FOUND);
     }
+
 }

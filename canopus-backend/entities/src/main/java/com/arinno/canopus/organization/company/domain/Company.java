@@ -1,4 +1,4 @@
-package com.arinno.canopus.entities;
+package com.arinno.canopus.organization.company.domain;
 
 import java.util.Date;
 
@@ -20,11 +20,11 @@ public class Company {
 	private Long id;
 	private String name;
 	private String description;
-	
+
 	@Column(name = "create_at")
 	@Temporal(TemporalType.DATE)
 	private Date createAt;
-	
+
 	public Long getId() {
 		return id;
 	}
@@ -56,6 +56,4 @@ public class Company {
 	public void setCreateAt(Date createAt) {
 		this.createAt = createAt;
 	}
-    
-
 }

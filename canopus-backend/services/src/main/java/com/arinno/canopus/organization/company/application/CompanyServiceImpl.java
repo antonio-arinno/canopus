@@ -1,10 +1,10 @@
-package com.arinno.canopus.servicies;
+package com.arinno.canopus.organization.company.application;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.arinno.canopus.entities.Company;
-import com.arinno.canopus.repositories.CompanyRepository;
+import com.arinno.canopus.organization.company.domain.Company;
+import com.arinno.canopus.organization.company.infrastructure.persistence.CompanyRepository;
 
 @Service
 public class CompanyServiceImpl implements CompanyService {
@@ -26,5 +26,4 @@ public class CompanyServiceImpl implements CompanyService {
     public Company save(Company company) {
         return repository.save(company);
     }
-
 }

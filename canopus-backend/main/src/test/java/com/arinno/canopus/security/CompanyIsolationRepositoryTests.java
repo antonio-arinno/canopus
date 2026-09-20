@@ -16,14 +16,14 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.Imputation;
 import com.arinno.canopus.entities.ImputationItem;
 import com.arinno.canopus.entities.Product;
 import com.arinno.canopus.entities.Project;
 import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
-import com.arinno.canopus.repositories.CompanyRepository;
+import com.arinno.canopus.organization.company.infrastructure.persistence.CompanyRepository;
 import com.arinno.canopus.repositories.ImputationRepository;
 import com.arinno.canopus.repositories.ProductRepository;
 import com.arinno.canopus.repositories.ProjectRepository;
@@ -34,8 +34,8 @@ import com.arinno.canopus.repositories.UserRepository;
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
-@EntityScan(basePackages = "com.arinno.canopus.entities")
-@EnableJpaRepositories(basePackages = "com.arinno.canopus.repositories")
+@EntityScan(basePackages = "com.arinno.canopus")
+@EnableJpaRepositories(basePackages = "com.arinno.canopus")
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:h2:mem:canopus_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false",
         "spring.datasource.driver-class-name=org.h2.Driver",

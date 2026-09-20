@@ -1,6 +1,8 @@
+import { Component, inject, signal, WritableSignal, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, signal, WritableSignal } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -8,14 +10,14 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { ActivatedRoute, Router } from '@angular/router';
+import { MatSelectModule } from '@angular/material/select';
+
 import { Imputation } from '@core/model/imputation';
 import { Product } from '@core/model/product';
 import { Project } from '@core/model/project';
 import { AuthService } from '@core/auth/auth.service';
 import { ImputationRequest, ImputationService } from '@features/imputation/data/imputation.service';
 import { ProductService } from '@features/product/data/product.service';
-import { MatSelectModule } from '@angular/material/select';
 import { ProjectService } from '@features/project/data/project.service';
 import { ModelMapperService } from '@core/model/model-mapper.service';
 import { FormStateService } from '@core/ui/form-state.service';
@@ -24,26 +26,37 @@ import { RequestStateService } from '@core/ui/request-state.service';
 
 @Component({
   selector: 'app-imputation-detail',
-  imports: [FormsModule, CommonModule, MatTableModule, MatCardModule, ReactiveFormsModule, MatInputModule, MatAutocompleteModule, MatDatepickerModule, MatNativeDateModule, MatButtonModule, MatSelectModule],
+  imports: [
+    FormsModule, 
+    CommonModule, 
+    MatTableModule, 
+    MatCardModule, 
+    ReactiveFormsModule, 
+    MatInputModule, 
+    MatAutocompleteModule, 
+    MatDatepickerModule, 
+    MatNativeDateModule, 
+    MatButtonModule, 
+    MatSelectModule
+  ],
   templateUrl: './imputation-detail.component.html',
   styleUrl: './imputation-detail.component.scss'
 })
+export class ImputationDetailComponent implements OnInit {
 
-export class ImputationDetailComponent {
-
-  imputationService = inject(ImputationService);
-  productService = inject(ProductService);
-  projectService = inject(ProjectService);
-  authService = inject(AuthService);
-  modelMapperService = inject(ModelMapperService);
-  formStateService = inject(FormStateService);
-  formValidationService = inject(FormValidationService);
-  requestStateService = inject(RequestStateService);
-  fb = inject(FormBuilder);
-  cd = inject(ChangeDetectorRef)
-  router = inject(Router);
-
-  activatedRoute = inject(ActivatedRoute);
+  // Inyección funcional encapsulada con modificadores limpios de solo lectura
+  private readonly imputationService = inject(ImputationService);
+  private readonly productService = inject(ProductService);
+  private readonly projectService = inject(ProjectService);
+  private readonly authService = inject(AuthService);
+  private readonly modelMapperService = inject(ModelMapperService);
+  private readonly formStateService = inject(FormStateService);
+  private readonly formValidationService = inject(FormValidationService);
+  private readonly requestStateService = inject(RequestStateService);
+  private readonly fb = inject(FormBuilder);
+  private readonly cd = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
 
   displayedColumns: string[] = ['project', 'time', 'delete'];
   
@@ -53,45 +66,45 @@ export class ImputationDetailComponent {
   product!: Product;
 
   products: WritableSignal<Product[]> = signal([]);
-
   productsTmp: Product[] = [];
   projects: Project[] = [];
-
   dataSourceItems!: MatTableDataSource<any>;
 
-  totalTime: number = 0;
+  totalTime = 0;
 
+  // Atributos reactivos expuestos al HTML mediante Signals globales del Core
   readonly isSubmitting = this.formStateService.isSubmitting;
   readonly successMessage = this.formStateService.successMessage;
   readonly submitErrorMessage = this.formStateService.errorMessage;
   readonly isLoading = this.requestStateService.isLoading;
   readonly errorMessage = this.requestStateService.errorMessage;
 
-  ngOnInit(){
+  ngOnInit(): void {
+    this.formStateService.clear();
     this.requestStateService.start();
     this.buildForm();
+    
     this.activatedRoute.params.subscribe(params => {
-      let id = params['id'];
+      const id = params['id'];
       const cmpDate = /\d{4}-\d{2}-\d{2}/;
-      if(!id.match(cmpDate)){
+      
+      if (!id.match(cmpDate)) {
         this.imputationService.get(id).subscribe({
-          next:(res: Imputation)=> {
+          next: (res: Imputation) => {
             this.getProjects(res.date);
             this.getImputationForm(res);
             this.requestStateService.finish();
-          },
-          error: (err: any) => this.requestStateService.setError(err)
+          }
         });
-      }else{
+      } else {
         this.imputationForm.get('date')?.setValue(id);
         this.addItemForm();
         this.getProjects(id);
       }
-
     });   
   }   
 
-  getProjects(id: string){
+  getProjects(id: string): void {
     this.requestStateService.start();
     this.projectService.getByOpenAndDate(id).subscribe({
       next: (res: Project[]) => {
@@ -100,14 +113,11 @@ export class ImputationDetailComponent {
         this.updateList();
         this.products.set(this.productsTmp);
         this.requestStateService.finish();
-      },
-      error: (err: any) => this.requestStateService.setError(err),
+      }
     });  
-    
   }
 
-
-  updateList(){
+  updateList(): void {
     this.productsTmp = [];
 
     for (const project of this.projects) {
@@ -138,87 +148,83 @@ export class ImputationDetailComponent {
     }
   }
 
-  getImputationForm(res: any){
-    this.imputationForm.get('id')?.setValue(res.id);
-    this.imputationForm.get('date')?.setValue(res.date);
-    for(let item of res.items){
+  getImputationForm(res: any): void {
+    this.imputationForm.patchValue({
+      id: res.id,
+      date: res.date
+    });
+    
+    for (const item of res.items) {
       this.addItem(item);
-      this.totalTime = this.totalTime + item.time;
+      this.totalTime += item.time;
     }
   }
 
-  get item() {
+  // Getter tipado para acceder cómodamente al FormArray desde la vista o métodos
+  get item(): FormArray {
     return this.imputationForm.controls["imputationItemForm"] as FormArray;
-  };
+  }
 
-  formEmpty(): Boolean {
-    if((this.imputationForm.controls["imputationItemForm"] as FormArray).length == 0){
-      return true;
-    }
-    return false;
+  formEmpty(): boolean {
+    return this.item.length === 0;
   }
 
   addItem(value: any): void {
-    this.buildFormItem();
-    this.imputationItemForm.get('id')?.setValue(value.id);
-    this.imputationItemForm.get('projectId')?.setValue(value.project.id);
-    this.imputationItemForm.get('time')?.setValue(value.time);
-    this.item.push(this.imputationItemForm);
+    const itemGroup = this.fb.group({
+      id: [value.id || ''],
+      projectId: [value.project?.id || '', Validators.required],
+      time: [value.time || '', Validators.required]
+    });
+    
+    this.item.push(itemGroup);
     this.dataSourceItems = new MatTableDataSource(this.item.controls);
-  };
+  }
 
   addItemForm(): void {
-    this.buildFormItem();
-    this.item.push(this.imputationItemForm);
+    const itemGroup = this.fb.group({
+      id: [''],
+      projectId: ['', Validators.required],
+      time: ['', Validators.required]
+    });
+    
+    this.item.push(itemGroup);
     this.dataSourceItems = new MatTableDataSource(this.item.controls);
     this.cd.detectChanges();
-  };
+  }
 
-  private buildForm(){
+  private buildForm(): void {
     this.imputationForm = this.fb.group({
       id: [''],
       date: ['', Validators.required],   
       imputationItemForm: this.fb.array([])
-    })
-  }
-
-  private buildFormItem(){
-    this.imputationItemForm = this.fb.group({
-      id: [''],
-      projectId: ['', Validators.required],
-      time: ['', Validators.required]  
     });
   }
 
   create(event: Event): void {
     event.preventDefault();
-    if(this.imputationForm.valid){
+    if (this.imputationForm.valid) {
       this.formStateService.startSubmit();
       const payload = this.buildImputationPayload();
       if (!payload) {
-        this.formStateService.setError('Debes completar la fecha y al menos una fila valida.');
+        this.formStateService.setError('Debes completar la fecha y al menos una fila válida.');
         return;
       }
       this.imputationService.create(payload).subscribe({
         next: () => {
           this.formStateService.setSuccess('Imputación creada con éxito.');
           this.router.navigateByUrl('/pvt/imputation');
-        },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
+        }
       });      
     }    
   }
 
   update(event: Event): void {
     event.preventDefault();
-    if(this.imputationForm.valid){
+    if (this.imputationForm.valid) {
       this.formStateService.startSubmit();
       const payload = this.buildImputationPayload();
       if (!payload) {
-        this.formStateService.setError('Debes completar la fecha y al menos una fila valida.');
+        this.formStateService.setError('Debes completar la fecha y al menos una fila válida.');
         return;
       }
       const id = this.imputationForm.getRawValue().id;
@@ -230,27 +236,19 @@ export class ImputationDetailComponent {
         next: () => {
           this.formStateService.setSuccess('Imputación actualizada con éxito.');
           this.router.navigateByUrl('/pvt/imputation');
-        },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
+        }
       });      
     }    
   }
 
   delete(event: Event): void {
     event.preventDefault();
-    if(this.imputationForm.valid){
+    if (this.imputationForm.valid) {
       this.imputation = this.imputationForm.value;
       this.imputationService.delete(this.imputation.id).subscribe({
         next: () => {
           this.router.navigateByUrl('/pvt/imputation');
-        },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
+        }
       });
     }
   }     
@@ -297,89 +295,45 @@ export class ImputationDetailComponent {
     return null;
   }
 
-  private extractErrorMessage(err: any): string {
-    const backendError = err?.error;
-
-    if (typeof backendError === 'string' && backendError.trim().length > 0) {
-      return backendError;
-    }
-
-    if (backendError?.message) {
-      return backendError.message;
-    }
-
-    if (backendError?.detail) {
-      return backendError.detail;
-    }
-
-    if (backendError?.title) {
-      return backendError.title;
-    }
-
-    if (Array.isArray(backendError?.errors) && backendError.errors.length > 0) {
-      const firstError = backendError.errors[0];
-      if (typeof firstError === 'string') {
-        return firstError;
-      }
-      if (firstError?.message) {
-        return firstError.message;
-      }
-    }
-
-    if (backendError?.errors && typeof backendError.errors === 'object') {
-      const firstErrorList = Object.values(backendError.errors).find(
-        (entry) => Array.isArray(entry) && entry.length > 0
-      ) as string[] | undefined;
-
-      if (firstErrorList?.[0]) {
-        return firstErrorList[0];
-      }
-    }
-
-    return err?.message ?? 'No se pudo completar la solicitud.';
-  }
-
   getValidationMessage(controlName: string): string | null {
     return this.formValidationService.getErrorMessage(this.imputationForm.get(controlName));
   }
 
-  dataChange(){
-    const date = `${this.imputationForm.get('date')?.value.getFullYear()}-${(this.imputationForm.get('date')?.value.getMonth()+1).toString().padStart(2, '0')}-${this.imputationForm.get('date')?.value.getDate().toString().padStart(2, '0')}`;
+  dataChange(): void {
+    const dateValue = this.imputationForm.get('date')?.value;
+    if (!dateValue) return;
+    const date = `${dateValue.getFullYear()}-${(dateValue.getMonth() + 1).toString().padStart(2, '0')}-${dateValue.getDate().toString().padStart(2, '0')}`;
     this.requestStateService.start();
     this.getProjects(date);
     this.imputationService.getByDate(date).subscribe({
-      next:(res: Imputation)=> {
+      next: (res: Imputation) => {
         this.totalTime = 0;
         this.buildForm();
-        this.getImputationForm(res);      
+        this.getImputationForm(res);
         this.requestStateService.finish();
       },
-        error: (err: any) => {
-          if (err.error.status == 404){
-            this.buildForm();
-            this.imputationForm.get('date')?.setValue(date);
-            this.addItemForm();
-          }else{
-            const message = this.extractErrorMessage(err);
-            this.formStateService.setError(message);
-          }
-        },
+      error: (err: any) => {
+        // Manejamos de forma específica el 404 de negocio (día sin imputar previo)
+        if (err?.status === 404 || err?.error?.status === 404) {
+          this.buildForm();
+          this.imputationForm.get('date')?.setValue(dateValue);
+          this.addItemForm();
+          this.requestStateService.finish();
+        }
+      }
     });
   }
 
-  deleteImputationItem(item: number): void {
-    this.item.removeAt(item);
+  deleteImputationItem(index: number): void {
+    this.item.removeAt(index);
     this.dataSourceItems = new MatTableDataSource(this.item.controls);
     this.updateTime();
   }
-
-  updateTime():void {
+  
+  updateTime(): void {
     this.totalTime = 0;
-    for(let item of this.item.value){
-      this.totalTime = this.totalTime + item.time;
+    for (const item of this.item.value) {
+      this.totalTime += (item.time || 0);
     }
   }
-
 }
-
-

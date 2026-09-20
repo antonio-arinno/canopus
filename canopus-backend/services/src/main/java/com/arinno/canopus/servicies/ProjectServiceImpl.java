@@ -4,10 +4,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.Product;
 import com.arinno.canopus.entities.Project;
 import com.arinno.canopus.entities.User;
@@ -43,22 +45,28 @@ public class ProjectServiceImpl implements IProjectService {
 		return projectRepository.findByCompanyAndDateProIsNull(company);
 	}
 
-	@Override
-	public Project findByIdAndCompany(Long id, Company company) {
-		Project project = projectRepository.findByIdAndCompany(id, company);
-		return Objects.requireNonNullElse(project, new Project());
-	}
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Project findByIdAndCompany(Long id, Company company) {
+        // Buscamos el proyecto garantizando el aislamiento por empresa. Si no existe, corta con un 404
+        return projectRepository.findByIdAndCompany(id, company)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proyecto no encontrado para la empresa."));
+    }
+
+    @Override
+    @Transactional		
+    public void deleteByIdAndCompany(Long id, Company company) {
+        // Reutilizamos el método de arriba para validar su existencia de forma segura antes de lanzar el borrado a MySQL
+        Project project = findByIdAndCompany(id, company);
+        projectRepository.delete(project);
+    }
 
 	@Override
 	@Transactional	
 	public Project save(Project project) {
 		return projectRepository.save(Objects.requireNonNull(project, "project must not be null"));
-	}
-
-	@Override
-	@Transactional		
-	public void deleteByIdAndCompany(Long id, Company company) {
-		projectRepository.deleteByIdAndCompany(id, company);
 	}
 	
 	@Override

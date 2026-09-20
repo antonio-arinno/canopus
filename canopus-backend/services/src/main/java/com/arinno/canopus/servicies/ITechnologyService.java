@@ -2,7 +2,7 @@ package com.arinno.canopus.servicies;
 
 import java.util.List;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.Technology;
 
 public interface ITechnologyService {

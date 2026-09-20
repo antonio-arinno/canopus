@@ -2,11 +2,11 @@ package com.arinno.canopus.servicies;
 
 import java.util.List;
 
-import com.arinno.canopus.entities.Company;
+
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.Product;
 import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.entities.User;
-import com.arinno.canopus.error.CustomException;
 
 public interface IProductService {
   
@@ -19,8 +19,8 @@ public interface IProductService {
     public List<Product> findByTechnologyAndCompany(Technology technology, Company company);
     
     Product findByIdAndCompany(Long id, Company company);
-    
-    public void deleteByIdAndCompany(Long id, Company company) throws CustomException;
+
+    public void deleteByIdAndCompany(Long id, Company company);
     
     Product save(Product product);
 

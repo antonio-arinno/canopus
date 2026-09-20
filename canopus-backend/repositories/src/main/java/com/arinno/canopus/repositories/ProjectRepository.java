@@ -2,11 +2,12 @@ package com.arinno.canopus.repositories;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.Product;
 import com.arinno.canopus.entities.Project;
 import com.arinno.canopus.entities.User;
@@ -23,7 +24,7 @@ public interface ProjectRepository extends CrudRepository<Project, Long> {
 
 	public List<Project> findByProductAndCompany(Product product, Company company);
 
-	public Project findByIdAndCompany(Long id, Company company);
+	Optional<Project> findByIdAndCompany(Long id, Company company);
 	
 	public void deleteByIdAndCompany(Long id, Company company);
 	

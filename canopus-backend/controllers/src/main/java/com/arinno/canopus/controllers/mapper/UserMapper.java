@@ -2,7 +2,7 @@ package com.arinno.canopus.controllers.mapper;
 
 import org.springframework.stereotype.Component;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserListItem;
 import com.arinno.canopus.entities.UserRequest;

@@ -5,6 +5,7 @@
       <mat-card-subtitle>Catálogo de tecnologías y su impacto</mat-card-subtitle>
     </div>
   </mat-card-header>
+  
   <mat-card-content>
     @if (isLoading()) {
       <p class="text-muted">Cargando tecnologías...</p>
@@ -18,46 +19,52 @@
       <p class="text-muted">{{ emptyMessage }}</p>
     }
 
-    <table mat-table [dataSource]="technologies()" class="w-100">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef> Name </th>
-          <td mat-cell *matCellDef="let element"> {{element.name}} </td>
-        </ng-container>
-        
-        <ng-container matColumnDef="description">
-          <th mat-header-cell *matHeaderCellDef> Description </th>
-          <td mat-cell *matCellDef="let element"> {{element.description}} </td>
-        </ng-container>
+    <!-- MEJORA: La tabla solo se monta en el DOM si no está cargando y hay elementos que mostrar -->
+    @if (!isLoading() && hasItems()) {
+      <table mat-table [dataSource]="technologies()" class="w-100">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef> Name </th>
+            <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+          </ng-container>
+          
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef> Description </th>
+            <td mat-cell *matCellDef="let element"> {{element.description}} </td>
+          </ng-container>
 
-        <ng-container matColumnDef="countProducts">
-          <th mat-header-cell *matHeaderCellDef> Products </th>
-          <td mat-cell *matCellDef="let element"> {{element.countProducts}} </td>
-        </ng-container>  
+          <ng-container matColumnDef="countProducts">
+            <th mat-header-cell *matHeaderCellDef> Products </th>
+            <td mat-cell *matCellDef="let element"> {{element.countProducts}} </td>
+          </ng-container>  
 
-        <ng-container matColumnDef="countProjects">
-          <th mat-header-cell *matHeaderCellDef> Projects </th>
-          <td mat-cell *matCellDef="let element"> {{element.countProjects}} </td>
-        </ng-container>  
+          <ng-container matColumnDef="countProjects">
+            <th mat-header-cell *matHeaderCellDef> Projects </th>
+            <td mat-cell *matCellDef="let element"> {{element.countProjects}} </td>
+          </ng-container>  
 
-        <ng-container matColumnDef="countContributors">
-          <th mat-header-cell *matHeaderCellDef> Contributors </th>
-          <td mat-cell *matCellDef="let element"> {{element.countContributors}} </td>
-        </ng-container> 
+          <ng-container matColumnDef="countContributors">
+            <th mat-header-cell *matHeaderCellDef> Contributors </th>
+            <td mat-cell *matCellDef="let element"> {{element.countContributors}} </td>
+          </ng-container> 
 
-        <ng-container matColumnDef="time">
-          <th mat-header-cell *matHeaderCellDef> Time </th>
-          <td mat-cell *matCellDef="let element"> {{element.time}} </td>
-        </ng-container>    
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row
-          (click)="edit(row.id)"
-          *matRowDef="let row; columns: displayedColumns;">
-        </tr>
-    </table>
+          <ng-container matColumnDef="time">
+            <th mat-header-cell *matHeaderCellDef> Time </th>
+            <td mat-cell *matCellDef="let element"> {{element.time}} </td>
+          </ng-container>    
+          
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row
+            (click)="edit(row.id)"
+            *matRowDef="let row; columns: displayedColumns;">
+          </tr>
+      </table>
+    }
   </mat-card-content>  
+  
   <mat-card-actions class="card-actions">
     <button mat-raised-button color="primary" (click)="create()">
       Crear tecnología
     </button>
   </mat-card-actions>
 </mat-card>
+

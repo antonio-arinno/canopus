@@ -3,10 +3,12 @@ package com.arinno.canopus.servicies;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.Technology;
 import com.arinno.canopus.repositories.TechnologyRepository;
 
@@ -30,20 +32,22 @@ public class TechnologyService implements ITechnologyService {
     }
 
     @Override
-    public Technology findByIdAndCompany(Long id, Company company) {
-        Technology technology = technologyRepository.findByIdAndCompany(id, company);
-        return Objects.requireNonNullElse(technology, new Technology());
-    }
-
-    @Override
     public List<Technology> findByNameContainingIgnoreCaseAndCompany(String term, Company company) {
         return technologyRepository.findByNameContainingIgnoreCaseAndCompany(term, company);
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Technology findByIdAndCompany(Long id, Company company) {
+        return technologyRepository.findByIdAndCompany(id, company)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tecnología no encontrada para la empresa."));
+    }
+
+    @Override
     @Transactional
     public void deleteByIdAndCompany(Long id, Company company) {
-        technologyRepository.deleteByIdAndCompany(id, company);
+        Technology technology = findByIdAndCompany(id, company);
+        technologyRepository.delete(technology);
     }
 
 }

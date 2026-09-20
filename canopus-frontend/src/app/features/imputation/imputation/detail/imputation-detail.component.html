@@ -10,84 +10,90 @@
     <form [formGroup]="imputationForm">
       <div class="detail-grid">
         <section class="detail-section">
-          <div class="section-title">Control de imputación</div>
-
+          
+          <!-- PANEL SUPERIOR DE CONTROL (Restaura la estructura Grid horizontal) -->
           <div class="top-controls">
             <mat-form-field>
               <mat-label>Fecha</mat-label>
-              <input matInput [matDatepicker]="picker" (dateChange)="dataChange()" placeholder="Elige una fecha" formControlName="date">
-              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <input matInput [matDatepicker]="picker" formControlName="date" (dateChange)="dataChange()">
+              <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
               <mat-datepicker #picker></mat-datepicker>
             </mat-form-field>
 
-            <button type="button" mat-flat-button color="primary" class="add-row-btn" (click)="addItemForm()">
+            <button mat-raised-button color="primary" class="add-row-btn" (click)="addItemForm()">
               Añadir fila
             </button>
 
             <div class="total-time-card">
-              <span class="total-time-label">Horas totales</span>
-              <strong class="total-time-value">{{ totalTime }}</strong>
+              <span class="total-time-label">Horas totales:</span>
+              <span class="total-time-value">{{ totalTime }}</span>
             </div>
           </div>
 
-
-
-          <div class="table-card">
+          <!-- TABLA DINÁMICA CONECTADA AL FORMARRAY -->
+          <div class="table-card" formArrayName="imputationItemForm">
             <div class="table-title">Detalle de imputaciones</div>
-
-            <mat-table [dataSource]="dataSourceItems" class="imputation-table" formArrayName="imputationItemForm">
+            
+            <table mat-table [dataSource]="dataSourceItems" class="imputation-table">
+              
+              <!-- COLUMNA: PROYECTO AGRUPADO -->
               <ng-container matColumnDef="project">
-                <mat-header-cell *matHeaderCellDef>Proyecto</mat-header-cell>
-                <mat-cell *matCellDef="let element" [formGroup]="element">
+                <th mat-header-cell *matHeaderCellDef> Proyecto </th>
+                <td mat-cell *matCellDef="let element; let index = index" [formGroupName]="index">
                   <mat-form-field>
-                    <mat-label>Proyecto</mat-label>
-                    <mat-select formControlName="projectId">
-                      @for (product of products(); track product) {
+                    <mat-select formControlName="projectId" (selectionChange)="updateTime()">
+                      <!-- Iteración optimizada en Angular 19 -->
+                      @for (product of products(); track product.id) {
                         <mat-optgroup [label]="product.name">
-                          @for (project of product.projects; track project) {
-                            <mat-option [value]="project.id">{{ project.name }}</mat-option>
+                          @for (project of product.projects; track project.id) {
+                            <mat-option [value]="project.id">
+                              {{ project.name }}
+                            </mat-option>
                           }
                         </mat-optgroup>
                       }
                     </mat-select>
                   </mat-form-field>
-                </mat-cell>
+                </td>
               </ng-container>
 
+              <!-- COLUMNA: HORAS IMPUTADAS -->
               <ng-container matColumnDef="time">
-                <mat-header-cell *matHeaderCellDef>Horas</mat-header-cell>
-                <mat-cell *matCellDef="let element" [formGroup]="element">
+                <th mat-header-cell *matHeaderCellDef> Horas </th>
+                <td mat-cell *matCellDef="let element; let index = index" [formGroupName]="index">
                   <mat-form-field>
-                    <mat-label>Horas</mat-label>
-                    <input matInput type="number" (keyup)="updateTime()" placeholder="Horas" formControlName="time">
+                    <input type="number" matInput formControlName="time" min="0" max="24" (input)="updateTime()">
                   </mat-form-field>
-                </mat-cell>
+                </td>
               </ng-container>
 
+              <!-- COLUMNA: ACCIONES -->
               <ng-container matColumnDef="delete">
-                <mat-header-cell *matHeaderCellDef>Acciones</mat-header-cell>
-                <mat-cell *matCellDef="let element; index as i" [formGroup]="element">
-                  <button type="button" mat-stroked-button color="warn" (click)="deleteImputationItem(i)">
+                <th mat-header-cell *matHeaderCellDef> Acciones </th>
+                <td mat-cell *matCellDef="let element; let index = index">
+                  <button mat-button (click)="deleteImputationItem(index)">
                     Eliminar
                   </button>
-                </mat-cell>
+                </td>
               </ng-container>
 
-              <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-              <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-            </mat-table>
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns; let index = index"></tr>
+            </table>
           </div>
+
         </section>
       </div>
 
+      <!-- ACCIONES DEL FOOTER Y ALERTAS -->
       <mat-card-footer class="detail-footer">
         <div class="footer-actions">
           @if (!imputationForm.get('id')?.value) {
-            <button type="submit" (click)="create($event)" mat-flat-button color="primary" [disabled]="imputationForm.invalid || formEmpty()">Guardar</button>
+            <button type="submit" mat-flat-button color="primary" [disabled]="imputationForm.invalid || formEmpty()" (click)="create($event)">Guardar</button>
           } @else {
-            <div class="space-between">
-              <button type="submit" (click)="update($event)" mat-flat-button color="primary" [disabled]="imputationForm.invalid || formEmpty()">Actualizar</button>
-              <button type="submit" (click)="delete($event)" mat-flat-button color="warn" [disabled]="imputationForm.invalid">Eliminar</button>
+            <div class="space-between w-100">
+              <button type="submit" mat-flat-button color="primary" [disabled]="imputationForm.invalid" (click)="update($event)">Actualizar</button>
+              <button type="button" mat-flat-button color="warn" (click)="delete($event)">Eliminar</button>
             </div>
           }
         </div>
@@ -96,21 +102,17 @@
           @if (isLoading()) {
             <p class="text-muted">Cargando imputación...</p>
           }
-
           @if (isSubmitting()) {
             <p class="text-muted">Guardando imputación...</p>
           }
-
           @if (successMessage()) {
             <p role="status" class="text-success">{{ successMessage() }}</p>
           }
-
           @if (errorMessage()) {
-            <mat-error>{{ errorMessage() }}</mat-error>
+            <p role="alert" class="mat-error">{{ errorMessage() }}</p>
           }
-
           @if (submitErrorMessage()) {
-            <mat-error>{{ submitErrorMessage() }}</mat-error>
+            <p role="alert" class="mat-error">{{ submitErrorMessage() }}</p>
           }
         </div>
       </mat-card-footer>

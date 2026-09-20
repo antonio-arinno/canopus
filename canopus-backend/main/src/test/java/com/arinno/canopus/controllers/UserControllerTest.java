@@ -3,7 +3,6 @@ package com.arinno.canopus.controllers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,7 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
 import com.arinno.canopus.controllers.mapper.UserMapper;
-import com.arinno.canopus.entities.Company;
+import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.entities.User;
 import com.arinno.canopus.entities.UserResponse;
 import com.arinno.canopus.servicies.JwtService;
@@ -32,6 +31,7 @@ class UserControllerTest {
 
     @Test
     void meDelegatesResponseBuildingToUserMapper() {
+        // Arrange (Preparación)
         Company company = new Company();
         company.setId(1L);
 
@@ -50,15 +50,21 @@ class UserControllerTest {
 
         when(jwtService.getUserFromToken("Bearer token")).thenReturn(user);
         when(jwtService.getCompanyFromToken("Bearer token")).thenReturn(company);
-        when(userService.findByIdAndCompany(10L, company)).thenReturn(Optional.of(user));
+        
+        // CORRECCIÓN 1: El servicio ahora devuelve el objeto User directamente, no un Optional
+        when(userService.findByIdAndCompany(10L, company)).thenReturn(user);
         when(userMapper.toDetail(user)).thenReturn(mappedResponse);
 
         UserController controller = new UserController(userService, jwtService, userMapper);
 
-        ResponseEntity<?> response = controller.user("Bearer token");
+        // Act (Acción)
+        // CORRECCIÓN 2: Tipamos la respuesta con <UserResponse> en lugar de <?>
+        ResponseEntity<UserResponse> response = controller.user("Bearer token");
 
+        // Assert (Verificación)
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).isSameAs(mappedResponse);
     }
+
 }
 

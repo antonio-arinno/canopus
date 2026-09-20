@@ -1,7 +1,8 @@
 import { Component, inject, WritableSignal, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Observable, combineLatest, of, concat, map, mergeMap, startWith } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -10,7 +11,6 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatGridListModule } from '@angular/material/grid-list';
-
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatTableModule } from '@angular/material/table';
 
@@ -22,33 +22,81 @@ import {
   CdkDropList,
 } from '@angular/cdk/drag-drop';
 
-import { Observable, concat, map, mergeMap, startWith } from 'rxjs';
-
 import { ProjectRequest, ProjectService } from '@features/project/data/project.service';
 import { UserService } from '@features/user/data/user.service';
+import { ProductService } from '@features/product/data/product.service';
+import { ImputationService } from '@features/imputation/data/imputation.service';
 import { Project } from '@core/model/project';
 import { Product } from '@core/model/product';
-import { User } from  '@core/model/user';
-import { ProductService } from '@features/product/data/product.service';
+import { User } from '@core/model/user';
 import { Status } from '@core/model/status';
-import { ImputationService } from '@features/imputation/data/imputation.service';
 import { ImputationSummary } from '@core/model/imputation-summary';
 import { ModelMapperService } from '@core/model/model-mapper.service';
 import { FormStateService } from '@core/ui/form-state.service';
 import { FormValidationService } from '@core/ui/form-validation.service';
 import { RequestStateService } from '@core/ui/request-state.service';
 
-import { DatePipe } from '@angular/common';
-
 @Component({
   selector: 'app-project-detail',
-  imports: [CommonModule, MatCardModule, MatInputModule, MatButtonModule, ReactiveFormsModule, MatAutocompleteModule, MatSelectModule, MatDatepickerModule, CdkDropList, CdkDrag, MatGridListModule, MatTableModule],
+  imports: [
+    CommonModule, 
+    MatCardModule, 
+    MatInputModule, 
+    MatButtonModule, 
+    ReactiveFormsModule, 
+    MatAutocompleteModule, 
+    MatSelectModule, 
+    MatDatepickerModule, 
+    CdkDropList, 
+    CdkDrag, 
+    MatGridListModule, 
+    MatTableModule
+  ],
   templateUrl: './project-detail.component.html',
   providers: [provideNativeDateAdapter(), DatePipe],
   styleUrl: './project-detail.component.scss'
 })
 export class ProjectDetailComponent implements OnInit {
 
+  // Inyección funcional encapsulada con modificadores óptimos de acceso
+  private readonly projectService = inject(ProjectService);
+  private readonly productService = inject(ProductService);
+  private readonly imputationService = inject(ImputationService);
+  private readonly userService = inject(UserService);
+  private readonly modelMapperService = inject(ModelMapperService);
+  private readonly formStateService = inject(FormStateService);
+  private readonly formValidationService = inject(FormValidationService);
+  private readonly requestStateService = inject(RequestStateService);
+  private readonly router = inject(Router);
+  private readonly activateRoute = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
+  private readonly datePipe = inject(DatePipe);
+
+  form!: FormGroup;
+  project!: Project;
+  user!: User;
+  dateOk = true;
+
+  // Atributos reactivos públicos compartidos con la vista (Signals)
+  readonly isSubmitting = this.formStateService.isSubmitting;
+  readonly successMessage = this.formStateService.successMessage;
+  readonly errorMessage = this.requestStateService.errorMessage;
+  readonly isLoading = this.requestStateService.isLoading;
+
+  users: WritableSignal<User[]> = signal([]);
+  contribuitors: WritableSignal<User[]> = signal([]);
+  imputationSummaries: WritableSignal<ImputationSummary[]> = signal([]);
+
+  displayedColumns: string[] = ['name', 'time'];
+  filteredProducts: Observable<Product[]> | undefined;    
+  filteredUsers: Observable<User[]> | undefined;  
+
+  public keys = Object.keys;
+  public userRoles = Status;
+
+  public getkeys(elementor: typeof Status) {
+    return this.keys(elementor).map(key => key as keyof typeof elementor);
+  }  
 
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
@@ -62,157 +110,122 @@ export class ProjectDetailComponent implements OnInit {
       );
     }
   }  
-  projectService = inject(ProjectService);
-  productService = inject(ProductService);
-  imputationService = inject(ImputationService);
-  userService = inject(UserService);
-  modelMapperService = inject(ModelMapperService);
-  formStateService = inject(FormStateService);
-  formValidationService = inject(FormValidationService);
-  requestStateService = inject(RequestStateService);
-  router = inject(Router);
-  activateRoute = inject(ActivatedRoute);
-  fb = inject(FormBuilder);
-  form!: FormGroup;
-
-  project!: Project;
-  user!: User;
-  dateOk = true;
-  readonly isSubmitting = this.formStateService.isSubmitting;
-  readonly successMessage = this.formStateService.successMessage;
-  readonly errorMessage = this.formStateService.errorMessage;
-  readonly isLoading = this.requestStateService.isLoading;
-
-  datePipe = inject(DatePipe); // Ahora esto ya no dará error
-
-  users: WritableSignal<User[]> = signal([]);
-  contribuitors: WritableSignal<User[]> = signal([]);
-  imputationSummaries: WritableSignal<ImputationSummary[]> = signal([]);
-
-  displayedColumns: string[] = ['name', 'time'];
-
-  filteredProducts: Observable<Product[]> | undefined;    
-  filteredUsers: Observable<User[]> | undefined;  
-
-  public keys = Object.keys;
-  public userRoles = Status;
-
-  public getkeys(elementor: typeof Status){
-    return this.keys(elementor).map(key => key as keyof typeof elementor);
-  }  
 
   ngOnInit(): void {
+    this.formStateService.clear();
     this.requestStateService.start();
+    this.buildForm();
     this.activateRoute.params.subscribe(params => {
-      this.buildForm();
-      let id = params['id']
-      if(id){
+      const id = params['id'];
+      if (id) {
         this.projectService.get(id).subscribe({
-          next:(res2: Project)=> {
+          next: (res2: Project) => {
             const res = this.modelMapperService.mapProject(res2);
-            this.form.get('id')?.setValue(res.id);
-            this.form.get('name')?.setValue(res.name);
-            this.form.get('description')?.setValue(res.description);
-            this.form.get('reference1')?.setValue(res.reference1);
-            this.form.get('reference2')?.setValue(res.reference2);
-            this.form.get('product')?.setValue(res.product);
-            this.form.get('status')?.setValue(res.getStatus());
-            if(res.dateDev!=null){this.form.get('dateDev')?.setValue(new Date(res.dateDev.replaceAll('-', '/')))}
-            if(res.datePre!=null){this.form.get('datePre')?.setValue(new Date(res.datePre.replaceAll('-', '/')))}
-            if(res.datePro!=null){this.form.get('datePro')?.setValue(new Date(res.datePro.replaceAll('-', '/')))}
-            this.form.get('responsible')?.setValue(res.responsible);
-            this.form.get('countContributors')?.setValue(res.countContributors);
-            this.form.get('time')?.setValue(res.time);
-            this.form.get('duration')?.setValue(res.getDuration());
+            
+            // Consolidamos la carga de datos estructurada con patchValue
+            this.form.patchValue({
+              id: res.id,
+              name: res.name,
+              description: res.description,
+              reference1: res.reference1,
+              reference2: res.reference2,
+              product: res.product,
+              status: res.getStatus(),
+              dateDev: res.dateDev ? new Date(res.dateDev.replaceAll('-', '/')) : null,
+              datePre: res.datePre ? new Date(res.datePre.replaceAll('-', '/')) : null,
+              datePro: res.datePro ? new Date(res.datePro.replaceAll('-', '/')) : null,
+              responsible: res.responsible,
+              countContributors: res.countContributors,
+              time: res.time,
+              duration: res.getDuration()
+            });
+
             this.statusChange();
             this.contribuitors.set(res.contributors);
-            this.userService.getByTechnology(res.product.technology.id)
-            .subscribe(users => {
+            
+            this.userService.getByTechnology(res.product.technology.id).subscribe(users => {
               this.users.set(users);
               this.users.update((currentUsers) => currentUsers.filter(
-                objeto => !res.contributors.some(objeto2 => objeto2.id == objeto.id)
-              ))
+                objeto => !res.contributors.some(objeto2 => objeto2.id === objeto.id)
+              ));
             });
+
             this.imputationService.getByProject(res.id).subscribe({
               next: (payload: ImputationSummary[]) => {
                 this.imputationSummaries.set(this.modelMapperService.mapImputationSummaryList(payload as unknown[]));
                 this.requestStateService.finish();
-              },
-              error: (err: any) => this.requestStateService.setError(err),
+              }
             });
-
-          },
-          error: (err: any) => this.requestStateService.setError(err)
+          }
         });
-      }else{       
+      } else {       
         this.project = new Project();
         this.requestStateService.finish();
       }
     });
 
-    this.filteredProducts = this.form.get('product')?.valueChanges
-      .pipe(
-        startWith(''),
-        map(value => typeof value === 'string' ? value : value.description),
-        mergeMap(value => value ? this._filter(value) : this._getAll())
-      );
-
+    this.filteredProducts = this.form.get('product')?.valueChanges.pipe(
+      startWith(''),
+      map(value => typeof value === 'string' ? value : value.description),
+      mergeMap(value => value ? this._filter(value) : this._getAll())
+    );
         
-    this.filteredUsers = this.form.get('responsible')?.valueChanges
-    .pipe(
+    this.filteredUsers = this.form.get('responsible')?.valueChanges.pipe(
       startWith(''),
       map(value => typeof value === 'string' ? value : value.name),
       mergeMap(value => value ? this._userFilter(value) : this._getUserAll())
     );
 
-    this.form.get('dateDev')?.valueChanges.subscribe(()=>{
-      this.form.get('datePre')?.enable()
+    // Escuchas reactivas para la validación lógica de flujos de fechas cruzadas
+    this.form.get('dateDev')?.valueChanges.subscribe(() => {
+      this.form.get('datePre')?.enable();
       this.statusChange();
-    }
-    )
+    });
 
     this.form.get('datePre')?.valueChanges.subscribe(() => {
-      if(this.form.get('datePre')?.value){
-        if(this.form.get('dateDev')?.value > this.form.get('datePre')?.value ){
-          this.dateOk = false
-        }else{
-          this.dateOk = true
-          this.form.get('datePro')?.enable() 
+      const datePreValue = this.form.get('datePre')?.value;
+      if (datePreValue) {
+        if (this.form.get('dateDev')?.value > datePreValue) {
+          this.dateOk = false;
+        } else {
+          this.dateOk = true;
+          this.form.get('datePro')?.enable(); 
         }
-      }else{
-        this.form.get('datePro')?.setValue(null)
-        this.form.get('datePro')?.disable() 
+      } else {
+        this.form.get('datePro')?.setValue(null);
+        this.form.get('datePro')?.disable(); 
       }
       this.statusChange();
-    })
+    });
 
     this.form.get('datePro')?.valueChanges.subscribe(() => {
-      if(this.form.get('datePre')?.value > this.form.get('datePro')?.value && this.form.get('datePro')?.value){
-        this.dateOk = false
-      }else{
-        this.dateOk = true
+      const datePreValue = this.form.get('datePre')?.value;
+      const dateProValue = this.form.get('datePro')?.value;
+      if (datePreValue > dateProValue && dateProValue) {
+        this.dateOk = false;
+      } else {
+        this.dateOk = true;
       }
       this.statusChange();
-    })
+    });
 
     this.form.get('product')?.valueChanges.subscribe(() => {
-      if(this.form.get('product')?.value.technology){
-        this.userService.getByTechnology(this.form.get('product')?.value.technology.id)
-        .subscribe(users => {
+      const techId = this.form.get('product')?.value?.technology?.id;
+      if (techId) {
+        this.userService.getByTechnology(techId).subscribe(users => {
           this.users.set(users);
           this.users.update((currentUsers) => currentUsers.filter(
-            objeto => !this.contribuitors().some(objeto2 => objeto2.id == objeto.id)
-          ))
-        })
+            objeto => !this.contribuitors().some(objeto2 => objeto2.id === objeto.id)
+          ));
+        });
       }
-    })
-
+    });
   }  
 
-  private statusChange(){
-    const datePro = { datepro: this.form.get('datePro')?.value};
-    this.form.patchValue( datePro );
-    let project = Project.fromObject(this.form.value);
+  private statusChange(): void {
+    const datePro = { datepro: this.form.get('datePro')?.value };
+    this.form.patchValue(datePro);
+    const project = Project.fromObject(this.form.value);
     this.form.get('status')?.setValue(project.getStatus());
     this.form.get('duration')?.setValue(project.getDuration()); 
   }    
@@ -249,28 +262,28 @@ export class ProjectDetailComponent implements OnInit {
     return this.formValidationService.getErrorMessage(this.form.get(controlName));
   }
 
-  private buildForm(){
+  private buildForm(): void {
     this.form = this.fb.group({
-      id:           [''],
-      name:         ['', [Validators.required]],
-      description:  ['', [Validators.required]],
-      reference1:   [''],
-      reference2:   [''],
-      product:      ['', [Validators.required]],
-      status:       [{value:'', disabled:true}], 
-      dateDev:      [Date, [Validators.required]],
-      datePre:      [{value:null, disabled:true}], 
-      datePro:      [{value:null, disabled:true}], 
-      responsible:  ['', [Validators.required]],
-      countContributors: [{value: '', disabled: true}, Validators.required],
-      time:         [{value: '', disabled: true}, Validators.required],
-      duration:     [{value: '', disabled: true}, Validators.required]
-    });  
-  }  
+      id: [''],
+      name: ['', [Validators.required]],
+      description: ['', [Validators.required]],
+      reference1: [''],
+      reference2: [''],
+      product: ['', [Validators.required]],
+      status: [{ value: '', disabled: true }],
+      dateDev: [null, [Validators.required]], // Corregido Date por null inicial
+      datePre: [{ value: null, disabled: true }],
+      datePro: [{ value: null, disabled: true }],
+      responsible: ['', [Validators.required]],
+      countContributors: [{ value: '', disabled: true }, Validators.required],
+      time: [{ value: '', disabled: true }, Validators.required],
+      duration: [{ value: '', disabled: true }, Validators.required]
+    });
+  }
 
   update(event: Event): void {
     event.preventDefault();
-    if(this.form.valid){
+    if (this.form.valid) {
       this.formStateService.startSubmit();
       const payload = this.buildProjectPayload();
       if (!payload) {
@@ -279,25 +292,22 @@ export class ProjectDetailComponent implements OnInit {
       }
       const id = this.form.getRawValue().id;
       if (typeof id !== 'number') {
-        this.formStateService.setError('No se pudo identificar el proyecto a actualizar.');
+        this.formStateService.setError('No se pudo identificar la tecnología a actualizar.');
         return;
       }
       this.projectService.update(id, payload).subscribe({
-        next: (res: any) => {
+        next: () => {
           this.formStateService.setSuccess('Proyecto actualizado con éxito.');
           this.router.navigateByUrl('/pvt/project');
-        },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
-      });
+        }
+      }
+    );
     }
-  } 
+  }
 
   create(event: Event): void {
     event.preventDefault();
-    if(this.form.valid){
+    if (this.form.valid) {
       this.formStateService.startSubmit();
       const payload = this.buildProjectPayload();
       if (!payload) {
@@ -305,33 +315,25 @@ export class ProjectDetailComponent implements OnInit {
         return;
       }
       this.projectService.create(payload).subscribe({
-        next: (res: any) => {
+        next: () => {
           this.formStateService.setSuccess('Proyecto creado con éxito.');
           this.router.navigateByUrl('/pvt/project');
-        },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
+        }
       });
     }
-  }  
+  }
 
   delete(event: Event): void {
     event.preventDefault();
-    if(this.form.valid){
+    if (this.form.valid) {
       this.project = this.form.value;
       this.projectService.delete(this.project.id).subscribe({
-        next: (res: any) => {
+        next: () => {
           this.router.navigateByUrl('/pvt/project');
-        },
-        error: (err: any) => {
-          const message = this.extractErrorMessage(err);
-          this.formStateService.setError(message);
-        },
+        }
       });
     }
-  }     
+  }
 
   private buildProjectPayload(): ProjectRequest | null {
     const raw = this.form.getRawValue();
@@ -340,15 +342,12 @@ export class ProjectDetailComponent implements OnInit {
     const dateDev = this.datePipe.transform(raw.dateDev, 'yyyy-MM-dd') ?? undefined;
     const datePre = this.datePipe.transform(raw.datePre, 'yyyy-MM-dd') ?? undefined;
     const datePro = this.datePipe.transform(raw.datePro, 'yyyy-MM-dd') ?? undefined;
-
     if (!productId || !responsibleId || !dateDev) {
       return null;
     }
-
     const contributorIds = this.contribuitors()
       .map((user) => this.extractEntityId(user))
       .filter((id): id is number => id !== null);
-
     return {
       name: raw.name,
       description: raw.description,
@@ -370,56 +369,7 @@ export class ProjectDetailComponent implements OnInit {
         return id;
       }
     }
-
     return null;
   }
-
-  private extractErrorMessage(err: any): string {
-    const backendError = err?.error;
-
-    if (typeof backendError === 'string' && backendError.trim().length > 0) {
-      return backendError;
-    }
-
-    if (backendError?.message) {
-      return backendError.message;
-    }
-
-    if (backendError?.detail) {
-      return backendError.detail;
-    }
-
-    if (backendError?.title) {
-      return backendError.title;
-    }
-
-    if (Array.isArray(backendError?.errors) && backendError.errors.length > 0) {
-      const firstError = backendError.errors[0];
-      if (typeof firstError === 'string') {
-        return firstError;
-      }
-      if (firstError?.message) {
-        return firstError.message;
-      }
-    }
-
-    if (backendError?.errors && typeof backendError.errors === 'object') {
-      const firstErrorList = Object.values(backendError.errors).find(
-        (entry) => Array.isArray(entry) && entry.length > 0
-      ) as string[] | undefined;
-
-      if (firstErrorList?.[0]) {
-        return firstErrorList[0];
-      }
-    }
-
-    return err?.message ?? 'No se pudo completar la solicitud.';
-  }
-
-
-}
-
-function value(value: User[]): User[] {
-  throw new Error('Function not implemented.');
 }
 

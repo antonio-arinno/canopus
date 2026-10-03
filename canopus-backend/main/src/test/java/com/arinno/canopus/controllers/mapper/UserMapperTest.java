@@ -1,5 +1,8 @@
 package com.arinno.canopus.controllers.mapper;
 
+
+
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -9,11 +12,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.arinno.canopus.organization.company.domain.Company;
-import com.arinno.canopus.entities.User;
-import com.arinno.canopus.entities.UserResponse;
-import com.arinno.canopus.servicies.IImputationService;
-import com.arinno.canopus.servicies.IProductService;
-import com.arinno.canopus.servicies.IProjectService;
+import com.arinno.canopus.time.imputation.application.IImputationService;
+import com.arinno.canopus.catalog.product.application.IProductService;
+import com.arinno.canopus.delivery.project.application.IProjectService;
+import com.arinno.canopus.organization.user.application.UserService;
+import com.arinno.canopus.organization.user.domain.User;
+import com.arinno.canopus.organization.user.contract.UserResponse;
+import com.arinno.canopus.organization.user.api.mapper.UserMapper;
+import com.arinno.canopus.organization.technology.api.mapper.TechnologyMapper;
 
 @ExtendWith(MockitoExtension.class)
 class UserMapperTest {
@@ -29,6 +35,9 @@ class UserMapperTest {
 
     @Mock
     private TechnologyMapper technologyMapper;
+
+    @Mock
+    private UserService userService;
 
     @Test
     void toDetailIncludesCountProductsCountProjectsAndTime() {
@@ -47,7 +56,8 @@ class UserMapperTest {
         when(projectService.countByResponsible(user)).thenReturn(5);
         when(imputationService.timeByUser(user)).thenReturn(40);
 
-        UserMapper userMapper = new UserMapper(productService, projectService, imputationService, technologyMapper);
+        UserMapper userMapper = new UserMapper(
+            productService, projectService, imputationService, technologyMapper, userService);
 
         UserResponse userResponse = userMapper.toDetail(user);
 

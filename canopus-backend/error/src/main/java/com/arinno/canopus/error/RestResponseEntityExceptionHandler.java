@@ -63,6 +63,36 @@ public class RestResponseEntityExceptionHandler { // Eliminado el 'extends Respo
         return ErrorResponseFactory.of(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<ErrorMessage> handleUsernameAlreadyExists(UsernameAlreadyExistsException exception) {
+        return ErrorResponseFactory.of(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ErrorMessage> handleEmailAlreadyExists(EmailAlreadyExistsException exception) {
+        return ErrorResponseFactory.of(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(TechnologyNotFoundException.class)
+    public ResponseEntity<ErrorMessage> technologyNotFoundException(TechnologyNotFoundException exception) {
+        return ErrorResponseFactory.of(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ErrorMessage> productNotFoundException(ProductNotFoundException exception) {
+        return ErrorResponseFactory.of(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(ProjectNotFoundException.class)
+    public ResponseEntity<ErrorMessage> projectNotFoundException(ProjectNotFoundException exception) {
+        return ErrorResponseFactory.of(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(ImputationNotFoundException.class)
+    public ResponseEntity<ErrorMessage> imputationNotFoundException(ImputationNotFoundException exception) {
+        return ErrorResponseFactory.of(HttpStatus.NOT_FOUND, exception.getMessage());
+    }   
+
     // 5. Captura genérica (Cualquier error inesperado no controlado previamente)
     // NOTA: Se deja al final para que Spring evalúe primero las excepciones específicas de arriba
     @ExceptionHandler(Exception.class)

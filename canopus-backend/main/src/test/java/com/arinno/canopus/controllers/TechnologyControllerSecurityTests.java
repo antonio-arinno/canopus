@@ -10,12 +10,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.arinno.canopus.controllers.mapper.TechnologyMapper;
+import com.arinno.canopus.organization.technology.api.mapper.TechnologyMapper;
+import com.arinno.canopus.organization.technology.api.TechnologyController;
 import com.arinno.canopus.organization.company.domain.Company;
-import com.arinno.canopus.entities.TechnologyRequest;
-import com.arinno.canopus.servicies.ITechnologyService;
-import com.arinno.canopus.servicies.JwtService;
-import com.arinno.canopus.servicies.UserService;
+import com.arinno.canopus.organization.technology.application.ITechnologyService;
+import com.arinno.canopus.services.JwtService;
+import com.arinno.canopus.organization.user.application.UserService;
+import com.arinno.canopus.organization.technology.contract.TechnologyRequest;
 
 @ExtendWith(MockitoExtension.class)
 class TechnologyControllerSecurityTests {
@@ -52,7 +53,7 @@ class TechnologyControllerSecurityTests {
         TechnologyController controller = new TechnologyController(technologyService, jwtService, userService, technologyMapper);
 
         // Act & Assert (Acción y Verificación)
-        assertThatThrownBy(() -> controller.save(request, "Bearer token"))
+        assertThatThrownBy(() -> controller.create(request, "Bearer token"))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting(exception -> ((ResponseStatusException) exception).getStatusCode())
                 // Verificamos que ahora el sistema responda con NOT_FOUND (404) en lugar de BAD_REQUEST

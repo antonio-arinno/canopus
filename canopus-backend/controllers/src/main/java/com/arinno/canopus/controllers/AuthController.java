@@ -1,6 +1,7 @@
 package com.arinno.canopus.controllers;
 
-import java.util.ArrayList;
+
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,11 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.arinno.canopus.organization.company.application.CompanyService;
 import com.arinno.canopus.organization.company.domain.Company;
+import com.arinno.canopus.organization.user.application.UserService;
 import com.arinno.canopus.entities.RegisterRequest;
-import com.arinno.canopus.entities.User;
+import com.arinno.canopus.organization.user.domain.User;
 import com.arinno.canopus.error.CustomException;
 import com.arinno.canopus.error.ErrorResponseFactory;
-import com.arinno.canopus.servicies.UserService;
 
 import jakarta.validation.Valid;
 
@@ -65,7 +66,6 @@ public class AuthController {
             user.setPassword(request.getPassword());
             user.setAdmin(true);
             user.setCompany(savedCompany);
-            user.setTechnologies(new ArrayList<>());
             userService.save(user);
 
             Map<String, String> body = new HashMap<>();

@@ -49,6 +49,7 @@
           @for (day of monthSelect; track day.value) {
             <li 
               class="calendar-day"
+              [style.grid-column-start]="day.value === 1 ? day.indexWeek : null"
               [class.is-today]="isToday(day)"
               [class.is-complete]="day.total === 8"
               [class.has-entry]="day.total > 0 && day.total < 8"

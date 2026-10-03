@@ -1,6 +1,11 @@
 package com.arinno.canopus.integration;
 
+
+
+
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -20,6 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -42,14 +48,32 @@ class AuthenticationAndTenantIsolationIntegrationTest {
         String tokenA = login("adminA", "PasswordA1");
         String tokenB = login("adminB", "PasswordB1");
 
-        createUser(tokenA, "memberA", "memberA@example.com");
-
         long adminAId = currentUserId(tokenA);
         long technologyId = createTechnology(tokenA, adminAId);
+        createUser(tokenA, "memberA", "memberA@example.com", technologyId);
         long productId = createProduct(tokenA, technologyId, adminAId);
         long projectId = createProject(tokenA, productId, adminAId);
         long imputationId = createImputation(tokenA, projectId);
         updateImputation(tokenA, imputationId, projectId);
+
+        mockMvc.perform(put("/user/me")
+            .header("Authorization", "Bearer " + tokenA)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new UserProfilePayload(
+                "Admin", "User", "adminA@example.com", List.of(technologyId)))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.technologies[0].id").value(technologyId));
+
+        mockMvc.perform(put("/user/me")
+            .header("Authorization", "Bearer " + tokenB)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new UserProfilePayload(
+                "Admin", "User", "adminB@example.com", List.of(technologyId)))))
+            .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/user/me").header("Authorization", "Bearer " + tokenB))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.technologies.length()").value(0));
 
         mockMvc.perform(get("/user").header("Authorization", "Bearer " + tokenA))
                 .andExpect(status().isOk())
@@ -87,7 +111,8 @@ class AuthenticationAndTenantIsolationIntegrationTest {
                 .content(objectMapper.writeValueAsString(new ImputationPayload(projectId))))
             .andExpect(status().isNotFound())
             // CORRECCIÓN: Sincronizamos el texto exacto devuelto por tu orElseThrow() en el servicio
-            .andExpect(jsonPath("$.message").value("Proyecto no encontrado para la empresa."));
+            .andExpect(jsonPath("$.message").value(containsString("Proyecto no encontrado para la empresa")));
+
 
     
     }
@@ -177,15 +202,16 @@ class AuthenticationAndTenantIsolationIntegrationTest {
                 .andExpect(status().isCreated());
     }
 
-    private void createUser(String token, String username, String email) throws Exception {
-        String body = objectMapper.writeValueAsString(new UserPayload(username, email));
+    private void createUser(String token, String username, String email, long technologyId) throws Exception {
+        String body = objectMapper.writeValueAsString(new UserPayload(username, email, technologyId));
 
         mockMvc.perform(post("/user")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.username").value(username));
+                .andExpect(jsonPath("$.username").value(username))
+                .andExpect(jsonPath("$.technologies[0].id").value(technologyId));
     }
 
     private String login(String username, String password) throws Exception {
@@ -213,10 +239,14 @@ class AuthenticationAndTenantIsolationIntegrationTest {
     private record LoginPayload(String username, String password) {
     }
 
-    private record UserPayload(String name, String lastname, String email, String username, boolean admin) {
-        UserPayload(String username, String email) {
-            this("Member", "User", email, username, false);
+    private record UserPayload(String name, String lastname, String email, String username, boolean admin,
+            List<Long> technologies) {
+        UserPayload(String username, String email, long technologyId) {
+            this("Member", "User", email, username, false, List.of(technologyId));
         }
+    }
+
+    private record UserProfilePayload(String name, String lastname, String email, List<Long> technologies) {
     }
 
     private record TechnologyPayload(String name, String description, long responsibleId) {

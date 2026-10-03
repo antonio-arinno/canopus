@@ -1,6 +1,7 @@
 package com.arinno.canopus.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,23 +13,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import com.arinno.canopus.organization.company.domain.Company;
-import com.arinno.canopus.entities.Imputation;
-import com.arinno.canopus.entities.ImputationItem;
-import com.arinno.canopus.entities.Product;
-import com.arinno.canopus.entities.Project;
-import com.arinno.canopus.entities.Technology;
-import com.arinno.canopus.entities.User;
+import com.arinno.canopus.time.imputation.domain.Imputation;
+import com.arinno.canopus.time.imputation.domain.ImputationItem;
+import com.arinno.canopus.catalog.product.domain.Product;
+import com.arinno.canopus.delivery.project.domain.Project;
+import com.arinno.canopus.organization.technology.domain.Technology;
+import com.arinno.canopus.organization.user.domain.User;
+import com.arinno.canopus.organization.technology.domain.UserTechnology;
 import com.arinno.canopus.organization.company.infrastructure.persistence.CompanyRepository;
-import com.arinno.canopus.repositories.ImputationRepository;
-import com.arinno.canopus.repositories.ProductRepository;
-import com.arinno.canopus.repositories.ProjectRepository;
-import com.arinno.canopus.repositories.TechnologyRepository;
-import com.arinno.canopus.repositories.UserRepository;
+import com.arinno.canopus.time.imputation.infrastructure.persistence.ImputationRepository;
+import com.arinno.canopus.catalog.product.infrastructure.persistence.ProductRepository;
+import com.arinno.canopus.delivery.project.infrastructure.persistence.ProjectRepository;
+import com.arinno.canopus.organization.technology.infrastructure.persistence.TechnologyRepository;
+import com.arinno.canopus.organization.user.infrastructure.persistence.UserRepository;
+import com.arinno.canopus.organization.technology.infrastructure.persistence.UserTechnologyRepository;
 
 // Verifies that repository queries never leak data across companies (tenant isolation).
 @DataJpaTest
@@ -50,10 +54,16 @@ class CompanyIsolationRepositoryTests {
     private CompanyRepository companyRepository;
 
     @Autowired
+    private TestEntityManager entityManager;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private TechnologyRepository technologyRepository;
+
+    @Autowired
+    private UserTechnologyRepository userTechnologyRepository;
 
     @Autowired
     private ProductRepository productRepository;
@@ -147,14 +157,42 @@ class CompanyIsolationRepositoryTests {
         Technology technologyA = newTechnology(companyA, userA, "Java");
         Technology technologyB = newTechnology(companyB, userB, "Java");
 
-        userA.setTechnologies(List.of(technologyA));
-        userRepository.save(userA);
-        userB.setTechnologies(List.of(technologyB));
-        userRepository.save(userB);
+        addTechnology(userA, technologyA);
+        addTechnology(userB, technologyB);
+
+        assertThat(userTechnologyRepository.findByUser(userA)).hasSize(1);
+        assertThat(userTechnologyRepository.findByUser(userA).get(0).getCompany().getId()).isEqualTo(companyA.getId());
 
         List<User> resultForCompanyA = userRepository.findByTechnologyAndCompany(technologyA.getId(), companyA.getId());
 
         assertThat(resultForCompanyA).extracting(User::getUsername).containsExactly("userA");
+    }
+
+    @Test
+    void userTechnologyAssociation_rejectsTechnologyFromAnotherCompany() {
+        Company companyA = companyRepository.save(companyOf("Company A"));
+        Company companyB = companyRepository.save(companyOf("Company B"));
+        User userA = newUser(companyA, "userA");
+        User userB = newUser(companyB, "userB");
+        Technology technologyB = newTechnology(companyB, userB, "Java");
+
+        assertThatThrownBy(() -> {
+            UserTechnology association = new UserTechnology();
+            association.setUser(userA);
+            association.setTechnology(technologyB);
+            association.setCompany(companyA);
+            userTechnologyRepository.save(association);
+            entityManager.flush();
+        })
+            .hasRootCauseInstanceOf(IllegalStateException.class);
+    }
+
+    private void addTechnology(User user, Technology technology) {
+        UserTechnology association = new UserTechnology();
+        association.setUser(user);
+        association.setTechnology(technology);
+        association.setCompany(user.getCompany());
+        userTechnologyRepository.save(association);
     }
 
     @Test

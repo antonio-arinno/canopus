@@ -105,15 +105,6 @@
           @if (isSubmitting()) {
             <p class="text-muted">Guardando imputación...</p>
           }
-          @if (successMessage()) {
-            <p role="status" class="text-success">{{ successMessage() }}</p>
-          }
-          @if (errorMessage()) {
-            <p role="alert" class="mat-error">{{ errorMessage() }}</p>
-          }
-          @if (submitErrorMessage()) {
-            <p role="alert" class="mat-error">{{ submitErrorMessage() }}</p>
-          }
         </div>
       </mat-card-footer>
     </form>

@@ -61,8 +61,6 @@ export class TechnologyDetailComponent implements OnInit {
 
   // Atributos reactivos compartidos con el HTML
   readonly isSubmitting = this.formStateService.isSubmitting;
-  readonly successMessage = this.formStateService.successMessage;
-  readonly errorMessage = this.requestStateService.errorMessage;
   readonly isLoading = this.requestStateService.isLoading;
 
   ngOnInit(): void {
@@ -138,7 +136,7 @@ export class TechnologyDetailComponent implements OnInit {
   getValidationMessage(controlName: string): string | null {
     return this.formValidationService.getErrorMessage(this.form.get(controlName));
   }
- 
+
   create(event: Event): void {
     event.preventDefault();
     if (this.form.valid) {
@@ -152,8 +150,8 @@ export class TechnologyDetailComponent implements OnInit {
         next: () => {
           this.formStateService.setSuccess('Tecnología creada con éxito.');
           this.router.navigateByUrl('/pvt/technology');
-        }
-        // Eliminado bloque 'error:' -> Lo gestiona el interceptor actualizando el requestState / formState
+        },
+        error: (err) => this.handleFormError(err, 'No se pudo crear la tecnología debido a restricciones del sistema.')
       });
     }    
   } 
@@ -163,10 +161,14 @@ export class TechnologyDetailComponent implements OnInit {
     if (this.form.valid) {
       const payload = this.form.getRawValue();
       this.technology = Technology.fromObject(payload);
+      this.formStateService.startSubmit();
+
       this.technologyService.delete(this.technology.id).subscribe({
         next: () => {
+          this.formStateService.setSuccess('Tecnología eliminada con éxito.');
           this.router.navigateByUrl('/pvt/technology');
-        }
+        },
+        error: (err) => this.handleFormError(err, 'No se pudo eliminar la tecnología debido a dependencias en el sistema.')
       });
     }
   }
@@ -189,10 +191,21 @@ export class TechnologyDetailComponent implements OnInit {
         next: () => {
           this.formStateService.setSuccess('Tecnología actualizada con éxito.');
           this.router.navigateByUrl('/pvt/technology');
-        }
+        },
+        error: (err) => this.handleFormError(err, 'No se pudo actualizar la tecnología debido a restricciones del sistema.')
       });
     }
   } 
+
+  private handleFormError(err: any, fallbackMessage: string): void {
+    if (err?.status === 403) {
+      this.formStateService.setError('No tienes permisos para realizar esta acción.');
+    } else {
+      const backendMessage = err?.error?.message || fallbackMessage;
+      this.formStateService.setError(backendMessage);
+    }
+  }
+
 
   private buildTechnologyPayload(): TechnologyRequest | null {
     const raw = this.form.getRawValue();

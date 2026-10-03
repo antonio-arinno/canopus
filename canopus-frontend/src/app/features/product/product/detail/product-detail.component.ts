@@ -65,9 +65,7 @@ export class ProductDetailComponent implements OnInit {
 
   // Atributos reactivos compartidos con el HTML mediante Signals
   readonly isSubmitting = this.formStateService.isSubmitting;
-  readonly successMessage = this.formStateService.successMessage;
   readonly isLoading = this.requestStateService.isLoading;
-  readonly errorMessage = this.requestStateService.errorMessage;
 
   
   displayedColumns: string[] = ['projectName', 'status', 'countContributors', 'time'];
@@ -189,7 +187,8 @@ export class ProductDetailComponent implements OnInit {
           this.formStateService.setSuccess('Producto creado con éxito.');
           this.router.navigateByUrl('/pvt/product');
         },
-         error: () => this.formStateService.reset()
+        // Invocamos el factor común pasando el error y su paracaídas de red específico
+        error: (err) => this.handleFormError(err, 'No se pudo crear el producto debido a restricciones del sistema.')
       });
     }    
   } 
@@ -208,7 +207,7 @@ export class ProductDetailComponent implements OnInit {
           this.formStateService.setSuccess('Producto actualizado con éxito.');
           this.router.navigateByUrl('/pvt/product');
         },
-        error: () => this.formStateService.reset()
+        error: (err) => this.handleFormError(err, 'No se pudo actualizar el producto debido a restricciones del sistema.')
       });
     }
   } 
@@ -221,10 +220,21 @@ export class ProductDetailComponent implements OnInit {
       this.product = Product.fromObject(payload);
       this.productService.delete(this.product.id).subscribe({
         next: () => {
+          this.formStateService.setSuccess('Producto eliminado con éxito.');
           this.router.navigateByUrl('/pvt/product');
         },
-        error: () => this.formStateService.reset()
+        error: (err) => this.handleFormError(err, 'No se pudo eliminar el producto debido a dependencias en el sistema.')
       });
+    }
+  }
+
+  // 🔥 FACTOR COMÚN (DRY): Centraliza el procesamiento de errores HTTP de privilegios (403) o negocio (409)
+  private handleFormError(err: any, fallbackMessage: string): void {
+    if (err?.status === 403) {
+      this.formStateService.setError('No tienes permisos para realizar esta acción.');
+    } else {
+      const backendMessage = err?.error?.message || fallbackMessage;
+      this.formStateService.setError(backendMessage);
     }
   }
 

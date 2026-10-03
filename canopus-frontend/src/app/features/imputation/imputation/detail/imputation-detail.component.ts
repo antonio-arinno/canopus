@@ -74,10 +74,7 @@ export class ImputationDetailComponent implements OnInit {
 
   // Atributos reactivos expuestos al HTML mediante Signals globales del Core
   readonly isSubmitting = this.formStateService.isSubmitting;
-  readonly successMessage = this.formStateService.successMessage;
-  readonly submitErrorMessage = this.formStateService.errorMessage;
   readonly isLoading = this.requestStateService.isLoading;
-  readonly errorMessage = this.requestStateService.errorMessage;
 
   ngOnInit(): void {
     this.formStateService.clear();
@@ -213,7 +210,9 @@ export class ImputationDetailComponent implements OnInit {
         next: () => {
           this.formStateService.setSuccess('Imputación creada con éxito.');
           this.router.navigateByUrl('/pvt/imputation');
-        }
+        },
+        // Captura DRY: Redirigimos el error hacia el Snackbar flotante interactivo
+        error: (err) => this.handleFormError(err, 'No se pudo registrar la imputación debido a restricciones del sistema.')
       });      
     }    
   }
@@ -236,7 +235,8 @@ export class ImputationDetailComponent implements OnInit {
         next: () => {
           this.formStateService.setSuccess('Imputación actualizada con éxito.');
           this.router.navigateByUrl('/pvt/imputation');
-        }
+        },
+        error: (err) => this.handleFormError(err, 'No se pudo actualizar la imputación debido a restricciones del sistema.')
       });      
     }    
   }
@@ -245,13 +245,27 @@ export class ImputationDetailComponent implements OnInit {
     event.preventDefault();
     if (this.imputationForm.valid) {
       this.imputation = this.imputationForm.value;
+      this.formStateService.startSubmit();
+      
       this.imputationService.delete(this.imputation.id).subscribe({
         next: () => {
+          this.formStateService.setSuccess('Imputación eliminada con éxito.');
           this.router.navigateByUrl('/pvt/imputation');
-        }
+        },
+        error: (err) => this.handleFormError(err, 'No se pudo eliminar la imputación debido a restricciones del sistema.')
       });
     }
-  }     
+  }
+
+  // 🔥 FACTOR COMÚN (DRY): Centraliza el procesamiento de errores HTTP (403, 409, etc.) para este formulario dinámico
+  private handleFormError(err: any, fallbackMessage: string): void {
+    if (err?.status === 403) {
+      this.formStateService.setError('No tienes permisos para realizar esta acción.');
+    } else {
+      const backendMessage = err?.error?.message || fallbackMessage;
+      this.formStateService.setError(backendMessage);
+    }
+  }   
 
   private buildImputationPayload(): ImputationRequest | null {
     const payload = this.imputationForm.getRawValue();

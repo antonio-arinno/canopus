@@ -148,16 +148,7 @@
           @if (isSubmitting()) {
             <p class="text-muted">Guardando producto...</p>
           }
-
-          @if (successMessage()) {
-            <p role="status" class="text-success">{{ successMessage() }}</p>
-          }
-
-          @if (errorMessage()) {
-            <div>
-              <mat-error>{{ errorMessage() }}</mat-error>
-            </div>
-          }
+          
         </div>
       </mat-card-footer>
     </form>

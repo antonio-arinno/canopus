@@ -1,12 +1,14 @@
 # Arquitectura objetivo del backend
 
-Estado actualizado: 2026-09-05.
+Estado actualizado: 2026-10-03.
 
 ## Alcance de esta decisión
 
-Esta fase define paquetes, responsabilidades y dependencias permitidas. No mueve clases ni cambia todavía los módulos Maven.
+Esta fase define paquetes, responsabilidades y dependencias permitidas, sin cambiar los módulos Maven.
 
 La reorganización inicial conserva los módulos actuales (`entities`, `repositories`, `services`, `controllers`, `auth`, `error`, `main`) y cambia progresivamente los paquetes Java para agrupar el código por capacidad funcional.
+
+Las subtareas 3.1 a 3.5 ya trasladaron entidades, contratos, repositorios, servicios y adaptadores HTTP a `organization.company`, `organization.user`, `organization.technology`, `catalog.product`, `delivery.project` y `time.imputation`. Las tablas, rutas HTTP y consultas de métricas se conservan. La separación de consultas bajo `reporting` y los movimientos de seguridad, registro, contratos compartidos y bootstrap siguen siendo trabajo posterior; no forman parte del paso 3.5.
 
 ## Grafo Maven actual
 
@@ -45,19 +47,21 @@ graph TD
 | `shared` | Contratos técnicos sin lógica de negocio | `PageResponse`, errores HTTP y factoría de errores |
 | `bootstrap` | Arranque, perfiles, Flyway y ensamblado | `Main`, `application*.properties`, migraciones |
 
-## Ciclo existente que condiciona el diseño
+## Relaciones de usuario y tecnología
 
-Existe un ciclo real en el modelo JPA:
+La relación JPA se mantiene mediante la entidad puente, pero ya no crea un ciclo de tipos entre los dominios:
 
 ```mermaid
 graph LR
-    User -->|ManyToMany technologies| Technology
+    UserTechnology --> User
+    UserTechnology --> Technology
+    UserTechnology --> Company
     Technology -->|ManyToOne responsible| User
     User --> Company
     Technology --> Company
 ```
 
-Por este motivo, `user` y `technology` no deben convertirse ahora en módulos Maven separados. Ambos pertenecen inicialmente al contexto Maven candidato `organization`, junto con `company` y `role`. El ciclo queda contenido dentro de ese límite.
+`User` no declara una navegación inversa a `UserTechnology` ni importa `Technology`; las asociaciones se consultan y actualizan mediante `UserTechnologyRepository`. `Technology` conserva la referencia a su usuario responsable. Ambos dominios permanecen juntos en el contexto Maven candidato `organization` durante esta fase; no se extraen módulos Maven todavía.
 
 ## Grafo funcional objetivo
 
@@ -101,7 +105,7 @@ graph TD
 
 ### Relaciones del modelo que justifican el grafo
 
-- `User` pertenece a `Company` y conoce `Technology` mediante `users_technologies`.
+- `User` pertenece a `Company`; `UserTechnology` enlaza usuario y tecnología en `users_technologies`, con validación JPA y claves foráneas compuestas por compañía. La asociación se accede mediante repositorio y no mediante una colección en `User`.
 - `Technology` pertenece a `Company` y referencia un `User` responsable.
 - `Product` pertenece a `Company` y referencia `Technology`, responsable y backup.
 - `Project` pertenece a `Company` y referencia `Product`, responsable y colaboradores.

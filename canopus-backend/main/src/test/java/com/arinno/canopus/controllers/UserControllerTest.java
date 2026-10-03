@@ -10,12 +10,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
-import com.arinno.canopus.controllers.mapper.UserMapper;
+import com.arinno.canopus.organization.user.api.mapper.UserMapper;
+import com.arinno.canopus.organization.user.api.UserController;
 import com.arinno.canopus.organization.company.domain.Company;
-import com.arinno.canopus.entities.User;
-import com.arinno.canopus.entities.UserResponse;
-import com.arinno.canopus.servicies.JwtService;
-import com.arinno.canopus.servicies.UserService;
+import com.arinno.canopus.services.JwtService;
+import com.arinno.canopus.organization.user.application.UserService;
+import com.arinno.canopus.organization.user.domain.User;
+import com.arinno.canopus.organization.user.contract.UserResponse;
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {

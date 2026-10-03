@@ -14,6 +14,8 @@ Aplicación web multiempresa para la gestión de proyectos de software: tiempos,
 
 `main`, `controllers`, `entities`, `repositories`, `services`, `auth`, `util`, `error`.
 
+Las capacidades usan los paquetes `organization.company`, `organization.user`, `organization.technology`, `catalog.product`, `delivery.project` y `time.imputation`. Cada una distribuye su código entre los módulos actuales mediante los sufijos `domain`, `contract`, `infrastructure.persistence`, `application` y `api`. La reorganización conserva las tablas y contratos HTTP; aún no se extraen módulos Maven por dominio.
+
 ### Controladores REST existentes
 
 `UserController`, `ProductController`, `ProjectController`, `TechnologyController`, `ImputationController`, `TestController`.

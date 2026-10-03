@@ -210,16 +210,6 @@
             <p class="text-muted">Guardando proyecto...</p>
           }
 
-          @if (successMessage()) {
-            <p role="status" class="text-success">{{ successMessage() }}</p>
-          }
-          
-          @if (errorMessage()) {
-            <div>
-              <mat-error>{{ errorMessage() }}</mat-error>
-            </div>
-          }
-
           <!-- MENSAJES DE VALIDACIÓN DE FECHAS DINÁMICAS -->
           @if (form.get('dateDev')?.value > form.get('datePre')?.value && form.get('datePre')?.value) {
             <p role="alert" class="text-danger">Fecha de PreProducción no puede ser inferior a fecha de Desarrollo</p>

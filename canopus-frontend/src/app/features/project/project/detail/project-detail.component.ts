@@ -79,8 +79,6 @@ export class ProjectDetailComponent implements OnInit {
 
   // Atributos reactivos públicos compartidos con la vista (Signals)
   readonly isSubmitting = this.formStateService.isSubmitting;
-  readonly successMessage = this.formStateService.successMessage;
-  readonly errorMessage = this.requestStateService.errorMessage;
   readonly isLoading = this.requestStateService.isLoading;
 
   users: WritableSignal<User[]> = signal([]);
@@ -292,16 +290,16 @@ export class ProjectDetailComponent implements OnInit {
       }
       const id = this.form.getRawValue().id;
       if (typeof id !== 'number') {
-        this.formStateService.setError('No se pudo identificar la tecnología a actualizar.');
+        this.formStateService.setError('No se pudo identificar el proyecto a actualizar.');
         return;
       }
       this.projectService.update(id, payload).subscribe({
         next: () => {
           this.formStateService.setSuccess('Proyecto actualizado con éxito.');
           this.router.navigateByUrl('/pvt/project');
-        }
-      }
-    );
+        },
+        error: (err) => this.handleFormError(err, 'No se pudo actualizar el proyecto debido a restricciones del sistema.')
+      });
     }
   }
 
@@ -318,7 +316,8 @@ export class ProjectDetailComponent implements OnInit {
         next: () => {
           this.formStateService.setSuccess('Proyecto creado con éxito.');
           this.router.navigateByUrl('/pvt/project');
-        }
+        },
+        error: (err) => this.handleFormError(err, 'No se pudo crear el proyecto debido a restricciones del sistema.')
       });
     }
   }
@@ -327,13 +326,28 @@ export class ProjectDetailComponent implements OnInit {
     event.preventDefault();
     if (this.form.valid) {
       this.project = this.form.value;
+      this.formStateService.startSubmit();
+      
       this.projectService.delete(this.project.id).subscribe({
         next: () => {
+          this.formStateService.setSuccess('Proyecto eliminado con éxito.');
           this.router.navigateByUrl('/pvt/project');
-        }
+        },
+        error: (err) => this.handleFormError(err, 'No se pudo eliminar el proyecto debido a dependencias en el sistema.')
       });
     }
   }
+
+  // 🔥 FACTOR COMÚN (DRY): Captura centralizada inteligente para errores HTTP locales y globales
+  private handleFormError(err: any, fallbackMessage: string): void {
+    if (err?.status === 403) {
+      this.formStateService.setError('No tienes permisos para realizar esta acción.');
+    } else {
+      const backendMessage = err?.error?.message || fallbackMessage;
+      this.formStateService.setError(backendMessage);
+    }
+  }
+
 
   private buildProjectPayload(): ProjectRequest | null {
     const raw = this.form.getRawValue();

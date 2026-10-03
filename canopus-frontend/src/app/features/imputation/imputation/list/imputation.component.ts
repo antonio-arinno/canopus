@@ -11,6 +11,7 @@ import { RequestStateService } from '@core/ui/request-state.service';
 // Definimos una interfaz interna para el tipado estricto de los días del calendario
 interface CalendarDay {
   value: number;
+  indexWeek: number;
   id: number | null;
   total: number;
 }

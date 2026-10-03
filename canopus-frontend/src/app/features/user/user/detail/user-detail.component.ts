@@ -175,7 +175,7 @@ export class UserDetailComponent implements OnInit {
         name: payload.name,
         lastname: payload.lastname,
         email: payload.email,
-        technologies: this.my_technologies()
+        technologies: this.my_technologies().map(technology => technology.id)
       }).subscribe({
         next: () => {
           this.formStateService.setSuccess('Usuario actualizado con éxito.');
@@ -216,9 +216,15 @@ export class UserDetailComponent implements OnInit {
       this.formStateService.startSubmit();
       const payload = this.form.getRawValue();
       this.user = User.fromObject(payload);
-      this.user.technologies = this.my_technologies();
-      
-      this.userService.create(this.user).subscribe({
+      this.userService.create({
+        id: this.user.id,
+        username: this.user.username,
+        name: this.user.name,
+        lastname: this.user.lastname,
+        email: this.user.email,
+        admin: payload.admin ?? false,
+        technologies: this.my_technologies().map(technology => technology.id)
+      }).subscribe({
         next: () => {
           this.formStateService.setSuccess('Usuario creado con éxito.');
           this.router.navigateByUrl('/pvt/user');

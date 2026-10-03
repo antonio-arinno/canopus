@@ -4,6 +4,17 @@ import { User } from '@core/model/user';
 import { ApiBaseService } from '@core/api/api-base.service';
 import { PageResponse } from '@core/api/page-response';
 
+export interface UserWriteRequest {
+  id?: number;
+  username?: string;
+  password?: string;
+  name: string;
+  lastname: string;
+  email: string;
+  admin?: boolean;
+  technologies: number[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -34,7 +45,7 @@ export class UserService extends ApiBaseService<User> {
     return this.httpGet<User>('/user/me');
   }
 
-  updateMe(user: Partial<User>): Observable<User> {
+  updateMe(user: Partial<Omit<User, 'technologies'>> & { technologies: number[] }): Observable<User> {
     return this.httpPut<User>('/user/me', user);
   }
 
@@ -42,7 +53,7 @@ export class UserService extends ApiBaseService<User> {
     return this.httpPut<void>('/user/me/password', { currentPassword, newPassword });
   }
 
-  create(user: User): Observable<User> {
+  create(user: UserWriteRequest): Observable<User> {
     return this.httpCreate(user);
   }
 

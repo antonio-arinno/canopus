@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAccordion, MatExpansionModule } from '@angular/material/expansion';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 
 import { Project } from '@core/model/project';
 import { Technology } from '@core/model/technology';
@@ -25,7 +26,8 @@ import { RequestStateService } from '@core/ui/request-state.service';
     MatButtonModule, 
     MatFormFieldModule, 
     MatButtonToggleModule, 
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatPaginatorModule
   ],
   templateUrl: './project.component.html',
   styleUrl: './project.component.scss'
@@ -48,6 +50,9 @@ export class ProjectComponent implements OnInit {
 
   technologies: WritableSignal<Technology[]> = signal([]);
   projects: Project[] = [];
+  pageIndex = 0;
+  pageSize = 10;
+  totalProjects = 0;
 
   // Enlaces directos a los estados reactivos globales de UI
   readonly isLoading = this.requestStateService.isLoading;
@@ -60,8 +65,14 @@ export class ProjectComponent implements OnInit {
     this.projectList();
 
     // Suscripción reactiva ante cambios en los filtros de usuario
-    this.responsibleControl.valueChanges.subscribe(() => this.projectList());
-    this.stateControl.valueChanges.subscribe(() => this.projectList());
+    this.responsibleControl.valueChanges.subscribe(() => {
+      this.pageIndex = 0;
+      this.projectList();
+    });
+    this.stateControl.valueChanges.subscribe(() => {
+      this.pageIndex = 0;
+      this.projectList();
+    });
 
     this.modoControl.valueChanges.subscribe(mode => {
       if (mode === 'expanded') {
@@ -80,16 +91,17 @@ export class ProjectComponent implements OnInit {
     const responsible = this.responsibleControl.value ?? 'personal';
     const state = this.stateControl.value ?? 'opened';
 
-    this.projectService.getByScope(responsible, state).subscribe({
-      next: (res: Project[]) => {
-        const payload = this.modelMapperService.mapProjectList(res as unknown[]);
+    this.projectService.getPage(this.pageIndex, this.pageSize, responsible, state).subscribe({
+      next: (response) => {
+        const payload = this.modelMapperService.mapProjectList(response.content as unknown[]);
         this.projects = [...payload];
+        this.totalProjects = response.totalElements;
+        this.pageIndex = response.number;
+        this.pageSize = response.size;
         this.updateList();
         this.requestStateService.finish();
-      }
-      // NOTA: Callback 'error:' eliminado. El 'errorInterceptor' captura
-      // automáticamente cualquier fallo en el backend (401, 404, 500) y
-      // actualiza el RequestStateService provocando que la UI pinte la alerta de forma nativa.
+      },
+      error: () => this.requestStateService.finish()
     });
 
     // Cambiamos el estado visual evitando que emita un evento secundario innecesario hacia el acordeón
@@ -99,6 +111,12 @@ export class ProjectComponent implements OnInit {
   updateList(): void {
     const techTree = this.projectListViewService.buildTechnologyTree(this.projects);
     this.technologies.set(techTree);
+  }
+
+  changePage(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.projectList();
   }
 
   hasItems(): boolean {

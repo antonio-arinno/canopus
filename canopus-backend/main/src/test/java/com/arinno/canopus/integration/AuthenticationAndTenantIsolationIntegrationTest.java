@@ -7,6 +7,7 @@ package com.arinno.canopus.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -42,19 +43,73 @@ class AuthenticationAndTenantIsolationIntegrationTest {
 
     @Test
     void registeredCompaniesCanAuthenticateAndOnlySeeTheirOwnUsers() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(get("/user/me"))
+            .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/user/me").header("Authorization", "Bearer invalid-token"))
+            .andExpect(status().isUnauthorized());
+
         registerCompany("Company A", "adminA", "adminA@example.com", "PasswordA1");
         registerCompany("Company B", "adminB", "adminB@example.com", "PasswordB1");
 
         String tokenA = login("adminA", "PasswordA1");
         String tokenB = login("adminB", "PasswordB1");
 
+        mockMvc.perform(get("/actuator/metrics").header("Authorization", "Bearer " + tokenA))
+            .andExpect(status().isOk());
+
         long adminAId = currentUserId(tokenA);
         long technologyId = createTechnology(tokenA, adminAId);
         createUser(tokenA, "memberA", "memberA@example.com", technologyId);
+
+        String memberToken = login("memberA", "memberA");
+        mockMvc.perform(post("/user")
+                .header("Authorization", "Bearer " + memberToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new UserPayload(
+                        "memberB", "memberB@example.com", technologyId))))
+            .andExpect(status().isForbidden());
+
+        mockMvc.perform(delete("/user/{id}", adminAId)
+                .header("Authorization", "Bearer " + memberToken))
+            .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/actuator/metrics").header("Authorization", "Bearer " + memberToken))
+            .andExpect(status().isForbidden());
+
         long productId = createProduct(tokenA, technologyId, adminAId);
         long projectId = createProject(tokenA, productId, adminAId);
         long imputationId = createImputation(tokenA, projectId);
         updateImputation(tokenA, imputationId, projectId);
+
+        mockMvc.perform(get("/product/contributor/{id}", adminAId)
+                .header("Authorization", "Bearer " + tokenA))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].name").value("Integration product"))
+            .andExpect(jsonPath("$[0].time").value(6));
+
+        mockMvc.perform(get("/product/{id}", productId).header("Authorization", "Bearer " + tokenA))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.countProjects").value(1))
+            .andExpect(jsonPath("$.time").value(6));
+
+        mockMvc.perform(get("/technology/{id}", technologyId).header("Authorization", "Bearer " + tokenA))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.countProducts").value(1))
+            .andExpect(jsonPath("$.countProjects").value(1))
+            .andExpect(jsonPath("$.time").value(6));
+
+        mockMvc.perform(get("/imputation/product/{id}", productId).header("Authorization", "Bearer " + tokenA))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].time").value(6));
+
+        mockMvc.perform(get("/imputation/project/{id}", projectId).header("Authorization", "Bearer " + tokenA))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].time").value(6));
 
         mockMvc.perform(put("/user/me")
             .header("Authorization", "Bearer " + tokenA)
@@ -104,6 +159,35 @@ class AuthenticationAndTenantIsolationIntegrationTest {
         mockMvc.perform(get("/project/globalall").header("Authorization", "Bearer " + tokenB))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(0));
+
+        mockMvc.perform(get("/product/page?page=0&size=1&scope=global")
+                .header("Authorization", "Bearer " + tokenA))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].time").value(6))
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.totalPages").value(1));
+
+        mockMvc.perform(get("/project/page?page=0&size=1&scope=global&state=all")
+                .header("Authorization", "Bearer " + tokenA))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].time").value(6))
+            .andExpect(jsonPath("$.totalElements").value(1));
+
+        mockMvc.perform(get("/technology/page?page=0&size=1")
+                .header("Authorization", "Bearer " + tokenA))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].countProducts").value(1))
+            .andExpect(jsonPath("$.content[0].time").value(6))
+            .andExpect(jsonPath("$.totalElements").value(1));
+
+        mockMvc.perform(get("/product/page?page=0&size=1&scope=global")
+                .header("Authorization", "Bearer " + tokenB))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(0))
+            .andExpect(jsonPath("$.totalElements").value(0));
 
         mockMvc.perform(post("/imputation")
                 .header("Authorization", "Bearer " + tokenB)

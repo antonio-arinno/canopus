@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 
 import { Technology } from '@core/model/technology';
@@ -11,7 +12,7 @@ import { RequestStateService } from '@core/ui/request-state.service';
 
 @Component({
   selector: 'app-technology',
-  imports: [MatTableModule, MatButtonModule, MatCardModule],
+  imports: [MatTableModule, MatButtonModule, MatCardModule, MatPaginatorModule],
   templateUrl: './technology.component.html',
   styleUrl: './technology.component.scss'
 })
@@ -24,6 +25,9 @@ export class TechnologyComponent implements OnInit {
   private readonly router = inject(Router);
 
   technologies: WritableSignal<Technology[]> = signal([]);
+  pageIndex = 0;
+  pageSize = 10;
+  totalTechnologies = 0;
   
   // Enlazamos directamente los estados reactivos globales de UI
   readonly isLoading = this.requestStateService.isLoading;
@@ -34,24 +38,32 @@ export class TechnologyComponent implements OnInit {
   dataSource = this.technologies;
 
   ngOnInit(): void {
-    // 1. Iniciamos el spinner y reseteamos errores previos automáticos
-    this.requestStateService.start();
-
-    this.technologyService.getAll().subscribe({
-      next: (res: Technology[]) => {
-        const technologyTmp = this.modelMapperService.mapTechnologyList(res as unknown[]);
-        this.technologies.set(technologyTmp);
-        // 2. Apagamos el estado de carga al recibir los datos con éxito
-        this.requestStateService.finish();
-      }
-      // NOTA: El bloque 'error' se elimina por completo. 
-      // El 'errorInterceptor' interceptará cualquier fallo de Spring Boot (ej. 401, 500) 
-      // y actualizará el state global provocando que la UI pinte el mat-error automáticamente.
-    });
+    this.loadPage();
   }
 
   hasItems(): boolean {
     return this.technologies().length > 0;
+  }
+
+  changePage(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.loadPage();
+  }
+
+  private loadPage(): void {
+    this.requestStateService.start();
+    this.technologyService.getPage(this.pageIndex, this.pageSize).subscribe({
+      next: (response) => {
+        const technologies = this.modelMapperService.mapTechnologyList(response.content as unknown[]);
+        this.technologies.set(technologies);
+        this.totalTechnologies = response.totalElements;
+        this.pageIndex = response.number;
+        this.pageSize = response.size;
+        this.requestStateService.finish();
+      },
+      error: () => this.requestStateService.finish()
+    });
   }
 
   edit(id: number): void {

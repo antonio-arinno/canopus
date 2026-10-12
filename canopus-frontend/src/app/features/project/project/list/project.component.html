@@ -95,6 +95,17 @@
         }  
       </mat-accordion> 
     }
+
+    @if (!isLoading() && totalProjects > 0) {
+      <mat-paginator
+        [length]="totalProjects"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [pageSizeOptions]="[10, 25, 50]"
+        aria-label="Selecciona página de proyectos"
+        (page)="changePage($event)">
+      </mat-paginator>
+    }
   </mat-card-content>
 
   <mat-card-actions class="card-actions">

@@ -59,6 +59,17 @@
           </tr>
       </table>
     }
+
+    @if (!isLoading() && totalTechnologies > 0) {
+      <mat-paginator
+        [length]="totalTechnologies"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [pageSizeOptions]="[10, 25, 50]"
+        aria-label="Selecciona página de tecnologías"
+        (page)="changePage($event)">
+      </mat-paginator>
+    }
   </mat-card-content>  
   
   <mat-card-actions class="card-actions">

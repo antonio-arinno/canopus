@@ -2,42 +2,51 @@
 
 Estado actualizado: 2026-10-03.
 
-## Alcance de esta decisión
+## Estado de la extracción
 
-Esta fase define paquetes, responsabilidades y dependencias permitidas, sin cambiar los módulos Maven.
-
-La reorganización inicial conserva los módulos actuales (`entities`, `repositories`, `services`, `controllers`, `auth`, `error`, `main`) y cambia progresivamente los paquetes Java para agrupar el código por capacidad funcional.
-
-Las subtareas 3.1 a 3.5 ya trasladaron entidades, contratos, repositorios, servicios y adaptadores HTTP a `organization.company`, `organization.user`, `organization.technology`, `catalog.product`, `delivery.project` y `time.imputation`. Las tablas, rutas HTTP y consultas de métricas se conservan. La separación de consultas bajo `reporting` y los movimientos de seguridad, registro, contratos compartidos y bootstrap siguen siendo trabajo posterior; no forman parte del paso 3.5.
+La reorganización por paquetes y capacidades, incluida la extracción Maven del paso 5 y la optimización de lecturas de fase 6, está completada. El reactor activo contiene `organization`, `catalog`, `delivery`, `time-tracking`, `reporting`, `security`, `web-adapters`, `shared` y el ejecutable `main`. Los módulos técnicos vacíos (`entities`, `repositories`, `services`, `controllers`, `auth`, `error`, `util`) fueron retirados. Se conservaron las tablas y respuestas HTTP existentes; las rutas paginadas nuevas son aditivas.
 
 ## Grafo Maven actual
 
 ```mermaid
 graph TD
-    main --> controllers
-    main --> auth
-    main --> repositories
-    controllers --> services
-    controllers --> util
-    controllers --> error
-    services --> entities
-    services --> repositories
-    services --> util
-    services --> error
-    repositories --> entities
-    auth --> entities
-    util --> entities
+    catalog --> organization
+    delivery --> catalog
+    delivery --> organization
+    time-tracking --> delivery
+    time-tracking --> catalog
+    time-tracking --> organization
+    reporting --> organization
+    reporting --> catalog
+    reporting --> delivery
+    reporting --> time-tracking
+    security --> organization
+    web-adapters --> organization
+    web-adapters --> catalog
+    web-adapters --> delivery
+    web-adapters --> time-tracking
+    web-adapters --> reporting
+    web-adapters --> security
+    web-adapters --> shared
+    main --> web-adapters
+    main --> security
+    main --> organization
+    main --> catalog
+    main --> delivery
+    main --> time-tracking
+    main --> reporting
+    main --> shared
 ```
 
-`entities` y `error` son hojas. El módulo `util` ya no contiene código activo y deberá eliminarse del reactor Maven durante la reorganización por paquetes, después de verificar que no quedan referencias.
+`shared` contiene únicamente contratos y errores técnicos reutilizados. `main` conserva el nombre y el artefacto ejecutable; `web-adapters` compone las APIs de las capacidades. No quedan declaraciones Maven de los módulos retirados.
 
 ## Capacidades funcionales objetivo
 
 | Capacidad | Responsabilidad | Código actual que posee |
 |---|---|---|
 | `organization.company` | Empresa cliente y límite de aislamiento | `Company`, `CompanyRepository`, `CompanyService` |
-| `organization.user` | Usuarios, roles, perfil y administración | `User`, `Role`, contratos de usuario, repositorios y servicios de usuario |
-| `organization.technology` | Tecnologías y responsable técnico | `Technology`, contratos, repositorio, servicio y controlador de tecnología |
+| `organization.user` | Usuarios, roles, perfil y administración | `User`, `Role`, contratos, repositorios, servicios y puerto `UserTechnologyAssignments` |
+| `catalog.technology` | Catálogo de tecnologías, responsable y asociación de tecnologías a usuarios | `Technology`, `UserTechnology`, contratos, repositorios, servicio, adaptador de asignaciones y controlador |
 | `catalog.product` | Productos, responsable, backup y tecnología | `Product`, contratos, repositorio, servicio y controlador de producto |
 | `delivery.project` | Proyectos, fechas, producto, responsable y colaboradores | `Project`, contratos, repositorio, servicio y controlador de proyecto |
 | `time.imputation` | Imputaciones diarias e ítems de tiempo | `Imputation`, `ImputationItem`, contratos, repositorio, servicio y controlador |
@@ -61,7 +70,7 @@ graph LR
     Technology --> Company
 ```
 
-`User` no declara una navegación inversa a `UserTechnology` ni importa `Technology`; las asociaciones se consultan y actualizan mediante `UserTechnologyRepository`. `Technology` conserva la referencia a su usuario responsable. Ambos dominios permanecen juntos en el contexto Maven candidato `organization` durante esta fase; no se extraen módulos Maven todavía.
+`User` no declara una navegación inversa a `UserTechnology` ni importa `Technology`. `organization.user` define el puerto `UserTechnologyAssignments` y el contrato local `UserTechnologyResponse`; `catalog.technology` implementa el puerto, resuelve los IDs dentro de la compañía y gestiona `UserTechnology`. `Technology` conserva la referencia a su usuario responsable, por lo que la dependencia de dominio va de catálogo hacia organización, nunca al revés. No hay ciclo de tipos entre esas capacidades.
 
 ## Grafo funcional objetivo
 
@@ -71,7 +80,7 @@ Las flechas significan "puede depender de".
 graph TD
     shared[shared]
     organization[organization]
-    catalog[catalog.product]
+    catalog["catalog.product + catalog.technology"]
     delivery[delivery.project]
     time[time.imputation]
     reporting[reporting]
@@ -86,6 +95,7 @@ graph TD
     delivery --> organization
     delivery --> shared
     time --> delivery
+    time --> catalog
     time --> organization
     time --> shared
     reporting --> organization
@@ -105,16 +115,16 @@ graph TD
 
 ### Relaciones del modelo que justifican el grafo
 
-- `User` pertenece a `Company`; `UserTechnology` enlaza usuario y tecnología en `users_technologies`, con validación JPA y claves foráneas compuestas por compañía. La asociación se accede mediante repositorio y no mediante una colección en `User`.
-- `Technology` pertenece a `Company` y referencia un `User` responsable.
+- `User` pertenece a `Company`; `UserTechnology` enlaza usuario y tecnología en `users_technologies`, con validación JPA y claves foráneas compuestas por compañía. `catalog.technology` implementa el puerto de asignaciones definido por `organization.user`.
+- `Technology` pertenece a `Company` y referencia un `User` responsable; su modelo y casos de uso están en `catalog.technology`.
 - `Product` pertenece a `Company` y referencia `Technology`, responsable y backup.
 - `Project` pertenece a `Company` y referencia `Product`, responsable y colaboradores.
 - `Imputation` referencia `User`; cada `ImputationItem` referencia `Project`.
 - Las consultas de métricas recorren varios dominios y por eso pertenecen a `reporting`, no al núcleo de `technology`, `product` o `project`.
 
-## Estructura de paquetes objetivo dentro de los módulos actuales
+## Estructura de paquetes por módulo
 
-Cada módulo Maven conservará su responsabilidad técnica durante la primera migración, pero los paquetes expresarán el dominio.
+Los módulos Maven activos expresan ahora las capacidades y responsabilidades descritas a continuación. Las rutas reflejan paquetes Java, no módulos técnicos separados.
 
 ```text
 com.arinno.canopus
@@ -125,19 +135,19 @@ com.arinno.canopus
 │   │   ├── domain
 │   │   ├── contract
 │   │   └── infrastructure.persistence
-│   ├── user
+│   └── user
 │   │   ├── api
 │   │   ├── application
 │   │   ├── domain
 │   │   ├── contract
 │   │   └── infrastructure.persistence
-│   └── technology
-│       ├── api
-│       ├── application
-│       ├── domain
-│       ├── contract
-│       └── infrastructure.persistence
 ├── catalog.product
+│   ├── api
+│   ├── application
+│   ├── domain
+│   ├── contract
+│   └── infrastructure.persistence
+├── catalog.technology
 │   ├── api
 │   ├── application
 │   ├── domain
@@ -167,9 +177,11 @@ com.arinno.canopus
 └── bootstrap
 ```
 
-### Distribución física mientras se conservan los módulos Maven
+### Distribución física anterior a la extracción Maven
 
-| Módulo actual | Sufijos de paquete que contiene |
+La tabla y el ejemplo siguientes describen el estado transitorio previo al paso 5; se conservan sólo como referencia histórica.
+
+| Módulo técnico anterior | Sufijos de paquete que contenía |
 |---|---|
 | `entities` | `*.domain`, `*.contract`, `shared.contract` |
 | `repositories` | `*.infrastructure.persistence` |
@@ -179,7 +191,7 @@ com.arinno.canopus
 | `error` | `shared.error` |
 | `main` | `bootstrap` |
 
-Una misma capacidad queda distribuida físicamente entre módulos durante esta fase, pero comparte una raíz de paquete reconocible. Ejemplo:
+Una misma capacidad quedaba distribuida físicamente entre módulos técnicos, aunque compartía una raíz de paquete reconocible. Ejemplo anterior:
 
 ```text
 entities/.../catalog/product/domain/Product.java
@@ -204,74 +216,101 @@ controllers/.../catalog/product/api/ProductController.java
 11. No se crea un nuevo módulo Maven si introduce una dependencia circular.
 12. Cada movimiento de paquete debe mantener compilación, tests, integración HTTP y construcción del JAR en verde.
 
-## Dependencias transitorias que deben corregirse
+## Estado de los bloqueos de extracción
 
-| Dependencia actual | Problema | Destino objetivo |
+| Acoplamiento observado | Estado | Implicación para Maven |
 |---|---|---|
-| `TechnologyMapper` consulta servicios de producto, proyecto e imputación | La presentación de tecnología depende de capacidades superiores y genera N+1 | `reporting` devuelve `TechnologySummary` agregado |
-| `ProductMapper` consulta proyecto e imputación | El mapeador ejecuta consultas y mezcla conversión con lectura | `reporting` devuelve `ProductSummary`/`ProductDetail` |
-| `ProjectMapper` consulta imputación | El mapeador no es puro | read model en `reporting` o consulta agregada de proyecto |
-| `ImputationRepository` contiene agregados por producto/proyecto/tecnología | El repositorio de escritura conoce varias capacidades | mover consultas transversales a `reporting.infrastructure.persistence` |
-| DTOs y entidades comparten el módulo `entities` | El contrato HTTP queda acoplado al modelo persistente | separar por paquetes `domain` y `contract` ahora; evaluar módulos después |
+| Dependencias de producción heredadas desde el POM raíz | Resuelto en fase 1: el parent gestiona versiones y cada módulo declara sus dependencias. | La compilación ya no recibe librerías accidentalmente desde el parent. |
+| `TechnologyMapper`, `ProductMapper`, `ProjectMapper` y `UserMapper` consultaban varios servicios | Resuelto en fase 2: son transformadores puros; reciben métricas de `ReportingService`. | Los mappers permanecen en `application/web-adapters`, que puede depender de reporting y de las capacidades. |
+| Agregados de imputación por proyecto/producto/tecnología dentro de `ImputationRepository` | Resuelto en fase 2: las consultas transversales viven en `ReportingRepository`; `IImputationService` queda con operaciones propias de tiempo. | `reporting` depende de las capacidades; `time-tracking` no necesita depender de reporting. |
+| Métricas todavía se calculaban por entidad desde `ReportingService` | Resuelto en fase 6 con consultas agrupadas para usuarios, productos, proyectos y tecnologías. | El número de consultas es constante por página, no por elemento; el contrato de métricas no cambia. |
+| Código fuente seguía físicamente distribuido en módulos técnicos | Resuelto en fases 3-5: movido a módulos de capacidad y soporte. | El reactor y el JAR usan los nuevos módulos sin referencias a los módulos técnicos retirados. |
+| Módulos técnicos vacíos y dependencias POM asociadas | Resuelto en fase 5: POMs y referencias retirados; error y contratos genéricos viven en `shared`. | Auditoría POM, `clean verify` (27 tests), Angular, JAR y health `UP` pasan. |
 
-## Candidatos futuros de módulos Maven
+## Resultado del paso 5: módulos Maven
 
-Esta lista es evidencia para la decisión del paso 5; no constituye todavía una decisión de extracción.
+Se extrajeron módulos por capacidad, no uno por paquete. El grafo activo y acíclico mantiene controllers/mappers transversales en `web-adapters` y el arranque en `main`.
 
 ```mermaid
 graph TD
     sharedM[shared]
     organizationM[organization]
-    catalogM[catalog]
+    catalogM["catalog (technology + product)"]
     deliveryM[delivery]
     timeM[time-tracking]
     reportingM[reporting]
     securityM[security]
-    appM[application]
+    webM["application / web adapters"]
+    appM[bootstrap]
 
     organizationM --> sharedM
     catalogM --> organizationM
     catalogM --> sharedM
     deliveryM --> catalogM
     deliveryM --> organizationM
+    deliveryM --> sharedM
     timeM --> deliveryM
+    timeM --> catalogM
     timeM --> organizationM
+    timeM --> sharedM
     reportingM --> organizationM
     reportingM --> catalogM
     reportingM --> deliveryM
     reportingM --> timeM
     securityM --> organizationM
-    appM --> securityM
-    appM --> reportingM
-    appM --> timeM
+    securityM --> sharedM
+    webM --> organizationM
+    webM --> catalogM
+    webM --> deliveryM
+    webM --> timeM
+    webM --> reportingM
+    webM --> securityM
+    webM --> sharedM
+    appM --> webM
+    appM --> sharedM
 ```
 
-### Restricciones para una futura extracción
+### Estado por módulo
 
-- `company`, `user`, `role` y `technology` se extraen juntos como `organization` mientras exista el ciclo JPA.
-- `reporting` se extrae sólo después de retirar consultas cruzadas de los mapeadores y repositorios de escritura.
-- `application`/`bootstrap` es el único módulo que ensambla todos los adaptadores.
-- `shared` debe permanecer pequeño y técnico; no puede convertirse en un contenedor genérico de código sin dueño.
-- Si una capacidad no tiene una API estable o no puede aislarse sin ciclos, permanece como paquete y no como módulo Maven.
+| Módulo | Estado | Responsabilidad y dependencias principales |
+|---|---|---|
+| `organization` | Extraído | `company`, `user`, `role` y puerto de asignaciones; no depende de catálogo. |
+| `catalog` | Extraído | `technology` y `product`; depende de `organization`. |
+| `delivery` | Extraído | Proyectos; depende de `catalog` y `organization`. |
+| `time-tracking` | Extraído | Imputaciones; depende de `delivery`, `catalog` y `organization`. |
+| `reporting` | Extraído | Consultas y read models transversales; depende de las capacidades. Las métricas de listas se recuperan por lote desde fase 6. |
+| `security` | Extraído | JWT, filtros y usuario actual; depende de `organization`. |
+| `web-adapters` | Extraído | Controllers, mappers HTTP y registro; compone módulos inferiores. |
+| `shared` | Extraído | Contratos técnicos y errores compartidos; sin entidades ni lógica de negocio. |
+| `main` | Conservado como ejecutable | Ensambla la aplicación, configuración y Flyway; preserva el nombre y la convención del JAR. |
+| `registration` | No es módulo independiente | `POST /register` permanece como orquestación en web-adapters. |
 
-## Secuencia para la reorganización por paquetes
+### Gates completados y siguiente fase
+
+1. Los módulos técnicos vacíos (`entities`, `repositories`, `services`, `controllers`, `auth`, `error`, `util`) y sus dependencias POM se retiraron.
+2. La auditoría no encontró declaraciones de módulos o artefactos retirados en los POMs activos.
+3. `mvnw.cmd -q clean verify` pasó con 27 tests, 0 fallos y 0 errores; `npm run build` pasó.
+4. El JAR contiene los módulos nuevos, arranca con MySQL/Flyway y `/actuator/health` devuelve `UP`.
+5. Fase 6 completada: paginación server-side para las listas principales, métricas por lote y carga anticipada de relaciones; se conservan las rutas array existentes.
+
+## Historial de reorganización por paquetes
 
 1. Crear raíces `shared` y `organization.company` y mover contratos técnicos/empresa.
-2. Mover conjuntamente `organization.user` y `organization.technology` para controlar su ciclo.
+2. Mover `organization.user` y extraer `catalog.technology` con un puerto de asignaciones para mantener la dependencia unidireccional.
 3. Mover `catalog.product`.
 4. Mover `delivery.project`.
 5. Mover `time.imputation`.
-6. Separar consultas transversales bajo `reporting`.
+6. Separar consultas transversales bajo `reporting` (hecho en fase 2).
 7. Mover autenticación a `security` y registro a `registration`.
 8. Mover `Main` y configuración conceptual a `bootstrap`.
-9. Eliminar el módulo Maven `util` vacío y sus dependencias.
-10. Validar tests, build frontend, empaquetado y arranque local después de cada bloque.
+9. Retirar los módulos técnicos vacíos y sus dependencias en el paso 5 (hecho).
+10. Validar tests, build frontend, empaquetado y arranque local después de cada bloque (hecho para la extracción).
 
 ## Criterios de aceptación
 
 - Cada clase activa tiene una capacidad propietaria clara.
-- El grafo objetivo no contiene ciclos entre capacidades de nivel superior; el ciclo `user`/`technology` queda encapsulado en `organization`.
+- El grafo objetivo no contiene ciclos entre capacidades de nivel superior; `catalog.technology` depende de `organization` para usuario, compañía y el puerto de asignaciones.
 - Las reglas de dependencia están documentadas y pueden verificarse mediante imports.
-- Se documentan las dependencias transitorias que impiden extraer módulos Maven hoy.
-- Los candidatos futuros de módulos forman un grafo acíclico.
-- La fase siguiente puede mover paquetes de forma incremental sin decidir todavía una división definitiva de módulos Maven.
+- Las dependencias entre módulos Maven activos forman un grafo acíclico.
+- Los contratos HTTP y el esquema se conservaron durante la extracción.
+- Las listas principales tienen límites de página y las consultas de métricas no ejecutan una consulta por elemento.

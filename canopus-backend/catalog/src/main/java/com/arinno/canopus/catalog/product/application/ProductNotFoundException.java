@@ -1,0 +1,8 @@
+package com.arinno.canopus.catalog.product.application;
+
+public class ProductNotFoundException extends RuntimeException {
+    public ProductNotFoundException(String message) {
+        super(message);
+    }
+}
+

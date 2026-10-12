@@ -2,6 +2,8 @@
 
 Aplicación web multiempresa para la gestión de proyectos de software: tiempos, evoluciones, productos, tecnologías y equipos.
 
+La referencia para diseñar una plantilla sin dominios de negocio es [Base de aplicación reutilizable](BASE_APLICACION_REUTILIZABLE.md). Distingue prácticas actuales, mejoras necesarias y requisitos del futuro scaffolder.
+
 ## Arquitectura
 
 - **Frontend**: Angular 19, standalone components, Angular Material. Carpeta `canopus-frontend`.
@@ -12,13 +14,15 @@ Aplicación web multiempresa para la gestión de proyectos de software: tiempos,
 
 ### Módulos Maven del backend
 
-`main`, `controllers`, `entities`, `repositories`, `services`, `auth`, `util`, `error`.
+`main`, `organization`, `catalog`, `delivery`, `time-tracking`, `reporting`, `security`, `web-adapters` y `shared`.
 
-Las capacidades usan los paquetes `organization.company`, `organization.user`, `organization.technology`, `catalog.product`, `delivery.project` y `time.imputation`. Cada una distribuye su código entre los módulos actuales mediante los sufijos `domain`, `contract`, `infrastructure.persistence`, `application` y `api`. La reorganización conserva las tablas y contratos HTTP; aún no se extraen módulos Maven por dominio.
+Las capacidades usan los paquetes `organization.company`, `organization.user`, `catalog.technology`, `catalog.product`, `delivery.project` y `time.imputation`. Sus entidades, contratos, persistencia y aplicaciones viven en los módulos de capacidad correspondientes; `catalog.technology` implementa el puerto de asignaciones declarado por `organization.user`. `reporting` contiene las consultas transversales, `security` la autenticación, `web-adapters` los controladores y mappers, y `shared` los contratos técnicos y errores reutilizados. `main` conserva el arranque ejecutable y Flyway. La extracción Maven del paso 5 está completada y mantiene las tablas y contratos HTTP.
+
+La fase 5 retiró los módulos técnicos vacíos (`entities`, `repositories`, `services`, `auth`, `controllers`, `util`, `error`) y sus referencias Maven. El grafo activo y las decisiones por capacidad están en `ARQUITECTURA_OBJETIVO_BACKEND.md`; la fase 6 completó paginación y métricas por lote para los listados revisados.
 
 ### Controladores REST existentes
 
-`UserController`, `ProductController`, `ProjectController`, `TechnologyController`, `ImputationController`, `TestController`.
+`AuthController`, `UserController`, `ProductController`, `ProjectController`, `TechnologyController`, `ImputationController`.
 
 ### Features del frontend
 
@@ -46,7 +50,7 @@ Las capacidades usan los paquetes `organization.company`, `organization.user`, `
 - Ruta: `/auth/register`.
 - Componente: `RegisterComponent` (`canopus-frontend/src/app/features/auth/auth/register`), formulario reactivo con nombre de empresa, nombre, apellidos, email, usuario y contraseña.
 - Backend: `AuthController` (`POST /register`, público) valida los datos, comprueba que el nombre de empresa y el usuario no existan, crea la `Company` y el `User` administrador (contraseña cifrada con `PasswordEncoder`).
-- Piezas nuevas: `RegisterRequest` (entities), `CompanyRepository` (repositories), `CompanyService`/`CompanyServiceImpl` (services), `AuthController` (controllers), regla `permitAll()` para `POST /register` en `SpringSecurityConfig`.
+- Distribución actual: `RegisterRequest`/`AuthController` en `web-adapters`, `CompanyRepository` y servicios de compañía en `organization`, y regla `permitAll()` para `POST /register` en `security`.
 - Tras un registro correcto, el frontend redirige a `/auth/login` para que el nuevo administrador inicie sesión.
 
 ## Módulo de usuarios (ABM y perfil) — estado actual
@@ -64,5 +68,5 @@ Las capacidades usan los paquetes `organization.company`, `organization.user`, `
 
 ## Pendientes conocidos
 
-- Completar el registro de empresa (`feature/register`), descrito arriba.
-- `npm start` (frontend) y el arranque de `Main` (backend) han terminado con código de salida 1 en las últimas sesiones; los builds compilan bien, pero el arranque en caliente no se ha verificado todavía.
+- La futura plantilla compañía/usuarios todavía no está generada; su referencia está en [Base de aplicación reutilizable](BASE_APLICACION_REUTILIZABLE.md).
+- Fase 6 completada: las pantallas principales de productos, proyectos y tecnologías usan paginación server-side; métricas y tecnologías de usuario se cargan en lote para evitar N+1. Se mantienen las rutas array existentes y sus DTOs.

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Product, ProductRequest } from '@core/model/product';
 import { ApiBaseService } from '@core/api/api-base.service';
+import { PageResponse } from '@core/api/page-response';
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +22,10 @@ export class ProductService extends ApiBaseService<Product> {
 
   getAll(): Observable<Product[]> {
     return this.httpGet<Product[]>('/product');
+  }
+
+  getPage(page: number, size: number, scope: string): Observable<PageResponse<Product>> {
+    return this.httpGet<PageResponse<Product>>(`/product/page?page=${page}&size=${size}&scope=${scope}`);
   }
 
   getByResponsibleMe(): Observable<Product[]> {

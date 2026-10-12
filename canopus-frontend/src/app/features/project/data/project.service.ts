@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Project } from '@core/model/project';
 import { ApiBaseService } from '@core/api/api-base.service';
+import { PageResponse } from '@core/api/page-response';
 
 export interface ProjectRequest {
   name: string;
@@ -34,6 +35,12 @@ export class ProjectService extends ApiBaseService<Project> {
       default:
         return this.getPersonalOpened();
     }
+  }
+
+  getPage(page: number, size: number, scope: string, state: string): Observable<PageResponse<Project>> {
+    return this.httpGet<PageResponse<Project>>(
+      `/project/page?page=${page}&size=${size}&scope=${scope}&state=${state}`
+    );
   }
 
   getPersonalOpened(): Observable<Project[]> {

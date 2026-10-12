@@ -15,8 +15,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.arinno.canopus.organization.company.domain.Company;
-import com.arinno.canopus.services.CurrentUserContext;
-import com.arinno.canopus.services.CurrentUserContextImpl;
 import com.arinno.canopus.organization.user.application.UserService;
 import com.arinno.canopus.organization.user.domain.User;
 

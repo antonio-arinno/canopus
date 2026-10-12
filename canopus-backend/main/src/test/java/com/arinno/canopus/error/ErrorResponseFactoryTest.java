@@ -12,7 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 
-import com.arinno.canopus.error.dto.ErrorMessage;
+import com.arinno.canopus.shared.error.ErrorMessage;
+import com.arinno.canopus.shared.error.ErrorResponseFactory;
 
 class ErrorResponseFactoryTest {
 

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -17,22 +18,26 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.time.imputation.domain.Imputation;
 import com.arinno.canopus.time.imputation.domain.ImputationItem;
 import com.arinno.canopus.catalog.product.domain.Product;
 import com.arinno.canopus.delivery.project.domain.Project;
-import com.arinno.canopus.organization.technology.domain.Technology;
+import com.arinno.canopus.catalog.technology.domain.Technology;
 import com.arinno.canopus.organization.user.domain.User;
-import com.arinno.canopus.organization.technology.domain.UserTechnology;
+import com.arinno.canopus.catalog.technology.domain.UserTechnology;
 import com.arinno.canopus.organization.company.infrastructure.persistence.CompanyRepository;
 import com.arinno.canopus.time.imputation.infrastructure.persistence.ImputationRepository;
 import com.arinno.canopus.catalog.product.infrastructure.persistence.ProductRepository;
 import com.arinno.canopus.delivery.project.infrastructure.persistence.ProjectRepository;
-import com.arinno.canopus.organization.technology.infrastructure.persistence.TechnologyRepository;
+import com.arinno.canopus.catalog.technology.infrastructure.persistence.TechnologyRepository;
 import com.arinno.canopus.organization.user.infrastructure.persistence.UserRepository;
-import com.arinno.canopus.organization.technology.infrastructure.persistence.UserTechnologyRepository;
+import com.arinno.canopus.catalog.technology.infrastructure.persistence.UserTechnologyRepository;
+import com.arinno.canopus.reporting.infrastructure.persistence.ReportingRepository;
 
 // Verifies that repository queries never leak data across companies (tenant isolation).
 @DataJpaTest
@@ -73,6 +78,9 @@ class CompanyIsolationRepositoryTests {
 
     @Autowired
     private ImputationRepository imputationRepository;
+
+    @Autowired
+    private ReportingRepository reportingRepository;
 
     private User newUser(Company company, String username) {
         User user = new User();
@@ -232,11 +240,133 @@ class CompanyIsolationRepositoryTests {
         newImputation(userA, projectA);
         newImputation(userB, projectB);
 
-        List<Map<String, Object>> productResult = imputationRepository.findByProductAndCompany(productB.getId(), companyA.getId());
-        List<Map<String, Object>> projectResult = imputationRepository.findByProjectAndCompany(projectB.getId(), companyA.getId());
+        List<Map<String, Object>> productResult = reportingRepository.findByProductAndCompany(productB.getId(), companyA.getId());
+        List<Map<String, Object>> projectResult = reportingRepository.findByProjectAndCompany(projectB.getId(), companyA.getId());
 
         assertThat(productResult).isEmpty();
         assertThat(projectResult).isEmpty();
+    }
+
+    @Test
+    void projectMetricsCanBeLoadedForMultipleProjectsInBatches() {
+        Company company = companyRepository.save(companyOf("Company"));
+        User responsible = newUser(company, "responsible");
+        User contributor = newUser(company, "contributor");
+        Technology technology = newTechnology(company, responsible, "Java");
+        Product product = newProduct(company, technology, responsible, responsible, "Product");
+        Project firstProject = newProject(company, product, responsible, "First");
+        Project secondProject = newProject(company, product, responsible, "Second");
+        firstProject.setContributors(new ArrayList<>(List.of(responsible, contributor)));
+        secondProject.setContributors(new ArrayList<>(List.of(contributor)));
+        projectRepository.saveAll(List.of(firstProject, secondProject));
+        newImputation(responsible, firstProject);
+        newImputation(contributor, secondProject);
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Long> projectIds = List.of(firstProject.getId(), secondProject.getId());
+        List<Object[]> contributorCounts = reportingRepository.contributorCountsByProjectIds(projectIds);
+        List<Object[]> times = reportingRepository.timesByProjectIds(projectIds);
+
+        assertThat(contributorCounts).hasSize(2);
+        assertThat(contributorCounts).extracting(row -> ((Number) row[1]).intValue()).containsExactlyInAnyOrder(2, 1);
+        assertThat(times).hasSize(2);
+        assertThat(times).extracting(row -> ((Number) row[1]).intValue()).containsExactlyInAnyOrder(8, 8);
+    }
+
+    @Test
+    void catalogMetricsCanBeLoadedForMultipleProductsAndTechnologiesInBatches() {
+        Company company = companyRepository.save(companyOf("Company"));
+        User responsible = newUser(company, "responsible");
+        User contributor = newUser(company, "contributor");
+        Technology firstTechnology = newTechnology(company, responsible, "Java");
+        Technology secondTechnology = newTechnology(company, responsible, "Angular");
+        addTechnology(responsible, firstTechnology);
+        addTechnology(contributor, secondTechnology);
+        Product firstProduct = newProduct(company, firstTechnology, responsible, responsible, "First");
+        Product secondProduct = newProduct(company, secondTechnology, responsible, responsible, "Second");
+        Project firstProject = newProject(company, firstProduct, responsible, "First project");
+        Project secondProject = newProject(company, secondProduct, responsible, "Second project");
+        firstProject.setContributors(new ArrayList<>(List.of(responsible, contributor)));
+        secondProject.setContributors(new ArrayList<>(List.of(contributor)));
+        projectRepository.saveAll(List.of(firstProject, secondProject));
+        newImputation(responsible, firstProject);
+        newImputation(contributor, secondProject);
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Long> productIds = List.of(firstProduct.getId(), secondProduct.getId());
+        List<Long> technologyIds = List.of(firstTechnology.getId(), secondTechnology.getId());
+        List<Object[]> productProjectCounts = reportingRepository.projectCountsByProductIds(productIds);
+        List<Object[]> productContributorCounts = reportingRepository.contributorCountsByProductIds(productIds);
+        List<Object[]> productTimes = reportingRepository.timesByProductIds(productIds);
+        List<Object[]> userProductTimes = reportingRepository.timesByProductAndUserIds(responsible.getId(), productIds);
+        List<Object[]> technologyProductCounts = reportingRepository.productCountsByTechnologyIds(technologyIds);
+        List<Object[]> technologyProjectCounts = reportingRepository.projectCountsByTechnologyIds(technologyIds);
+        List<Object[]> technologyContributorCounts = reportingRepository.contributorCountsByTechnologyIds(technologyIds);
+        List<Object[]> technologyTimes = reportingRepository.timesByTechnologyIds(technologyIds);
+        List<Object[]> userProductCounts = reportingRepository.productCountsByResponsibleUserIds(
+            List.of(responsible.getId(), contributor.getId()));
+        List<Object[]> userProjectCounts = reportingRepository.projectCountsByResponsibleUserIds(
+            List.of(responsible.getId(), contributor.getId()));
+        List<Object[]> userTimes = reportingRepository.timesByUserIds(List.of(responsible.getId(), contributor.getId()));
+        List<UserTechnology> userTechnologies = userTechnologyRepository.findByUserIn(List.of(responsible, contributor));
+
+        assertThat(productProjectCounts).extracting(row -> ((Number) row[1]).intValue()).containsExactlyInAnyOrder(1, 1);
+        assertThat(productContributorCounts).extracting(row -> ((Number) row[1]).intValue()).containsExactlyInAnyOrder(2, 1);
+        assertThat(productTimes).extracting(row -> ((Number) row[1]).intValue()).containsExactlyInAnyOrder(8, 8);
+        assertThat(userProductTimes).extracting(row -> ((Number) row[1]).intValue()).containsExactly(8);
+        assertThat(technologyProductCounts).extracting(row -> ((Number) row[1]).intValue()).containsExactlyInAnyOrder(1, 1);
+        assertThat(technologyProjectCounts).extracting(row -> ((Number) row[1]).intValue()).containsExactlyInAnyOrder(1, 1);
+        assertThat(technologyContributorCounts).extracting(row -> ((Number) row[1]).intValue()).containsExactlyInAnyOrder(2, 1);
+        assertThat(technologyTimes).extracting(row -> ((Number) row[1]).intValue()).containsExactlyInAnyOrder(8, 8);
+        assertThat(userProductCounts).extracting(row -> ((Number) row[1]).intValue()).containsExactly(2);
+        assertThat(userProjectCounts).extracting(row -> ((Number) row[1]).intValue()).containsExactly(2);
+        assertThat(userTimes).extracting(row -> ((Number) row[1]).intValue()).containsExactlyInAnyOrder(8, 8);
+        assertThat(userTechnologies).hasSize(2)
+            .allSatisfy(association -> assertThat(Hibernate.isInitialized(association.getTechnology())).isTrue());
+    }
+
+    @Test
+    void pagedCatalogQueriesStayCompanyScopedAndPreloadMapperRelations() {
+        Company companyA = companyRepository.save(companyOf("Company A"));
+        Company companyB = companyRepository.save(companyOf("Company B"));
+        User userA = newUser(companyA, "userA");
+        User userB = newUser(companyB, "userB");
+        Technology technologyA = newTechnology(companyA, userA, "Java");
+        Technology technologyB = newTechnology(companyB, userB, "Angular");
+        Product productA = newProduct(companyA, technologyA, userA, userA, "Product A");
+        Product productB = newProduct(companyB, technologyB, userB, userB, "Product B");
+        newProject(companyA, productA, userA, "Project A");
+        newProject(companyB, productB, userB, "Project B");
+        entityManager.flush();
+        entityManager.clear();
+
+        Company persistedCompanyA = companyRepository.findById(companyA.getId()).orElseThrow();
+        Page<Project> projectPage = projectRepository.findByCompany(
+                persistedCompanyA, PageRequest.of(0, 10, Sort.by("id")));
+        Page<Product> productPage = productRepository.findByCompany(
+                persistedCompanyA, PageRequest.of(0, 10, Sort.by("id")));
+        Page<Technology> technologyPage = technologyRepository.findByCompany(
+                persistedCompanyA, PageRequest.of(0, 10, Sort.by("id")));
+
+        assertThat(projectPage.getTotalElements()).isEqualTo(1);
+        assertThat(projectPage.getContent()).singleElement().satisfies(project -> {
+            assertThat(project.getName()).isEqualTo("Project A");
+            assertThat(Hibernate.isInitialized(project.getProduct())).isTrue();
+            assertThat(Hibernate.isInitialized(project.getProduct().getTechnology())).isTrue();
+        });
+        assertThat(productPage.getTotalElements()).isEqualTo(1);
+        assertThat(productPage.getContent()).singleElement().satisfies(product -> {
+            assertThat(product.getName()).isEqualTo("Product A");
+            assertThat(Hibernate.isInitialized(product.getTechnology())).isTrue();
+            assertThat(Hibernate.isInitialized(product.getResponsible())).isTrue();
+        });
+        assertThat(technologyPage.getTotalElements()).isEqualTo(1);
+        assertThat(technologyPage.getContent()).singleElement().satisfies(technology -> {
+            assertThat(technology.getName()).isEqualTo("Java");
+            assertThat(Hibernate.isInitialized(technology.getResponsible())).isTrue();
+        });
     }
 
     @Test

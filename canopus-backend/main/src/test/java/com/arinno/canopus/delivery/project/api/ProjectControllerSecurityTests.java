@@ -14,9 +14,10 @@ import com.arinno.canopus.delivery.project.api.mapper.ProjectMapper;
 import com.arinno.canopus.organization.company.domain.Company;
 import com.arinno.canopus.catalog.product.application.IProductService;
 import com.arinno.canopus.delivery.project.application.IProjectService;
-import com.arinno.canopus.services.JwtService;
+import com.arinno.canopus.security.JwtService;
 import com.arinno.canopus.organization.user.application.UserService;
 import com.arinno.canopus.delivery.project.contract.ProjectRequest;
+import com.arinno.canopus.reporting.application.ReportingService;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectControllerSecurityTests {
@@ -35,6 +36,9 @@ class ProjectControllerSecurityTests {
 
     @Mock
     private ProjectMapper projectMapper;
+
+    @Mock
+    private ReportingService reportingService;
 
     @Test
     void createRejectsProductFromAnotherCompany() throws Exception {
@@ -55,7 +59,8 @@ class ProjectControllerSecurityTests {
         when(productService.findByIdAndCompany(2L, company))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado en esta empresa"));
 
-        ProjectController controller = new ProjectController(projectService, jwtService, productService, userService, projectMapper);
+        ProjectController controller = new ProjectController(
+            projectService, jwtService, productService, userService, projectMapper, reportingService);
 
         // Act & Assert (Acción y Verificación)
         assertThatThrownBy(() -> controller.create(request, "Bearer token"))

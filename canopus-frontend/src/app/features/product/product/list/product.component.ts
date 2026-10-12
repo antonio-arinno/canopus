@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAccordion, MatExpansionModule } from '@angular/material/expansion';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 
 import { Product } from '@core/model/product';
 import { ProductService } from '@features/product/data/product.service';
@@ -25,7 +26,8 @@ import { RequestStateService } from '@core/ui/request-state.service';
     MatExpansionModule, 
     MatFormFieldModule, 
     MatButtonToggleModule, 
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatPaginatorModule
   ],
   templateUrl: './product.component.html',
   styleUrl: './product.component.scss'
@@ -47,6 +49,9 @@ export class ProductComponent implements OnInit {
 
   technologies: WritableSignal<Technology[]> = signal([]);
   products: Product[] = [];
+  pageIndex = 0;
+  pageSize = 10;
+  totalProducts = 0;
   
   // Enlaces de estado reactivo global controlados por el errorInterceptor
   readonly isLoading = this.requestStateService.isLoading;
@@ -59,7 +64,10 @@ export class ProductComponent implements OnInit {
     this.productList();
 
     // Escucha reactiva a los cambios de filtros del usuario
-    this.responsibleControl.valueChanges.subscribe(() => this.productList());
+    this.responsibleControl.valueChanges.subscribe(() => {
+      this.pageIndex = 0;
+      this.productList();
+    });
     
     this.modoControl.valueChanges.subscribe(mode => {
       if (mode === 'expanded') {
@@ -77,16 +85,17 @@ export class ProductComponent implements OnInit {
 
     const scope = this.responsibleControl.value ?? 'personal';
 
-    this.productService.getByScope(scope).subscribe({
-      next: (res: Product[]) => {
-        const payload = this.modelMapperService.mapProductList(res as unknown[]);
+    this.productService.getPage(this.pageIndex, this.pageSize, scope).subscribe({
+      next: (response) => {
+        const payload = this.modelMapperService.mapProductList(response.content as unknown[]);
         this.products = [...payload];
+        this.totalProducts = response.totalElements;
+        this.pageIndex = response.number;
+        this.pageSize = response.size;
         this.updateList();
         this.requestStateService.finish();
-      }
-      // NOTA: Bloque 'error:' eliminado. Tu 'errorInterceptor' interceptará
-      // automáticamente cualquier fallo del backend (como un 401 o 500)
-      // y actualizará las alertas en la interfaz usando el RequestStateService.
+      },
+      error: () => this.requestStateService.finish()
     });
 
     this.modoControl.setValue('collapsed', { emitEvent: false });
@@ -95,6 +104,12 @@ export class ProductComponent implements OnInit {
   updateList(): void {
     const techTree = this.productListViewService.buildTechnologyTree(this.products);
     this.technologies.set(techTree);
+  }
+
+  changePage(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.productList();
   }
 
   hasItems(): boolean {

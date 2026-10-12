@@ -9,7 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.arinno.canopus.error.dto.ErrorMessage;
+import com.arinno.canopus.shared.error.ErrorMessage;
+import com.arinno.canopus.registration.api.CustomException;
+import com.arinno.canopus.web.error.RestResponseEntityExceptionHandler;
 
 class RestResponseEntityExceptionHandlerTest {
 

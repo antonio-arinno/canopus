@@ -10,13 +10,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.arinno.canopus.organization.technology.api.mapper.TechnologyMapper;
-import com.arinno.canopus.organization.technology.api.TechnologyController;
+import com.arinno.canopus.catalog.technology.api.mapper.TechnologyMapper;
+import com.arinno.canopus.catalog.technology.api.TechnologyController;
 import com.arinno.canopus.organization.company.domain.Company;
-import com.arinno.canopus.organization.technology.application.ITechnologyService;
-import com.arinno.canopus.services.JwtService;
+import com.arinno.canopus.catalog.technology.application.ITechnologyService;
+import com.arinno.canopus.security.JwtService;
 import com.arinno.canopus.organization.user.application.UserService;
-import com.arinno.canopus.organization.technology.contract.TechnologyRequest;
+import com.arinno.canopus.catalog.technology.contract.TechnologyRequest;
+import com.arinno.canopus.reporting.application.ReportingService;
 
 @ExtendWith(MockitoExtension.class)
 class TechnologyControllerSecurityTests {
@@ -32,6 +33,9 @@ class TechnologyControllerSecurityTests {
 
     @Mock
     private TechnologyMapper technologyMapper;
+
+    @Mock
+    private ReportingService reportingService;
 
 
 
@@ -50,7 +54,8 @@ class TechnologyControllerSecurityTests {
         when(userService.findByIdAndCompany(2L, company))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no se encontró"));
 
-        TechnologyController controller = new TechnologyController(technologyService, jwtService, userService, technologyMapper);
+        TechnologyController controller = new TechnologyController(
+            technologyService, jwtService, userService, technologyMapper, reportingService);
 
         // Act & Assert (Acción y Verificación)
         assertThatThrownBy(() -> controller.create(request, "Bearer token"))

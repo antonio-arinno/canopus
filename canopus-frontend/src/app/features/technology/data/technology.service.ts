@@ -2,6 +2,7 @@ import { Injectable } from "@angular/core";
 import { Observable } from 'rxjs';
 import { Technology } from "@core/model/technology";
 import { ApiBaseService } from '@core/api/api-base.service';
+import { PageResponse } from '@core/api/page-response';
 
 export interface TechnologyRequest {
     name: string;
@@ -17,6 +18,10 @@ export class TechnologyService extends ApiBaseService<Technology> {
 
     getAll(): Observable<Technology[]> {
         return this.httpGet<Technology[]>('/technology');
+    }
+
+    getPage(page: number, size: number): Observable<PageResponse<Technology>> {
+        return this.httpGet<PageResponse<Technology>>(`/technology/page?page=${page}&size=${size}`);
     }
 
     create(technology: TechnologyRequest): Observable<Technology> {

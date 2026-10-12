@@ -13,10 +13,13 @@ import org.springframework.http.ResponseEntity;
 import com.arinno.canopus.organization.user.api.mapper.UserMapper;
 import com.arinno.canopus.organization.user.api.UserController;
 import com.arinno.canopus.organization.company.domain.Company;
-import com.arinno.canopus.services.JwtService;
+import com.arinno.canopus.security.JwtService;
 import com.arinno.canopus.organization.user.application.UserService;
 import com.arinno.canopus.organization.user.domain.User;
 import com.arinno.canopus.organization.user.contract.UserResponse;
+import com.arinno.canopus.organization.user.contract.UserTechnologyResponse;
+import com.arinno.canopus.reporting.application.ReportingService;
+import com.arinno.canopus.reporting.contract.UserMetrics;
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
@@ -29,6 +32,9 @@ class UserControllerTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private ReportingService reportingService;
 
     @Test
     void meDelegatesResponseBuildingToUserMapper() {
@@ -54,9 +60,12 @@ class UserControllerTest {
         
         // CORRECCIÓN 1: El servicio ahora devuelve el objeto User directamente, no un Optional
         when(userService.findByIdAndCompany(10L, company)).thenReturn(user);
-        when(userMapper.toDetail(user)).thenReturn(mappedResponse);
+        UserMetrics metrics = new UserMetrics(3, 5, 40);
+        when(reportingService.userMetrics(user)).thenReturn(metrics);
+        when(userService.findTechnologiesByUser(user)).thenReturn(java.util.List.<UserTechnologyResponse>of());
+        when(userMapper.toDetail(user, metrics, java.util.List.of())).thenReturn(mappedResponse);
 
-        UserController controller = new UserController(userService, jwtService, userMapper);
+        UserController controller = new UserController(userService, jwtService, userMapper, reportingService);
 
         // Act (Acción)
         // CORRECCIÓN 2: Tipamos la respuesta con <UserResponse> en lugar de <?>
